@@ -20,18 +20,16 @@ export const ROUTE_DAY_TABS = [
 ];
 
 // Column layout on each route-day tab, by position (A, B, C...).
-// Based on the real sheet structure:
-// A: (blank/checkbox helper) B: Ney  C: Yay  D: Address
-// E: Driver Notes & Special Instructions  F: Driving Directions
-// G: Account Name  H: City
+// Actual sheet structure (Ney column was removed in the converted sheet):
+// A: (blank) B: Yay  C: Address  D: Driver Notes & Special Instructions
+// E: Driving Directions  F: Account Name  G: City
 export const ROUTE_COLUMNS = {
-  doneCol: "C",            // "Yay" column - the single done/not-done flag we use
-  legacyCol: "B",           // "Ney" column - read-only, ignored by the app logic
-  addressCol: "D",
-  notesCol: "E",
-  directionsCol: "F",
-  accountNameCol: "G",
-  cityCol: "H",
+  doneCol: "B",            // "Yay" column - the single done/not-done flag we use
+  addressCol: "C",
+  notesCol: "D",
+  directionsCol: "E",
+  accountNameCol: "F",
+  cityCol: "G",
 };
 
 // Explicit allow-list of fields ever exposed to the driver app's API

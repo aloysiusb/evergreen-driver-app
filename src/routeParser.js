@@ -18,8 +18,8 @@ function pick(obj, allowedFields) {
 // Name (G). E.g. "INDUSTRIAL DOLORES and SATANK" or "USE HALLEY'S COMET"
 // both appear in column D with everything else on the row blank.
 function isSectionHeaderRow(row) {
-  const [, ney, yay, , , , accountName] = row;
-  const hasCheckboxData = ney || yay;
+  const [, yay, , , , accountName] = row;
+  const hasCheckboxData = yay;
   const hasAccountName = accountName && accountName.trim().length > 0;
   return !hasCheckboxData && !hasAccountName;
 }
@@ -84,7 +84,7 @@ export function parseRouteTab(rawRows) {
       return;
     }
 
-    const [, , yay, address, notes, directions, accountName, city] = row;
+    const [, yay, address, notes, directions, accountName, city] = row;
 
     const isFullyBlank =
       !address?.trim() && !notes?.trim() && !accountName?.trim() && !city?.trim();
