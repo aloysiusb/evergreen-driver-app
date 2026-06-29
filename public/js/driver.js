@@ -286,7 +286,7 @@
   function initStartDayBtn() {
     const btn = document.getElementById('start-day-btn');
     if (localStorage.getItem(backupKey)) {
-      btn.textContent = '✓ Backup done';
+      btn.textContent = '✓ Backup saved';
       btn.disabled = true;
     }
   }
@@ -305,7 +305,7 @@
       const data = await res.json();
       localStorage.setItem(backupKey, '1');
       localStorage.setItem(backupTabKey, data.newTitle || '');
-      btn.textContent = '✓ Backup done';
+      btn.textContent = '✓ Backup saved';
       document.getElementById('view-original-btn').style.display = 'inline-flex';
     } catch {
       btn.textContent = 'Backup failed';
