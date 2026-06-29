@@ -89,6 +89,9 @@ export function parseRouteTab(rawRows) {
             rowNumber: sheetRowNumber,
             isSectionHeader: true,
             sectionLabel: label,
+            notes:       (row[cols.notes]       || "").trim(),
+            directions:  (row[cols.directions]  || "").trim(),
+            accountName: (row[cols.accountName] || "").trim(),
             rowColor: rowColor || null,
           },
           ALLOWED_STOP_FIELDS

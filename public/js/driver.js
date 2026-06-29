@@ -73,16 +73,20 @@
 
   function sectionHeaderHtml(item) {
     let style = '';
+    let textColor = 'var(--route-color-dark)';
     if (item.rowColor) {
       const r = Math.round((item.rowColor.red   ?? 1) * 255);
       const g = Math.round((item.rowColor.green ?? 1) * 255);
       const b = Math.round((item.rowColor.blue  ?? 1) * 255);
-      // Perceived brightness — use dark text on light backgrounds
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-      const textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
+      textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
       style = ` style="background:rgb(${r},${g},${b});color:${textColor};border-color:rgba(0,0,0,0.15);"`;
     }
-    return `<div class="section-header"${style}>${esc(item.sectionLabel)}</div>`;
+    const extra = [item.accountName, item.directions, item.notes].filter(Boolean);
+    const extraHtml = extra.length
+      ? `<div style="font-size:12px;font-weight:400;margin-top:4px;opacity:0.9;">${extra.map(esc).join(' · ')}</div>`
+      : '';
+    return `<div class="section-header"${style}>${esc(item.sectionLabel)}${extraHtml}</div>`;
   }
 
   function stopCardHtml(item, isCompleted) {
