@@ -95,17 +95,27 @@
            </svg>
          </button>`;
 
+    // Map + Directions buttons
+    const mapQuery = encodeURIComponent((item.address || '') + (item.city ? ' ' + item.city : ''));
+    const mapBtn = item.address
+      ? `<a class="stop-action-btn" href="https://maps.google.com/?q=${mapQuery}" target="_blank" rel="noopener">📍 Map</a>`
+      : '';
+    const dirBtn = item.directions
+      ? `<button class="stop-action-btn" data-dir-row="${item.rowNumber}">↗ Directions</button>`
+      : '';
+
     return `
       <div class="stop-card${isCompleted ? ' completed' : ''}" data-row="${item.rowNumber}">
         <div class="stop-main">
           <div class="stop-info">
             <div class="stop-account">${esc(nameOrAddr)}</div>
             ${addrLine ? `<div class="stop-address">${esc(addrLine)}</div>` : ''}
+            ${(mapBtn || dirBtn) ? `<div class="stop-action-row">${mapBtn}${dirBtn}</div>` : ''}
             ${noteHtml}
           </div>
           ${actionBtn}
         </div>
-        ${item.directions ? `<div class="stop-directions">↗ ${esc(item.directions)}</div>` : ''}
+        ${item.directions ? `<div class="stop-directions" id="dir-${item.rowNumber}" style="display:none;">${esc(item.directions)}</div>` : ''}
       </div>`;
   }
 
@@ -121,6 +131,16 @@
     });
     container.querySelectorAll('.stop-note, .stop-note-add').forEach(el => {
       el.addEventListener('click', () => editNote(Number(el.dataset.row), el));
+    });
+    container.querySelectorAll('[data-dir-row]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.dataset.dirRow;
+        const dirEl = document.getElementById('dir-' + row);
+        if (!dirEl) return;
+        const visible = dirEl.style.display !== 'none';
+        dirEl.style.display = visible ? 'none' : 'block';
+        btn.textContent = visible ? '↗ Directions' : '↙ Hide';
+      });
     });
   }
 
@@ -258,10 +278,22 @@
     };
   }
 
-  // ── Start My Day (backup) ─────────────────────────────────────────────────
+  // ── Start My Day (backup — once per day) ────────────────────────────────
+
+  const backupKey = 'backup_done_' + route.id + '_' + new Date().toISOString().slice(0, 10);
+  const backupTabKey = 'backup_tab_' + route.id + '_' + new Date().toISOString().slice(0, 10);
+
+  function initStartDayBtn() {
+    const btn = document.getElementById('start-day-btn');
+    if (localStorage.getItem(backupKey)) {
+      btn.textContent = '✓ Backup done';
+      btn.disabled = true;
+    }
+  }
 
   document.getElementById('start-day-btn').addEventListener('click', async function () {
     const btn = this;
+    if (localStorage.getItem(backupKey)) return;
     btn.disabled = true;
     btn.textContent = 'Creating backup…';
     try {
@@ -270,13 +302,73 @@
         { method: 'POST' }
       );
       if (!res.ok) throw new Error();
-      btn.textContent = '✓ Backup created';
-      setTimeout(() => { btn.style.display = 'none'; }, 2500);
+      const data = await res.json();
+      localStorage.setItem(backupKey, '1');
+      localStorage.setItem(backupTabKey, data.newTitle || '');
+      btn.textContent = '✓ Backup done';
+      document.getElementById('view-original-btn').style.display = 'inline-flex';
     } catch {
       btn.textContent = 'Backup failed';
       btn.disabled = false;
       showToast('Could not create backup');
     }
+  });
+
+  // ── View Original ────────────────────────────────────────────────────────
+
+  function initViewOriginalBtn() {
+    const btn = document.getElementById('view-original-btn');
+    if (localStorage.getItem(backupKey)) {
+      btn.style.display = 'inline-flex';
+    }
+    btn.addEventListener('click', async () => {
+      const tabName = localStorage.getItem(backupTabKey);
+      if (!tabName) { showToast('No backup found for today'); return; }
+      btn.textContent = 'Loading…';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/backup/${encodeURIComponent(tabName)}`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        showOriginal(data.items, tabName);
+      } catch {
+        showToast('Could not load original');
+      } finally {
+        btn.textContent = '📋 View Original';
+        btn.disabled = false;
+      }
+    });
+  }
+
+  function showOriginal(items, tabName) {
+    const overlay = document.getElementById('original-overlay');
+    const list = document.getElementById('original-list');
+    const html = [];
+    for (const item of items) {
+      if (item.isSectionHeader) {
+        html.push(`<div class="section-header">${esc(item.sectionLabel)}</div>`);
+        continue;
+      }
+      const nameOrAddr = item.accountName || item.address;
+      const addrLine = item.accountName && item.address
+        ? item.address + (item.city ? ', ' + item.city : '') : (item.city || '');
+      html.push(`
+        <div class="stop-card">
+          <div class="stop-main">
+            <div class="stop-info">
+              <div class="stop-account">${esc(nameOrAddr)}</div>
+              ${addrLine ? `<div class="stop-address">${esc(addrLine)}</div>` : ''}
+              ${item.notes ? `<div class="stop-note note-info">${esc(item.notes)}</div>` : ''}
+            </div>
+          </div>
+        </div>`);
+    }
+    list.innerHTML = html.join('');
+    overlay.style.display = 'flex';
+  }
+
+  document.getElementById('original-close').addEventListener('click', () => {
+    document.getElementById('original-overlay').style.display = 'none';
   });
 
   // ── Utilities ────────────────────────────────────────────────────────────
@@ -299,5 +391,7 @@
 
   loadRoute();
   connectWS();
+  initStartDayBtn();
+  initViewOriginalBtn();
 
 })();

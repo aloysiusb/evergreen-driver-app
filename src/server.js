@@ -159,6 +159,23 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
+// Read-only access to backup tabs (named like "Tues DV backup 2026-06-29")
+app.get("/api/backup/:tabName", async (req, res) => {
+  try {
+    const { tabName } = req.params;
+    if (!tabName.includes('backup')) {
+      return res.status(403).json({ error: 'Not a backup tab.' });
+    }
+    const range = `'${tabName}'!A1:H1000`;
+    const rawRows = await readRange(SPREADSHEET_ID, range);
+    const { items, routeDate } = parseRouteTab(rawRows);
+    res.json({ tabName, routeDate, items });
+  } catch (err) {
+    console.error(`[backup/${req.params.tabName}] ${err.message}`);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
 // --- Static file server --------------------------------------------------
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
