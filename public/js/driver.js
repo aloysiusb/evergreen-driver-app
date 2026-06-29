@@ -104,13 +104,13 @@
       ? `<button class="stop-action-btn" data-dir-row="${item.rowNumber}">↗ Directions</button>`
       : '';
 
-    // Row color from sheet as left border
+    // Row color from sheet as card background
     let colorStyle = '';
     if (item.rowColor) {
       const r = Math.round((item.rowColor.red   ?? 1) * 255);
       const g = Math.round((item.rowColor.green ?? 1) * 255);
       const b = Math.round((item.rowColor.blue  ?? 1) * 255);
-      colorStyle = `style="border-left: 5px solid rgb(${r},${g},${b});"`;
+      colorStyle = `style="background: rgb(${r},${g},${b}); border-color: rgba(0,0,0,0.12);"`;
     }
 
     return `
