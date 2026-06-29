@@ -14,11 +14,11 @@ function pick(obj, allowedFields) {
 }
 
 function isSectionHeaderRow(row, cols) {
-  const accountName = (row[cols.accountName] || "").trim();
-  const address     = (row[cols.address]     || "").trim();
-  // A row with no Account Name and some text in the Address column is a
-  // section title (e.g. CORYELL RANCH, ASPEN GLEN, USE HALLEY'S COMET).
-  return !accountName && address.length > 0;
+  const address = (row[cols.address] || "").trim();
+  const city    = (row[cols.city]    || "").trim();
+  // Section titles (CORYELL RANCH, ASPEN GLEN, USE HALLEY'S COMET) have no
+  // street number in the address and no city. Real stops always have both.
+  return address.length > 0 && !/\d/.test(address) && !city;
 }
 
 // A date row looks like "06.23.2026 - TUES DV" - also a section-header
