@@ -48,6 +48,7 @@ export const ALLOWED_STOP_FIELDS = [
   "city",
   "isSectionHeader",
   "sectionLabel",
+  "rowColor",
 ];
 
 // Sheets that are explicitly OFF LIMITS to the driver-facing API,

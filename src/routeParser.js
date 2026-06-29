@@ -43,21 +43,26 @@ export function parseRouteTab(rawRows) {
   // Find the real header row (contains "Address" and "Account Name")
   // rather than assuming it's always row 0 - guards against stray blank
   // leading rows from manual edits or copy/paste in the sheet.
-  const headerIdx = rawRows.findIndex(
-    (row) => row.includes("Address") && row.includes("Account Name")
+  // Support both plain string[][] (legacy/backup) and { values, rowColor }[] (with colors)
+  const normalized = rawRows.map(r =>
+    Array.isArray(r) ? { values: r, rowColor: null } : r
   );
-  const dataRows = rawRows.slice(headerIdx >= 0 ? headerIdx + 1 : 1);
-  const rowOffset = headerIdx >= 0 ? headerIdx + 1 : 1; // rows before first data row
+
+  const headerIdx = normalized.findIndex(
+    ({ values: row }) => row.includes("Address") && row.includes("Account Name")
+  );
+  const dataRows = normalized.slice(headerIdx >= 0 ? headerIdx + 1 : 1);
+  const rowOffset = headerIdx >= 0 ? headerIdx + 1 : 1;
   const items = [];
   let routeDate = null;
   let currentSection = null;
 
-  dataRows.forEach((row, idx) => {
-    const sheetRowNumber = idx + rowOffset + 1; // 1-indexed sheet row
+  dataRows.forEach(({ values: row, rowColor }, idx) => {
+    const sheetRowNumber = idx + rowOffset + 1;
 
     if (isSectionHeaderRow(row)) {
       const label = (row[3] || "").trim();
-      if (!label) return; // fully blank row, skip
+      if (!label) return;
 
       if (isDateRow(row, label)) {
         routeDate = label;
@@ -71,6 +76,7 @@ export function parseRouteTab(rawRows) {
             rowNumber: sheetRowNumber,
             isSectionHeader: true,
             sectionLabel: label,
+            rowColor: rowColor || null,
           },
           ALLOWED_STOP_FIELDS
         )
@@ -78,12 +84,11 @@ export function parseRouteTab(rawRows) {
       return;
     }
 
-    // Normal stop row.
     const [, , yay, address, notes, directions, accountName, city] = row;
 
     const isFullyBlank =
       !address?.trim() && !notes?.trim() && !accountName?.trim() && !city?.trim();
-    if (isFullyBlank) return; // trailing/empty row in the sheet, skip it
+    if (isFullyBlank) return;
 
     items.push(
       pick(
@@ -97,6 +102,7 @@ export function parseRouteTab(rawRows) {
           accountName: (accountName || "").trim(),
           city: (city || "").trim(),
           sectionLabel: currentSection,
+          rowColor: rowColor || null,
         },
         ALLOWED_STOP_FIELDS
       )

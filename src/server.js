@@ -5,7 +5,7 @@ import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
-import { readRange, writeRange, duplicateSheet } from "./sheets.js";
+import { readRange, readRangeWithColors, writeRange, duplicateSheet } from "./sheets.js";
 import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 
@@ -49,7 +49,7 @@ app.get("/api/routes/:tabName", async (req, res) => {
     assertAllowedTab(tabName);
 
     const range = `'${tabName}'!A1:H1000`;
-    const rawRows = await readRange(SPREADSHEET_ID, range);
+    const rawRows = await readRangeWithColors(SPREADSHEET_ID, range);
     const { items, routeDate } = parseRouteTab(rawRows);
 
     const withUrgency = items.map((item) =>

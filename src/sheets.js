@@ -48,6 +48,47 @@ export async function readRange(spreadsheetId, range) {
   return res.data.values || [];
 }
 
+// Returns rows as { values: string[], rowColor: {red,green,blue}|null }
+// rowColor is null when the row has no background (white/default).
+export async function readRangeWithColors(spreadsheetId, range) {
+  const sheets = await getSheetsClient();
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId,
+    ranges: [range],
+    includeGridData: true,
+    fields: 'sheets.data.rowData.values.effectiveValue,sheets.data.rowData.values.effectiveFormat.backgroundColor',
+  });
+
+  const rowData = res.data.sheets?.[0]?.data?.[0]?.rowData || [];
+
+  return rowData.map(row => {
+    const cells = row.values || [];
+
+    const values = cells.map(c => {
+      const v = c.effectiveValue;
+      if (!v) return '';
+      if (v.stringValue !== undefined) return v.stringValue;
+      if (v.numberValue !== undefined) return String(v.numberValue);
+      if (v.boolValue !== undefined) return (v.boolValue ? 'TRUE' : 'FALSE');
+      return '';
+    });
+
+    // Use the first non-white background color found in the row
+    let rowColor = null;
+    for (const cell of cells) {
+      const bg = cell.effectiveFormat?.backgroundColor;
+      if (bg) {
+        const r = bg.red ?? 1;
+        const g = bg.green ?? 1;
+        const b = bg.blue ?? 1;
+        if (r < 0.95 || g < 0.95 || b < 0.95) { rowColor = bg; break; }
+      }
+    }
+
+    return { values, rowColor };
+  });
+}
+
 export async function writeRange(spreadsheetId, range, values) {
   const sheets = await getSheetsClient();
   await sheets.spreadsheets.values.update({

@@ -104,8 +104,17 @@
       ? `<button class="stop-action-btn" data-dir-row="${item.rowNumber}">↗ Directions</button>`
       : '';
 
+    // Row color from sheet as left border
+    let colorStyle = '';
+    if (item.rowColor) {
+      const r = Math.round((item.rowColor.red   ?? 1) * 255);
+      const g = Math.round((item.rowColor.green ?? 1) * 255);
+      const b = Math.round((item.rowColor.blue  ?? 1) * 255);
+      colorStyle = `style="border-left: 5px solid rgb(${r},${g},${b});"`;
+    }
+
     return `
-      <div class="stop-card${isCompleted ? ' completed' : ''}" data-row="${item.rowNumber}">
+      <div class="stop-card${isCompleted ? ' completed' : ''}" data-row="${item.rowNumber}" ${colorStyle}>
         <div class="stop-main">
           <div class="stop-info">
             <div class="stop-account">${esc(nameOrAddr)}</div>
