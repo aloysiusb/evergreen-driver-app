@@ -49,36 +49,42 @@ export async function readRange(spreadsheetId, range) {
 }
 
 // Returns rows as { values: string[], rowColor: {red,green,blue}|null }
-// Uses two API calls: values via the reliable values.get, colors via includeGridData.
+// Single API call so row indices for values and colors always align.
 export async function readRangeWithColors(spreadsheetId, range) {
   const sheets = await getSheetsClient();
 
-  const [valuesRes, colorRes] = await Promise.all([
-    sheets.spreadsheets.values.get({ spreadsheetId, range }),
-    sheets.spreadsheets.get({
-      spreadsheetId,
-      ranges: [range],
-      includeGridData: true,
-      fields: 'sheets.data.rowData.values.effectiveFormat.backgroundColor',
-    }),
-  ]);
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId,
+    ranges: [range],
+    includeGridData: true,
+    fields: 'sheets.data.rowData.values.effectiveValue,sheets.data.rowData.values.effectiveFormat.backgroundColor',
+  });
 
-  const values = valuesRes.data.values || [];
-  const rowData = colorRes.data.sheets?.[0]?.data?.[0]?.rowData || [];
+  const rowData = res.data.sheets?.[0]?.data?.[0]?.rowData || [];
 
-  return values.map((row, i) => {
-    const cells = rowData[i]?.values || [];
+  return rowData.map(row => {
+    const cells = row.values || [];
+
+    const values = cells.map(cell => {
+      const ev = cell.effectiveValue;
+      if (!ev) return '';
+      if (ev.stringValue  !== undefined) return ev.stringValue;
+      if (ev.numberValue  !== undefined) return String(ev.numberValue);
+      if (ev.boolValue    !== undefined) return ev.boolValue ? 'TRUE' : 'FALSE';
+      return '';
+    });
+
+    // Skip columns A, B, C (blank/Ney/Yay checkboxes) — read color from D onward
     let rowColor = null;
-    for (const cell of cells.slice(3)) {  // skip checkbox cols A, B, C (Ney, Yay)
+    for (const cell of cells.slice(3)) {
       const bg = cell.effectiveFormat?.backgroundColor;
       if (bg) {
-        const r = bg.red ?? 1;
-        const g = bg.green ?? 1;
-        const b = bg.blue ?? 1;
+        const r = bg.red ?? 1, g = bg.green ?? 1, b = bg.blue ?? 1;
         if (r < 0.95 || g < 0.95 || b < 0.95) { rowColor = bg; break; }
       }
     }
-    return { values: row, rowColor };
+
+    return { values, rowColor };
   });
 }
 
