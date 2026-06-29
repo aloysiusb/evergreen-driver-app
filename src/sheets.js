@@ -49,31 +49,25 @@ export async function readRange(spreadsheetId, range) {
 }
 
 // Returns rows as { values: string[], rowColor: {red,green,blue}|null }
-// rowColor is null when the row has no background (white/default).
+// Uses two API calls: values via the reliable values.get, colors via includeGridData.
 export async function readRangeWithColors(spreadsheetId, range) {
   const sheets = await getSheetsClient();
-  const res = await sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [range],
-    includeGridData: true,
-    fields: 'sheets.data.rowData.values.effectiveValue,sheets.data.rowData.values.effectiveFormat.backgroundColor',
-  });
 
-  const rowData = res.data.sheets?.[0]?.data?.[0]?.rowData || [];
+  const [valuesRes, colorRes] = await Promise.all([
+    sheets.spreadsheets.values.get({ spreadsheetId, range }),
+    sheets.spreadsheets.get({
+      spreadsheetId,
+      ranges: [range],
+      includeGridData: true,
+      fields: 'sheets.data.rowData.values.effectiveFormat.backgroundColor',
+    }),
+  ]);
 
-  return rowData.map(row => {
-    const cells = row.values || [];
+  const values = valuesRes.data.values || [];
+  const rowData = colorRes.data.sheets?.[0]?.data?.[0]?.rowData || [];
 
-    const values = cells.map(c => {
-      const v = c.effectiveValue;
-      if (!v) return '';
-      if (v.stringValue !== undefined) return v.stringValue;
-      if (v.numberValue !== undefined) return String(v.numberValue);
-      if (v.boolValue !== undefined) return (v.boolValue ? 'TRUE' : 'FALSE');
-      return '';
-    });
-
-    // Use the first non-white background color found in the row
+  return values.map((row, i) => {
+    const cells = rowData[i]?.values || [];
     let rowColor = null;
     for (const cell of cells) {
       const bg = cell.effectiveFormat?.backgroundColor;
@@ -84,8 +78,7 @@ export async function readRangeWithColors(spreadsheetId, range) {
         if (r < 0.95 || g < 0.95 || b < 0.95) { rowColor = bg; break; }
       }
     }
-
-    return { values, rowColor };
+    return { values: row, rowColor };
   });
 }
 
