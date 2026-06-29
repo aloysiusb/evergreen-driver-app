@@ -69,7 +69,7 @@ export async function readRangeWithColors(spreadsheetId, range) {
   return values.map((row, i) => {
     const cells = rowData[i]?.values || [];
     let rowColor = null;
-    for (const cell of cells.slice(2)) {  // skip checkbox cols A & B
+    for (const cell of cells.slice(3)) {  // skip checkbox cols A, B, C (Ney, Yay)
       const bg = cell.effectiveFormat?.backgroundColor;
       if (bg) {
         const r = bg.red ?? 1;
