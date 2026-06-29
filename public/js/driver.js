@@ -23,7 +23,6 @@
   let routeDate = '';
   let ws = null;
   let wsReconnectTimer = null;
-  let completedExpanded = false;
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -38,25 +37,34 @@
       done.length + ' of ' + total + ' done';
     document.getElementById('route-date').textContent = routeDate || '';
 
-    renderPendingStops();
-    updateCompletedSummary(done.length);
+    renderAllStops();
   }
 
-  function renderPendingStops() {
+  function renderAllStops() {
     const list = document.getElementById('stops-list');
     const html = [];
 
+    // Pending stops in original order with section headers
+    let hasPending = false;
     for (const item of allStops) {
       if (item.isSectionHeader) {
         html.push('<div class="section-header">' + esc(item.sectionLabel) + '</div>');
         continue;
       }
       if (item.done) continue;
+      hasPending = true;
       html.push(stopCardHtml(item, false));
     }
 
-    if (html.length === 0) {
-      html.push('<div style="text-align:center;padding:48px 20px;color:var(--text-muted);font-size:14px;">All stops complete! 🎉</div>');
+    if (!hasPending) {
+      html.push('<div style="text-align:center;padding:32px 20px;color:var(--text-muted);font-size:14px;">All stops complete! 🎉</div>');
+    }
+
+    // Completed stops at the bottom
+    const completed = allStops.filter(s => !s.isSectionHeader && s.done);
+    if (completed.length > 0) {
+      html.push('<div class="section-header completed-section-header">✓ Completed — tap Undo to reopen</div>');
+      completed.forEach(s => html.push(stopCardHtml(s, true)));
     }
 
     list.innerHTML = html.join('');
@@ -114,24 +122,6 @@
     container.querySelectorAll('.stop-note, .stop-note-add').forEach(el => {
       el.addEventListener('click', () => editNote(Number(el.dataset.row), el));
     });
-  }
-
-  function updateCompletedSummary(count) {
-    const summary = document.getElementById('completed-summary');
-    if (count === 0) { summary.style.display = 'none'; return; }
-    summary.style.display = 'block';
-    document.getElementById('completed-count').textContent =
-      '✓ ' + count + ' stop' + (count !== 1 ? 's' : '') + ' done';
-    document.getElementById('completed-toggle').textContent =
-      completedExpanded ? 'Hide ▴' : 'Show ▾';
-    if (completedExpanded) renderCompletedList();
-  }
-
-  function renderCompletedList() {
-    const completed = allStops.filter(s => !s.isSectionHeader && s.done);
-    const list = document.getElementById('completed-list');
-    list.innerHTML = completed.map(s => stopCardHtml(s, true)).join('');
-    attachStopListeners(list);
   }
 
   // ── Actions ──────────────────────────────────────────────────────────────
@@ -267,20 +257,6 @@
       }
     };
   }
-
-  // ── Completed toggle ─────────────────────────────────────────────────────
-
-  document.getElementById('completed-summary').addEventListener('click', function (e) {
-    if (e.target.closest('#completed-list')) return;
-    completedExpanded = !completedExpanded;
-    document.getElementById('completed-toggle').textContent =
-      completedExpanded ? 'Hide ▴' : 'Show ▾';
-    if (completedExpanded) {
-      renderCompletedList();
-    } else {
-      document.getElementById('completed-list').innerHTML = '';
-    }
-  });
 
   // ── Start My Day (backup) ─────────────────────────────────────────────────
 

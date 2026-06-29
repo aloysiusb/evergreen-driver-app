@@ -103,7 +103,16 @@ body {
   overflow: hidden;
 }
 
-.stop-card.completed { opacity: 0.6; }
+.stop-card.completed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.completed-section-header {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
 
 .stop-main {
   display: flex;
@@ -188,15 +197,17 @@ body {
 }
 
 .undo-btn {
-  font-size: 12px;
-  border: 1px solid var(--border);
-  background: none;
-  color: var(--text-muted);
-  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid #16a34a;
+  background: white;
+  color: #16a34a;
+  padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
   align-self: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Note edit ── */
