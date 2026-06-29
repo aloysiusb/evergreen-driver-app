@@ -60,6 +60,7 @@ app.get("/api/routes/:tabName", async (req, res) => {
 
     res.json({ tabName, routeDate, items: withUrgency });
   } catch (err) {
+    console.error(`[routes/${req.params.tabName}] ${err.message}`);
     res.status(err.status || 500).json({ error: err.message });
   }
 });
