@@ -52,14 +52,14 @@ export function parseRouteTab(rawRows) {
   const headerRow = headerIdx >= 0 ? normalized[headerIdx].values : [];
   const fi = (name) => headerRow.findIndex(h => h && h.trim().toLowerCase() === name.toLowerCase());
   const cols = {
-    yay:         fi("Yay")          !== -1 ? fi("Yay")          : 1,
-    address:     fi("Address")      !== -1 ? fi("Address")      : 2,
+    yay:         fi("Yay"),
+    address:     fi("Address"),
     notes:       fi("Driver Notes and Special Requests") !== -1
                    ? fi("Driver Notes and Special Requests")
-                   : fi("Notes") !== -1 ? fi("Notes") : 3,
-    directions:  fi("Directions")   !== -1 ? fi("Directions")   : 4,
-    accountName: fi("Account Name") !== -1 ? fi("Account Name") : 5,
-    city:        fi("City")         !== -1 ? fi("City")         : 6,
+                   : fi("Notes"),
+    directions:  fi("Directions"),
+    accountName: fi("Account Name"),
+    city:        fi("City"),
   };
 
   const dataRows = normalized.slice(headerIdx >= 0 ? headerIdx + 1 : 1);
