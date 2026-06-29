@@ -50,14 +50,13 @@ export function parseRouteTab(rawRows) {
   // Detect column positions from the header row so tabs with/without the
   // legacy "Ney" column both work correctly.
   const headerRow = headerIdx >= 0 ? normalized[headerIdx].values : [];
-  const fi = (name) => headerRow.findIndex(h => h && h.trim().toLowerCase() === name.toLowerCase());
+  // Partial match — finds the first header that contains the keyword (case-insensitive)
+  const fi = (keyword) => headerRow.findIndex(h => h && h.trim().toLowerCase().includes(keyword.toLowerCase()));
   const cols = {
     yay:         fi("Yay"),
     address:     fi("Address"),
-    notes:       fi("Driver Notes and Special Requests") !== -1
-                   ? fi("Driver Notes and Special Requests")
-                   : fi("Notes"),
-    directions:  fi("Directions"),
+    notes:       fi("Driver Notes"),
+    directions:  fi("Direction"),
     accountName: fi("Account Name"),
     city:        fi("City"),
   };
