@@ -14,9 +14,13 @@ function pick(obj, allowedFields) {
 }
 
 function isSectionHeaderRow(row, cols) {
-  const yay = row[cols.yay];
-  const accountName = row[cols.accountName];
-  return !yay && !(accountName && accountName.trim().length > 0);
+  const yay     = row[cols.yay] || "";
+  const address = (row[cols.address] || "").trim();
+  // Real stops always have a street number; section headers (CORYELL RANCH,
+  // ASPEN GLEN, etc.) are label-only text with no digits in the address field.
+  const hasStreetNumber = /\d/.test(address);
+  const isDone = String(yay).toUpperCase() === "TRUE";
+  return !isDone && !hasStreetNumber && address.length > 0;
 }
 
 // A date row looks like "06.23.2026 - TUES DV" - also a section-header
