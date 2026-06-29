@@ -13,15 +13,10 @@ function pick(obj, allowedFields) {
   return out;
 }
 
-// A "section header" row in this sheet has its label sitting in the
-// Address column position (D), but no checkbox values and no Account
-// Name (G). E.g. "INDUSTRIAL DOLORES and SATANK" or "USE HALLEY'S COMET"
-// both appear in column D with everything else on the row blank.
-function isSectionHeaderRow(row) {
-  const [, yay, , , , accountName] = row;
-  const hasCheckboxData = yay;
-  const hasAccountName = accountName && accountName.trim().length > 0;
-  return !hasCheckboxData && !hasAccountName;
+function isSectionHeaderRow(row, cols) {
+  const yay = row[cols.yay];
+  const accountName = row[cols.accountName];
+  return !yay && !(accountName && accountName.trim().length > 0);
 }
 
 // A date row looks like "06.23.2026 - TUES DV" - also a section-header
@@ -51,6 +46,22 @@ export function parseRouteTab(rawRows) {
   const headerIdx = normalized.findIndex(
     ({ values: row }) => row.includes("Address") && row.includes("Account Name")
   );
+
+  // Detect column positions from the header row so tabs with/without the
+  // legacy "Ney" column both work correctly.
+  const headerRow = headerIdx >= 0 ? normalized[headerIdx].values : [];
+  const fi = (name) => headerRow.findIndex(h => h && h.trim().toLowerCase() === name.toLowerCase());
+  const cols = {
+    yay:         fi("Yay")          !== -1 ? fi("Yay")          : 1,
+    address:     fi("Address")      !== -1 ? fi("Address")      : 2,
+    notes:       fi("Driver Notes and Special Requests") !== -1
+                   ? fi("Driver Notes and Special Requests")
+                   : fi("Notes") !== -1 ? fi("Notes") : 3,
+    directions:  fi("Directions")   !== -1 ? fi("Directions")   : 4,
+    accountName: fi("Account Name") !== -1 ? fi("Account Name") : 5,
+    city:        fi("City")         !== -1 ? fi("City")         : 6,
+  };
+
   const dataRows = normalized.slice(headerIdx >= 0 ? headerIdx + 1 : 1);
   const rowOffset = headerIdx >= 0 ? headerIdx + 1 : 1;
   const items = [];
@@ -60,8 +71,8 @@ export function parseRouteTab(rawRows) {
   dataRows.forEach(({ values: row, rowColor }, idx) => {
     const sheetRowNumber = idx + rowOffset + 1;
 
-    if (isSectionHeaderRow(row)) {
-      const label = (row[3] || "").trim();
+    if (isSectionHeaderRow(row, cols)) {
+      const label = (row[cols.address] || "").trim();
       if (!label) return;
 
       if (isDateRow(row, label)) {
@@ -84,10 +95,15 @@ export function parseRouteTab(rawRows) {
       return;
     }
 
-    const [, yay, address, notes, directions, accountName, city] = row;
+    const yay         = row[cols.yay]         || "";
+    const address     = row[cols.address]     || "";
+    const notes       = row[cols.notes]       || "";
+    const directions  = row[cols.directions]  || "";
+    const accountName = row[cols.accountName] || "";
+    const city        = row[cols.city]        || "";
 
     const isFullyBlank =
-      !address?.trim() && !notes?.trim() && !accountName?.trim() && !city?.trim();
+      !address.trim() && !notes.trim() && !accountName.trim() && !city.trim();
     if (isFullyBlank) return;
 
     items.push(
@@ -96,11 +112,11 @@ export function parseRouteTab(rawRows) {
           rowNumber: sheetRowNumber,
           isSectionHeader: false,
           done: String(yay).toUpperCase() === "TRUE",
-          address: (address || "").trim(),
-          notes: (notes || "").trim(),
-          directions: (directions || "").trim(),
-          accountName: (accountName || "").trim(),
-          city: (city || "").trim(),
+          address: address.trim(),
+          notes: notes.trim(),
+          directions: directions.trim(),
+          accountName: accountName.trim(),
+          city: city.trim(),
           sectionLabel: currentSection,
           rowColor: rowColor || null,
         },
