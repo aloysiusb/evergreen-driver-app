@@ -48,7 +48,7 @@
     let hasPending = false;
     for (const item of allStops) {
       if (item.isSectionHeader) {
-        html.push('<div class="section-header">' + esc(item.sectionLabel) + '</div>');
+        html.push(sectionHeaderHtml(item));
         continue;
       }
       if (item.done) continue;
@@ -69,6 +69,17 @@
 
     list.innerHTML = html.join('');
     attachStopListeners(list);
+  }
+
+  function sectionHeaderHtml(item) {
+    let style = '';
+    if (item.rowColor) {
+      const r = Math.round((item.rowColor.red   ?? 1) * 255);
+      const g = Math.round((item.rowColor.green ?? 1) * 255);
+      const b = Math.round((item.rowColor.blue  ?? 1) * 255);
+      style = ` style="background:rgb(${r},${g},${b});color:#fff;border-color:rgba(0,0,0,0.15);"`;
+    }
+    return `<div class="section-header"${style}>${esc(item.sectionLabel)}</div>`;
   }
 
   function stopCardHtml(item, isCompleted) {
