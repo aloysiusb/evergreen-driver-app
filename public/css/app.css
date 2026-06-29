@@ -192,8 +192,13 @@ body {
 .done-btn:active,
 .done-btn.pressed {
   transform: scale(0.88);
-  background: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.5);
+  background: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(147,197,253,0.6);
+}
+
+.done-btn.pressed {
+  transform: scale(1);
+  background: #93c5fd;
 }
 
 .undo-btn {
