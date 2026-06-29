@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: evergreen-driver-app
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: ROUTE_SHEET_ID
+        sync: false   # set manually in Render dashboard
+      - key: GOOGLE_SERVICE_ACCOUNT_KEY
+        sync: false   # paste full service account JSON — set in Render dashboard only

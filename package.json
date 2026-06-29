@@ -1,0 +1,16 @@
+{
+  "name": "evergreen-driver-app",
+  "version": "1.0.0",
+  "description": "Backend for Evergreen compost route driver app - syncs with Google Sheets",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "googleapis": "^140.0.1",
+    "cors": "^2.8.5",
+    "ws": "^8.18.0"
+  }
+}
