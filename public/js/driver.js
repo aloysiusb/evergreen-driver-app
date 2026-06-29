@@ -124,7 +124,7 @@
           </div>
           ${actionBtn}
         </div>
-        ${item.directions ? `<div class="stop-directions" id="dir-${item.rowNumber}" style="display:none;">${esc(item.directions)}</div>` : ''}
+        ${item.directions ? `<div class="stop-directions" id="dir-${item.rowNumber}">${esc(item.directions)}</div>` : ''}
       </div>`;
   }
 
