@@ -14,11 +14,13 @@ function pick(obj, allowedFields) {
 }
 
 function isSectionHeaderRow(row, cols) {
-  const address = (row[cols.address] || "").trim();
-  const city    = (row[cols.city]    || "").trim();
-  // Section titles (CORYELL RANCH, ASPEN GLEN, USE HALLEY'S COMET) have no
-  // street number in the address and no city. Real stops always have both.
-  return address.length > 0 && !/\d/.test(address) && !city;
+  const address     = (row[cols.address]     || "").trim();
+  const accountName = (row[cols.accountName] || "").trim();
+  const city        = (row[cols.city]        || "").trim();
+  // Real stops always have a city AND an account name.
+  // Title/header rows (CORYELL RANCH, date rows, USE HALLEY'S COMET etc.)
+  // never have both — they're missing at least one.
+  return address.length > 0 && !city && !accountName;
 }
 
 // A date row looks like "06.23.2026 - TUES DV" - also a section-header
