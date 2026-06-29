@@ -79,7 +79,7 @@ export async function readRangeWithColors(spreadsheetId, range) {
     for (const cell of cells.slice(3)) {
       const bg = cell.effectiveFormat?.backgroundColor;
       if (bg) {
-        const r = bg.red ?? 1, g = bg.green ?? 1, b = bg.blue ?? 1;
+        const r = bg.red ?? 0, g = bg.green ?? 0, b = bg.blue ?? 0;
         if (r < 0.95 || g < 0.95 || b < 0.95) {
           rowColor = bg;
           console.log('[color] found:', JSON.stringify(bg), '→ rgb(', Math.round(r*255), Math.round(g*255), Math.round(b*255), ')');
