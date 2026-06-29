@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Route — Evergreen Compost</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="manifest" href="/manifest.json">
+</head>
+<body>
+
+<header class="route-header">
+  <div class="route-header-top">
+    <div>
+      <div class="route-title" id="route-name">Loading…</div>
+      <div class="route-day" id="route-day"></div>
+    </div>
+    <div class="route-date" id="route-date"></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <div class="progress-text" id="progress-text">Loading route…</div>
+</header>
+
+<div id="ws-status">⚠ Reconnecting — changes may not sync live</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div>Loading route…</div>
+</div>
+
+<div id="main-content" style="display:none;">
+  <div class="content">
+    <div id="stops-list"></div>
+    <div id="completed-summary">
+      <div class="completed-header">
+        <span id="completed-count"></span>
+        <span class="completed-toggle" id="completed-toggle">Show ▾</span>
+      </div>
+      <div id="completed-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="action-bar">
+  <a href="/" class="btn-secondary">← Routes</a>
+  <button class="btn-primary" id="start-day-btn">Start My Day</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="/js/routes.js"></script>
+<script src="/js/driver.js"></script>
+</body>
+</html>

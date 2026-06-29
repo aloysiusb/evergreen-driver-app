@@ -1,0 +1,421 @@
+:root {
+  --route-color: #22c55e;
+  --route-color-dark: #16a34a;
+  --route-color-light: #dcfce7;
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --text-muted: #71717a;
+  --urgent-bg: #fee2e2;
+  --urgent-text: #991b1b;
+  --hold-bg: #fef3c7;
+  --hold-text: #92400e;
+  --radius: 12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+.route-header {
+  background: var(--route-color);
+  color: white;
+  padding: 20px 16px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.route-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.route-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.route-day   { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+.route-date  { font-size: 12px; opacity: 0.75; text-align: right; padding-top: 2px; }
+
+.progress-wrap {
+  background: rgba(255,255,255,0.3);
+  border-radius: 999px;
+  height: 6px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.progress-bar {
+  background: white;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.progress-text { font-size: 12px; opacity: 0.9; }
+
+/* ── Offline banner ── */
+#ws-status {
+  display: none;
+  background: #fbbf24;
+  color: #78350f;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── Content ── */
+.content {
+  padding: 12px 12px 100px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── Section headers ── */
+.section-header {
+  background: var(--route-color-light);
+  color: var(--route-color-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 8px;
+  margin: 16px 0 8px;
+}
+
+/* ── Stop card ── */
+.stop-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.stop-card.completed { opacity: 0.6; }
+
+.stop-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 12px;
+}
+
+.stop-info { flex: 1; min-width: 0; }
+
+.stop-account {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.stop-address {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.stop-note {
+  font-size: 13px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.stop-note-add {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  padding: 4px 0;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.note-urgent { background: var(--urgent-bg); color: var(--urgent-text); }
+.note-hold   { background: var(--hold-bg);   color: var(--hold-text);   }
+.note-info   { background: var(--route-color-light); color: var(--route-color-dark); }
+
+.stop-directions {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 0 12px 10px 12px;
+  line-height: 1.45;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 0;
+}
+
+/* ── Done button ── */
+.done-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  margin-top: 2px;
+}
+
+.done-btn svg { width: 22px; height: 22px; }
+
+.done-btn:active,
+.done-btn.pressed {
+  background: var(--route-color);
+  border-color: var(--route-color);
+  color: white;
+  transform: scale(0.9);
+}
+
+.undo-btn {
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: center;
+}
+
+/* ── Note edit ── */
+textarea.note-edit {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 2px solid var(--route-color);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  resize: none;
+  margin-top: 8px;
+  min-height: 64px;
+  outline: none;
+  display: block;
+}
+
+/* ── Completed summary ── */
+#completed-summary {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 16px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.completed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.completed-toggle { font-size: 12px; color: var(--route-color); }
+
+#completed-list { border-top: 1px solid var(--border); }
+#completed-list .stop-card { border-radius: 0; border: none; border-bottom: 1px solid var(--border); margin: 0; }
+#completed-list .stop-card:last-child { border-bottom: none; }
+
+/* ── Action bar ── */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  z-index: 90;
+}
+
+.btn-primary {
+  background: var(--route-color);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 28px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-primary:disabled { opacity: 0.55; cursor: default; }
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Loading ── */
+#loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--route-color);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-state { text-align: center; padding: 40px 20px; }
+.error-state button {
+  margin-top: 16px;
+  background: var(--route-color);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: #18181b;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 999;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Home page ── */
+.home-header {
+  background: #18181b;
+  color: white;
+  padding: 36px 20px 28px;
+  text-align: center;
+}
+
+.home-logo {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.home-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.home-header p {
+  font-size: 14px;
+  opacity: 0.55;
+  margin-top: 4px;
+}
+
+.route-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 20px 16px 40px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.route-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-decoration: none;
+  border-radius: 16px;
+  padding: 20px 16px 18px;
+  color: white;
+  min-height: 120px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+
+.route-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+}
+
+.route-card:active { transform: scale(0.95); }
+
+.route-card-day {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.route-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}

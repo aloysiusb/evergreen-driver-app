@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evergreen Compost — Routes</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="manifest" href="/manifest.json">
+</head>
+<body>
+<div class="home-header">
+  <div class="home-logo">🌿</div>
+  <h1>Evergreen Compost</h1>
+  <p>Tap your route to get started</p>
+</div>
+
+<div class="route-grid" id="route-grid"></div>
+
+<script src="/js/routes.js"></script>
+<script>
+const grid = document.getElementById('route-grid');
+grid.innerHTML = ROUTES.map(r => `
+  <a class="route-card" href="/driver/${r.id}" style="background:${r.color};">
+    <div class="route-card-day">${r.day}</div>
+    <div class="route-card-name">${r.name}</div>
+  </a>
+`).join('');
+</script>
+</body>
+</html>

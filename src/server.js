@@ -2,10 +2,14 @@
 import express from "express";
 import cors from "cors";
 import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
 import { readRange, writeRange, duplicateSheet } from "./sheets.js";
 import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(cors());
@@ -153,6 +157,17 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+
+// --- Static file server --------------------------------------------------
+
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+
+// Serve driver.html for all /driver/* routes (client-side routing)
+app.get("/driver/:routeId", (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'driver.html'));
+});
+
+app.use(express.static(PUBLIC_DIR));
 
 // --- WebSocket layer for real-time sync across drivers -------------------
 
