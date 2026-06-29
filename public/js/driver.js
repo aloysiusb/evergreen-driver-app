@@ -75,9 +75,9 @@
     let style = '';
     let textColor = 'var(--route-color-dark)';
     if (item.rowColor) {
-      const r = Math.round((item.rowColor.red   ?? 1) * 255);
-      const g = Math.round((item.rowColor.green ?? 1) * 255);
-      const b = Math.round((item.rowColor.blue  ?? 1) * 255);
+      const r = Math.round((item.rowColor.red   ?? 0) * 255);
+      const g = Math.round((item.rowColor.green ?? 0) * 255);
+      const b = Math.round((item.rowColor.blue  ?? 0) * 255);
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
       textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
       style = ` style="background:rgb(${r},${g},${b});color:${textColor};border-color:rgba(0,0,0,0.15);"`;
@@ -125,9 +125,9 @@
     // Row color from sheet as card background
     let colorStyle = '';
     if (item.rowColor) {
-      const r = Math.round((item.rowColor.red   ?? 1) * 255);
-      const g = Math.round((item.rowColor.green ?? 1) * 255);
-      const b = Math.round((item.rowColor.blue  ?? 1) * 255);
+      const r = Math.round((item.rowColor.red   ?? 0) * 255);
+      const g = Math.round((item.rowColor.green ?? 0) * 255);
+      const b = Math.round((item.rowColor.blue  ?? 0) * 255);
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
       const textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
       colorStyle = `style="background:rgb(${r},${g},${b}); border-color:rgba(0,0,0,0.12); color:${textColor};"`;
