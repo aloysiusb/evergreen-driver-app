@@ -15,6 +15,7 @@
   --radius: 12px;
   --home-header-bg: #18181b;
   --home-header-text: #ffffff;
+  --route-card-radius: 16px;
   --font-size: 16px;
   --font-weight: 400;
   --line-height: 1.5;
@@ -482,7 +483,7 @@ textarea.note-edit {
   flex-direction: column;
   justify-content: flex-end;
   text-decoration: none;
-  border-radius: 16px;
+  border-radius: var(--route-card-radius);
   padding: 20px 16px 18px;
   color: white;
   min-height: 120px;

@@ -27,6 +27,11 @@ export const DEFAULT_STYLES = {
   "--font-size":        "16",
   "--font-weight":      "400",
   "--line-height":      "1.5",
+  "--route-card-radius": "16",
+  // Home page content
+  "site-logo":          "🌿",
+  "site-heading":       "Evergreen Compost",
+  "site-subhead":       "Tap your route to get started",
   // Route card text (applies to all cards on home page)
   "route-card-text":        "#ffffff",
   // Per-route colors (card bg + driver header)

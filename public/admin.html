@@ -110,6 +110,14 @@
     color: #4a9e3f; min-height: 1.4em;
   }
 
+  input[type=text] {
+    background: #2a2a2a; color: #f0f0f0;
+    border: 1px solid #444; border-radius: 6px;
+    padding: 5px 8px; font-family: inherit; font-size: 0.82em;
+    width: 160px;
+  }
+  input[type=text]:focus { outline: 1px solid #4a9e3f; border-color: transparent; }
+
   /* ── PREVIEW ── */
   .preview { flex: 1; overflow: hidden; }
   .preview iframe { width: 100%; height: 100%; border: none; }
@@ -127,6 +135,18 @@
 
     <div class="panel-section">
       <h2>Page</h2>
+      <div class="control-row">
+        <label>Logo</label>
+        <div class="inputs"><input type="text" data-text="site-logo" value="🌿" maxlength="8" placeholder="emoji or text"></div>
+      </div>
+      <div class="control-row">
+        <label>Heading</label>
+        <div class="inputs"><input type="text" data-text="site-heading" value="Evergreen Compost" maxlength="40"></div>
+      </div>
+      <div class="control-row">
+        <label>Subheading</label>
+        <div class="inputs"><input type="text" data-text="site-subhead" value="Tap your route to get started" maxlength="60"></div>
+      </div>
       <div class="control-row">
         <label>Background</label>
         <div class="inputs"><input type="color" data-var="--bg" value="#f4f4f5"></div>
@@ -203,6 +223,13 @@
         <label>Card text color</label>
         <div class="inputs"><input type="color" data-var="route-card-text" value="#ffffff"></div>
       </div>
+      <div class="control-row">
+        <label>Card corner radius</label>
+        <div class="inputs">
+          <input type="range" data-var="--route-card-radius" min="0" max="40" step="1" value="16">
+          <span class="val-display" data-for="--route-card-radius">16px</span>
+        </div>
+      </div>
       <div class="control-row" style="margin-top:6px;">
         <label style="color:#555;font-size:0.75em;">Route color sets card bg + driver header</label>
       </div>
@@ -267,6 +294,9 @@ function collectStyles() {
   document.querySelectorAll('[data-var]').forEach(el => {
     styles[el.dataset.var] = el.value;
   });
+  document.querySelectorAll('[data-text]').forEach(el => {
+    styles[el.dataset.text] = el.value;
+  });
   return styles;
 }
 
@@ -278,7 +308,8 @@ function applyToPreview(styles) {
   // Apply CSS custom properties
   for (const [key, val] of Object.entries(styles)) {
     if (key.startsWith('--')) {
-      iframeRoot.style.setProperty(key, (key === '--font-size' || key === '--radius') ? val + 'px' : val);
+      const needsPx = key === '--font-size' || key === '--radius' || key === '--route-card-radius';
+      iframeRoot.style.setProperty(key, needsPx ? val + 'px' : val);
     }
   }
 
@@ -295,18 +326,26 @@ function applyToPreview(styles) {
       </a>`;
     }).join('');
   }
+
+  // Apply editable text content to preview
+  const logoEl   = iframeDoc.getElementById('site-logo');
+  const headEl   = iframeDoc.getElementById('site-heading');
+  const subEl    = iframeDoc.getElementById('site-subhead');
+  if (logoEl && styles['site-logo'])    logoEl.textContent   = styles['site-logo'];
+  if (headEl && styles['site-heading']) headEl.textContent   = styles['site-heading'];
+  if (subEl  && styles['site-subhead']) subEl.textContent    = styles['site-subhead'];
 }
 
 function updateDisplay(varName, value) {
   const el = document.querySelector(`.val-display[data-for="${varName}"]`);
   if (!el) return;
-  if (varName === '--font-size' || varName === '--radius') el.textContent = value + 'px';
-  else el.textContent = value;
+  const needsPx = varName === '--font-size' || varName === '--radius' || varName === '--route-card-radius';
+  el.textContent = needsPx ? value + 'px' : value;
 }
 
-document.querySelectorAll('[data-var]').forEach(el => {
+document.querySelectorAll('[data-var], [data-text]').forEach(el => {
   el.addEventListener('input', () => {
-    updateDisplay(el.dataset.var, el.value);
+    if (el.dataset.var) updateDisplay(el.dataset.var, el.value);
     applyToPreview(collectStyles());
   });
 });
@@ -315,8 +354,10 @@ async function loadStyles() {
   const res = await fetch('/api/styles');
   const styles = await res.json();
   for (const [key, val] of Object.entries(styles)) {
-    const el = document.querySelector(`[data-var="${key}"]`);
-    if (el) { el.value = val; updateDisplay(key, val); }
+    const varEl  = document.querySelector(`[data-var="${key}"]`);
+    const textEl = document.querySelector(`[data-text="${key}"]`);
+    if (varEl)  { varEl.value  = val; updateDisplay(key, val); }
+    if (textEl) { textEl.value = val; }
   }
   applyToPreview(styles);
 }
