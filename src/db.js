@@ -29,6 +29,15 @@ export const DEFAULT_STYLES = {
   "--line-height":      "1.5",
   "--route-card-radius":     "16",
   "--home-header-padding":   "36",
+  // Driver page — done button
+  "--done-btn-bg":           "#22c55e",
+  "--done-btn-text":         "#ffffff",
+  "--done-btn-done-bg":      "#93c5fd",
+  // Driver page — stop cards
+  "--route-header-text":     "#ffffff",
+  "--stop-done-bg":          "#f0fdf4",
+  "--stop-done-border":      "#bbf7d0",
+  "--action-bar-bg":         "#ffffff",
   // Home page content
   "site-logo":          "🌿",
   "site-heading":       "Evergreen Compost",
