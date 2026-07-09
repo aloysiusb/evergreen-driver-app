@@ -38,6 +38,9 @@ export const DEFAULT_STYLES = {
   "--stop-done-bg":          "#f0fdf4",
   "--stop-done-border":      "#bbf7d0",
   "--action-bar-bg":         "#ffffff",
+  "--action-btn-bg":         "#ffffff",
+  "--action-btn-text":       "#71717a",
+  "--action-btn-border":     "#e4e4e7",
   // Home page content
   "site-logo":          "🌿",
   "site-heading":       "Evergreen Compost",
