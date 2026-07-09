@@ -4,7 +4,21 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
-## 2026-07-09
+## 2026-07-09 (session 2)
+
+**What was done:**
+- Expanded style system to cover every non-sheet visual property with full color + font size + font weight controls per element
+- New CSS vars added: `--route-title-font-size/weight`, `--section-header-font-size/weight`, `--completed-section-bg/text/border`, `--stop-account-font-size/weight`, `--stop-address-font-size/weight`, `--stop-note-font-size/weight`, `--note-edit-bg/font-size/font-weight`, `--urgent-bg/text`, `--hold-bg/text`, `--action-btn-font-size/weight`, `--primary-btn-text/font-size/weight`, `--toast-bg/text/font-size/weight`, `--home-heading-font-size/weight`, `--home-subhead-font-size/weight`, `--progress-bar-fill`
+- admin.html reorganized into: Home Page, Global Typography, Text Colors, Stop Cards, Notes & Alerts (new), Driver Page, Route Cards & Colors — with paired sliders for size+weight per element
+- `needsPx()` is now pattern-based (`key.endsWith('-font-size')`) instead of a hardcoded list — any future vars pick up unit handling automatically
+- All hardcoded hex values and `white` literals replaced with CSS vars in app.css
+- `needsPx` updated in driver.js and index.html to match
+
+**State:** All changes pushed to GitHub. Ready to deploy to Render.
+
+---
+
+## 2026-07-09 (session 1)
 
 **Session summary:** Set up deployment infrastructure and built the style system.
 
