@@ -15,21 +15,17 @@ db.exec(`CREATE TABLE IF NOT EXISTS styles (
 )`);
 
 export const DEFAULT_STYLES = {
-  "--bg":            "#e8f0e4",
-  "--bg-opacity":    "1",
-  "--card-bg":       "#ffffff",
-  "--card-opacity":  "1",
-  "--text":          "#1a2e17",
-  "--header-bg":     "#2d5a27",
-  "--header-text":   "#ffffff",
-  "--accent":        "#4a9e3f",
-  "--done-bg":       "#d6edcf",
-  "--done-text":     "#1a5c12",
-  "--border":        "#c8dbc4",
-  "--font-size":     "15",
-  "--font-weight":   "400",
-  "--line-height":   "1.5",
-  "--radius":        "10",
+  "--bg":               "#f4f4f5",
+  "--surface":          "#ffffff",
+  "--border":           "#e4e4e7",
+  "--text":             "#18181b",
+  "--text-muted":       "#71717a",
+  "--home-header-bg":   "#18181b",
+  "--home-header-text": "#ffffff",
+  "--radius":           "12",
+  "--font-size":        "16",
+  "--font-weight":      "400",
+  "--line-height":      "1.5",
 };
 
 export function getStyles() {

@@ -15,6 +15,15 @@
   root.style.setProperty('--route-color', route.color);
   root.style.setProperty('--route-color-dark', route.colorDark);
   root.style.setProperty('--route-color-light', route.colorLight);
+
+  // Load and apply server-side style settings
+  function applyStyles(styles) {
+    for (const [key, val] of Object.entries(styles)) {
+      const cssVal = (key === '--font-size' || key === '--radius') ? val + 'px' : val;
+      root.style.setProperty(key, cssVal);
+    }
+  }
+  fetch('/api/styles').then(r => r.json()).then(applyStyles).catch(() => {});
   document.title = route.name + ' — Evergreen';
   document.getElementById('route-name').textContent = route.name;
   document.getElementById('route-day').textContent = route.day;
@@ -303,6 +312,9 @@
       if (msg.type === 'note-updated') {
         const s = allStops.find(s => s.rowNumber === msg.rowNumber);
         if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; render(); }
+      }
+      if (msg.type === 'style-updated') {
+        applyStyles(msg.styles);
       }
     };
   }

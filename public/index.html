@@ -7,6 +7,9 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
 <link rel="manifest" href="/manifest.json">
 </head>
@@ -21,6 +24,15 @@
 
 <script src="/js/routes.js"></script>
 <script>
+// Load server style settings
+fetch('/api/styles').then(r => r.json()).then(styles => {
+  const root = document.documentElement;
+  for (const [key, val] of Object.entries(styles)) {
+    const cssVal = (key === '--font-size' || key === '--radius') ? val + 'px' : val;
+    root.style.setProperty(key, cssVal);
+  }
+}).catch(() => {});
+
 const grid = document.getElementById('route-grid');
 grid.innerHTML = ROUTES.map(r => `
   <a class="route-card" href="/driver/${r.id}" style="background:${r.color};">
