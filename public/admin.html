@@ -198,6 +198,53 @@
     </div>
 
     <div class="panel-section">
+      <h2>Route Cards &amp; Headers</h2>
+      <div class="control-row">
+        <label>Card text color</label>
+        <div class="inputs"><input type="color" data-var="route-card-text" value="#ffffff"></div>
+      </div>
+      <div class="control-row" style="margin-top:6px;">
+        <label style="color:#555;font-size:0.75em;">Route color sets card bg + driver header</label>
+      </div>
+      <div class="control-row">
+        <label>Tuesday DV</label>
+        <div class="inputs"><input type="color" data-var="route-tues-dv" value="#0ea5e9"></div>
+      </div>
+      <div class="control-row">
+        <label>Tuesday 4WD</label>
+        <div class="inputs"><input type="color" data-var="route-tues-4wd" value="#f97316"></div>
+      </div>
+      <div class="control-row">
+        <label>Wednesday DV Res</label>
+        <div class="inputs"><input type="color" data-var="route-weds-res" value="#22c55e"></div>
+      </div>
+      <div class="control-row">
+        <label>Wednesday Commercial</label>
+        <div class="inputs"><input type="color" data-var="route-weds-commercial" value="#a855f7"></div>
+      </div>
+      <div class="control-row">
+        <label>Thursday UV</label>
+        <div class="inputs"><input type="color" data-var="route-thurs-uv" value="#06b6d4"></div>
+      </div>
+      <div class="control-row">
+        <label>Thursday Com/Eagle</label>
+        <div class="inputs"><input type="color" data-var="route-thurs-comeagle" value="#ef4444"></div>
+      </div>
+      <div class="control-row">
+        <label>Friday</label>
+        <div class="inputs"><input type="color" data-var="route-friday" value="#eab308"></div>
+      </div>
+      <div class="control-row">
+        <label>Monday</label>
+        <div class="inputs"><input type="color" data-var="route-monday" value="#ec4899"></div>
+      </div>
+      <div class="control-row">
+        <label>Max Routes</label>
+        <div class="inputs"><input type="color" data-var="route-max-routes" value="#6366f1"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
       <div id="push-status"></div>
       <button class="push-btn" id="push-btn">Save &amp; Push to All Drivers</button>
       <br>
@@ -227,9 +274,26 @@ function applyToPreview(styles) {
   const iframeDoc = frame.contentDocument;
   if (!iframeDoc) return;
   const iframeRoot = iframeDoc.documentElement;
+
+  // Apply CSS custom properties
   for (const [key, val] of Object.entries(styles)) {
-    const cssVal = (key === '--font-size' || key === '--radius') ? val + 'px' : val;
-    iframeRoot.style.setProperty(key, cssVal);
+    if (key.startsWith('--')) {
+      iframeRoot.style.setProperty(key, (key === '--font-size' || key === '--radius') ? val + 'px' : val);
+    }
+  }
+
+  // Re-render route cards with updated colors
+  const grid = iframeDoc.getElementById('route-grid');
+  const ROUTES = frame.contentWindow.ROUTES;
+  if (grid && ROUTES) {
+    const cardText = styles['route-card-text'] || '#ffffff';
+    grid.innerHTML = ROUTES.map(r => {
+      const bg = styles['route-' + r.id] || r.color;
+      return `<a class="route-card" href="/driver/${r.id}" style="background:${bg};color:${cardText};">
+        <div class="route-card-day">${r.day}</div>
+        <div class="route-card-name">${r.name}</div>
+      </a>`;
+    }).join('');
   }
 }
 

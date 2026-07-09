@@ -15,6 +15,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS styles (
 )`);
 
 export const DEFAULT_STYLES = {
+  // Global
   "--bg":               "#f4f4f5",
   "--surface":          "#ffffff",
   "--border":           "#e4e4e7",
@@ -26,6 +27,18 @@ export const DEFAULT_STYLES = {
   "--font-size":        "16",
   "--font-weight":      "400",
   "--line-height":      "1.5",
+  // Route card text (applies to all cards on home page)
+  "route-card-text":        "#ffffff",
+  // Per-route colors (card bg + driver header)
+  "route-tues-dv":          "#0ea5e9",
+  "route-tues-4wd":         "#f97316",
+  "route-weds-res":         "#22c55e",
+  "route-weds-commercial":  "#a855f7",
+  "route-thurs-uv":         "#06b6d4",
+  "route-thurs-comeagle":   "#ef4444",
+  "route-friday":           "#eab308",
+  "route-monday":           "#ec4899",
+  "route-max-routes":       "#6366f1",
 };
 
 export function getStyles() {

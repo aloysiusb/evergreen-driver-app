@@ -24,22 +24,33 @@
 
 <script src="/js/routes.js"></script>
 <script>
-// Load server style settings
+const grid = document.getElementById('route-grid');
+
 fetch('/api/styles').then(r => r.json()).then(styles => {
+  // Apply global CSS vars
   const root = document.documentElement;
   for (const [key, val] of Object.entries(styles)) {
-    const cssVal = (key === '--font-size' || key === '--radius') ? val + 'px' : val;
-    root.style.setProperty(key, cssVal);
+    if (key.startsWith('--')) {
+      root.style.setProperty(key, (key === '--font-size' || key === '--radius') ? val + 'px' : val);
+    }
   }
-}).catch(() => {});
-
-const grid = document.getElementById('route-grid');
-grid.innerHTML = ROUTES.map(r => `
-  <a class="route-card" href="/driver/${r.id}" style="background:${r.color};">
-    <div class="route-card-day">${r.day}</div>
-    <div class="route-card-name">${r.name}</div>
-  </a>
-`).join('');
+  // Render route cards using stored colors
+  const cardText = styles['route-card-text'] || '#ffffff';
+  grid.innerHTML = ROUTES.map(r => {
+    const bg = styles['route-' + r.id] || r.color;
+    return `<a class="route-card" href="/driver/${r.id}" style="background:${bg};color:${cardText};">
+      <div class="route-card-day">${r.day}</div>
+      <div class="route-card-name">${r.name}</div>
+    </a>`;
+  }).join('');
+}).catch(() => {
+  // Fallback to hardcoded colors if API fails
+  grid.innerHTML = ROUTES.map(r => `
+    <a class="route-card" href="/driver/${r.id}" style="background:${r.color};">
+      <div class="route-card-day">${r.day}</div>
+      <div class="route-card-name">${r.name}</div>
+    </a>`).join('');
+});
 </script>
 </body>
 </html>

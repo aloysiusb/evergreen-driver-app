@@ -10,20 +10,25 @@
     throw new Error('Unknown route id: ' + routeId);
   }
 
-  // Apply color theme
   const root = document.documentElement;
-  root.style.setProperty('--route-color', route.color);
-  root.style.setProperty('--route-color-dark', route.colorDark);
-  root.style.setProperty('--route-color-light', route.colorLight);
 
-  // Load and apply server-side style settings
+  // Load and apply server-side style settings (includes per-route color)
   function applyStyles(styles) {
     for (const [key, val] of Object.entries(styles)) {
-      const cssVal = (key === '--font-size' || key === '--radius') ? val + 'px' : val;
-      root.style.setProperty(key, cssVal);
+      if (key.startsWith('--')) {
+        root.style.setProperty(key, (key === '--font-size' || key === '--radius') ? val + 'px' : val);
+      }
     }
+    // Use stored route color if available, else fall back to routes.js value
+    const routeColor = styles['route-' + route.id] || route.color;
+    root.style.setProperty('--route-color', routeColor);
   }
-  fetch('/api/styles').then(r => r.json()).then(applyStyles).catch(() => {});
+  fetch('/api/styles').then(r => r.json()).then(applyStyles).catch(() => {
+    // Fallback to hardcoded colors
+    root.style.setProperty('--route-color', route.color);
+    root.style.setProperty('--route-color-dark', route.colorDark);
+    root.style.setProperty('--route-color-light', route.colorLight);
+  });
   document.title = route.name + ' — Evergreen';
   document.getElementById('route-name').textContent = route.name;
   document.getElementById('route-day').textContent = route.day;

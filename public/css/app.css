@@ -1,7 +1,8 @@
 :root {
   --route-color: #22c55e;
-  --route-color-dark: #16a34a;
-  --route-color-light: #dcfce7;
+  --route-color-dark: color-mix(in srgb, var(--route-color) 80%, black);
+  --route-color-light: color-mix(in srgb, var(--route-color) 20%, white);
+  --route-card-text: #ffffff;
   --bg: #f4f4f5;
   --surface: #ffffff;
   --border: #e4e4e7;
