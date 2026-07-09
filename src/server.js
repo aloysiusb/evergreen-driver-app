@@ -8,6 +8,7 @@ import { WebSocketServer } from "ws";
 import { readRange, readRangeWithColors, writeRange, duplicateSheet } from "./sheets.js";
 import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
+import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -158,6 +159,24 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+
+// --- Style API -----------------------------------------------------------
+
+app.get("/api/styles", (req, res) => {
+  res.json(getStyles());
+});
+
+app.post("/api/styles", (req, res) => {
+  const styles = setStyles(req.body);
+  broadcast({ type: "style-updated", styles });
+  res.json(styles);
+});
+
+app.post("/api/styles/reset", (req, res) => {
+  const styles = setStyles(DEFAULT_STYLES);
+  broadcast({ type: "style-updated", styles });
+  res.json(styles);
+});
 
 // Read-only access to backup tabs (named like "Tues DV backup 2026-06-29")
 app.get("/api/backup/:tabName", async (req, res) => {

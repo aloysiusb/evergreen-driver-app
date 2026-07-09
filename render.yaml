@@ -6,7 +6,7 @@ services:
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 22
       - key: ROUTE_SHEET_ID
         sync: false   # set manually in Render dashboard
       - key: GOOGLE_SERVICE_ACCOUNT_KEY
