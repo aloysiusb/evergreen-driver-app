@@ -16,7 +16,7 @@
   function applyStyles(styles) {
     for (const [key, val] of Object.entries(styles)) {
       if (key.startsWith('--')) {
-        root.style.setProperty(key, (key === '--font-size' || key === '--radius') ? val + 'px' : val);
+        root.style.setProperty(key, (key === '--radius' || key === '--route-card-radius' || key.endsWith('-font-size') || key.endsWith('-padding')) ? val + 'px' : val);
       }
     }
     // Use stored route color if available, else fall back to routes.js value

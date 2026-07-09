@@ -37,7 +37,7 @@
 
   /* ── PANEL ── */
   .panel {
-    width: 300px;
+    width: 310px;
     flex-shrink: 0;
     background: #1e1e1e;
     border-right: 1px solid #333;
@@ -64,11 +64,22 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
-  .control-row label { font-size: 0.82em; color: #ccc; flex: 1; }
+  .control-row label { font-size: 0.82em; color: #ccc; flex: 1; min-width: 0; }
 
-  .control-row .inputs { display: flex; align-items: center; gap: 6px; }
+  .control-row .inputs { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+  /* 2-col grid for compact paired controls (e.g. size + weight side by side) */
+  .control-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .control-pair .pair-item { display: flex; flex-direction: column; gap: 3px; }
+  .control-pair label { font-size: 0.75em; color: #999; }
+  .control-pair .pair-val { font-size: 0.72em; color: #777; text-align: right; }
 
   input[type=color] {
     width: 34px; height: 28px;
@@ -77,10 +88,11 @@
   }
 
   input[type=range] {
-    width: 90px;
+    width: 80px;
     accent-color: #4a9e3f;
     cursor: pointer;
   }
+  .control-pair input[type=range] { width: 100%; }
 
   .val-display {
     font-size: 0.78em; color: #aaa;
@@ -114,9 +126,18 @@
     background: #2a2a2a; color: #f0f0f0;
     border: 1px solid #444; border-radius: 6px;
     padding: 5px 8px; font-family: inherit; font-size: 0.82em;
-    width: 160px;
+    width: 150px;
   }
   input[type=text]:focus { outline: 1px solid #4a9e3f; border-color: transparent; }
+
+  .subsection {
+    font-size: 0.72em;
+    color: #666;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 10px 0 6px;
+  }
 
   /* ── PREVIEW ── */
   .preview { flex: 1; overflow: hidden; }
@@ -133,8 +154,9 @@
 <div class="layout">
   <div class="panel">
 
+    <!-- ── PAGE ── -->
     <div class="panel-section">
-      <h2>Page</h2>
+      <h2>Home Page</h2>
       <div class="control-row">
         <label>Logo</label>
         <div class="inputs"><input type="text" data-text="site-logo" value="🌿" maxlength="8" placeholder="emoji or text"></div>
@@ -148,15 +170,15 @@
         <div class="inputs"><input type="text" data-text="site-subhead" value="Tap your route to get started" maxlength="60"></div>
       </div>
       <div class="control-row">
-        <label>Background</label>
+        <label>Page background</label>
         <div class="inputs"><input type="color" data-var="--bg" value="#f4f4f5"></div>
       </div>
       <div class="control-row">
-        <label>Home header bg</label>
+        <label>Header bg</label>
         <div class="inputs"><input type="color" data-var="--home-header-bg" value="#18181b"></div>
       </div>
       <div class="control-row">
-        <label>Home header text</label>
+        <label>Header text color</label>
         <div class="inputs"><input type="color" data-var="--home-header-text" value="#ffffff"></div>
       </div>
       <div class="control-row">
@@ -166,10 +188,78 @@
           <span class="val-display" data-for="--home-header-padding">36px</span>
         </div>
       </div>
+
+      <div class="subsection">Heading typography</div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Heading size</label>
+          <input type="range" data-var="--home-heading-font-size" min="12" max="48" step="1" value="22">
+          <span class="pair-val" data-for="--home-heading-font-size">22px</span>
+        </div>
+        <div class="pair-item">
+          <label>Heading weight</label>
+          <input type="range" data-var="--home-heading-font-weight" min="100" max="900" step="100" value="800">
+          <span class="pair-val" data-for="--home-heading-font-weight">800</span>
+        </div>
+      </div>
+
+      <div class="subsection">Subheading typography</div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Subhead size</label>
+          <input type="range" data-var="--home-subhead-font-size" min="10" max="24" step="1" value="14">
+          <span class="pair-val" data-for="--home-subhead-font-size">14px</span>
+        </div>
+        <div class="pair-item">
+          <label>Subhead weight</label>
+          <input type="range" data-var="--home-subhead-font-weight" min="100" max="900" step="100" value="400">
+          <span class="pair-val" data-for="--home-subhead-font-weight">400</span>
+        </div>
+      </div>
     </div>
 
+    <!-- ── GLOBAL TYPOGRAPHY ── -->
     <div class="panel-section">
-      <h2>Cards &amp; Stops</h2>
+      <h2>Global Typography</h2>
+      <div class="control-row">
+        <label>Base font size</label>
+        <div class="inputs">
+          <input type="range" data-var="--font-size" min="11" max="24" step="0.5" value="16">
+          <span class="val-display" data-for="--font-size">16px</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Base weight</label>
+        <div class="inputs">
+          <input type="range" data-var="--font-weight" min="100" max="900" step="100" value="400">
+          <span class="val-display" data-for="--font-weight">400</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Line height</label>
+        <div class="inputs">
+          <input type="range" data-var="--line-height" min="1.1" max="2.2" step="0.05" value="1.5">
+          <span class="val-display" data-for="--line-height">1.5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TEXT COLORS ── -->
+    <div class="panel-section">
+      <h2>Text Colors</h2>
+      <div class="control-row">
+        <label>Primary text</label>
+        <div class="inputs"><input type="color" data-var="--text" value="#18181b"></div>
+      </div>
+      <div class="control-row">
+        <label>Secondary / muted text</label>
+        <div class="inputs"><input type="color" data-var="--text-muted" value="#71717a"></div>
+      </div>
+    </div>
+
+    <!-- ── STOP CARDS ── -->
+    <div class="panel-section">
+      <h2>Stop Cards</h2>
       <div class="control-row">
         <label>Card background</label>
         <div class="inputs"><input type="color" data-var="--surface" value="#ffffff"></div>
@@ -185,63 +275,6 @@
           <span class="val-display" data-for="--radius">12px</span>
         </div>
       </div>
-    </div>
-
-    <div class="panel-section">
-      <h2>Text</h2>
-      <div class="control-row">
-        <label>Primary text</label>
-        <div class="inputs"><input type="color" data-var="--text" value="#18181b"></div>
-      </div>
-      <div class="control-row">
-        <label>Secondary text</label>
-        <div class="inputs"><input type="color" data-var="--text-muted" value="#71717a"></div>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <h2>Typography</h2>
-      <div class="control-row">
-        <label>Font size</label>
-        <div class="inputs">
-          <input type="range" data-var="--font-size" min="11" max="24" step="0.5" value="16">
-          <span class="val-display" data-for="--font-size">16px</span>
-        </div>
-      </div>
-      <div class="control-row">
-        <label>Font weight</label>
-        <div class="inputs">
-          <input type="range" data-var="--font-weight" min="100" max="900" step="100" value="400">
-          <span class="val-display" data-for="--font-weight">400</span>
-        </div>
-      </div>
-      <div class="control-row">
-        <label>Line height</label>
-        <div class="inputs">
-          <input type="range" data-var="--line-height" min="1.1" max="2.2" step="0.05" value="1.5">
-          <span class="val-display" data-for="--line-height">1.5</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <h2>Driver Page</h2>
-      <div class="control-row">
-        <label>Route header text</label>
-        <div class="inputs"><input type="color" data-var="--route-header-text" value="#ffffff"></div>
-      </div>
-      <div class="control-row">
-        <label>Done button color</label>
-        <div class="inputs"><input type="color" data-var="--done-btn-bg" value="#22c55e"></div>
-      </div>
-      <div class="control-row">
-        <label>Done button text</label>
-        <div class="inputs"><input type="color" data-var="--done-btn-text" value="#ffffff"></div>
-      </div>
-      <div class="control-row">
-        <label>Completed button color</label>
-        <div class="inputs"><input type="color" data-var="--done-btn-done-bg" value="#93c5fd"></div>
-      </div>
       <div class="control-row">
         <label>Completed stop bg</label>
         <div class="inputs"><input type="color" data-var="--stop-done-bg" value="#f0fdf4"></div>
@@ -250,26 +283,234 @@
         <label>Completed stop border</label>
         <div class="inputs"><input type="color" data-var="--stop-done-border" value="#bbf7d0"></div>
       </div>
-      <div class="control-row">
-        <label>Action bar bg</label>
-        <div class="inputs"><input type="color" data-var="--action-bar-bg" value="#ffffff"></div>
+
+      <div class="subsection">Account name</div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--stop-account-font-size" min="10" max="28" step="0.5" value="16">
+          <span class="pair-val" data-for="--stop-account-font-size">16px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--stop-account-font-weight" min="100" max="900" step="100" value="600">
+          <span class="pair-val" data-for="--stop-account-font-weight">600</span>
+        </div>
       </div>
-      <div class="control-row">
-        <label>Map/Dir button bg</label>
-        <div class="inputs"><input type="color" data-var="--action-btn-bg" value="#ffffff"></div>
-      </div>
-      <div class="control-row">
-        <label>Map/Dir button text</label>
-        <div class="inputs"><input type="color" data-var="--action-btn-text" value="#71717a"></div>
-      </div>
-      <div class="control-row">
-        <label>Map/Dir button border</label>
-        <div class="inputs"><input type="color" data-var="--action-btn-border" value="#e4e4e7"></div>
+
+      <div class="subsection">Address / secondary</div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--stop-address-font-size" min="9" max="22" step="0.5" value="13">
+          <span class="pair-val" data-for="--stop-address-font-size">13px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--stop-address-font-weight" min="100" max="900" step="100" value="400">
+          <span class="pair-val" data-for="--stop-address-font-weight">400</span>
+        </div>
       </div>
     </div>
 
+    <!-- ── NOTES & ALERTS ── -->
     <div class="panel-section">
-      <h2>Route Cards &amp; Headers</h2>
+      <h2>Notes &amp; Alerts</h2>
+      <div class="subsection">Note chip typography</div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--stop-note-font-size" min="9" max="22" step="0.5" value="13">
+          <span class="pair-val" data-for="--stop-note-font-size">13px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--stop-note-font-weight" min="100" max="900" step="100" value="400">
+          <span class="pair-val" data-for="--stop-note-font-weight">400</span>
+        </div>
+      </div>
+
+      <div class="subsection">Urgent note</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--urgent-bg" value="#fee2e2"></div>
+      </div>
+      <div class="control-row">
+        <label>Text color</label>
+        <div class="inputs"><input type="color" data-var="--urgent-text" value="#991b1b"></div>
+      </div>
+
+      <div class="subsection">Hold note</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--hold-bg" value="#fef3c7"></div>
+      </div>
+      <div class="control-row">
+        <label>Text color</label>
+        <div class="inputs"><input type="color" data-var="--hold-text" value="#92400e"></div>
+      </div>
+
+      <div class="subsection">Note textarea</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--note-edit-bg" value="#ffffff"></div>
+      </div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--note-edit-font-size" min="9" max="22" step="0.5" value="13">
+          <span class="pair-val" data-for="--note-edit-font-size">13px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--note-edit-font-weight" min="100" max="900" step="100" value="400">
+          <span class="pair-val" data-for="--note-edit-font-weight">400</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DRIVER PAGE ── -->
+    <div class="panel-section">
+      <h2>Driver Page</h2>
+
+      <div class="subsection">Route header</div>
+      <div class="control-row">
+        <label>Header text color</label>
+        <div class="inputs"><input type="color" data-var="--route-header-text" value="#ffffff"></div>
+      </div>
+      <div class="control-row">
+        <label>Progress bar fill</label>
+        <div class="inputs"><input type="color" data-var="--progress-bar-fill" value="#ffffff"></div>
+      </div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Title size</label>
+          <input type="range" data-var="--route-title-font-size" min="14" max="40" step="1" value="22">
+          <span class="pair-val" data-for="--route-title-font-size">22px</span>
+        </div>
+        <div class="pair-item">
+          <label>Title weight</label>
+          <input type="range" data-var="--route-title-font-weight" min="100" max="900" step="100" value="700">
+          <span class="pair-val" data-for="--route-title-font-weight">700</span>
+        </div>
+      </div>
+
+      <div class="subsection">Section headers</div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Header size</label>
+          <input type="range" data-var="--section-header-font-size" min="8" max="20" step="0.5" value="11.5">
+          <span class="pair-val" data-for="--section-header-font-size">11.5px</span>
+        </div>
+        <div class="pair-item">
+          <label>Header weight</label>
+          <input type="range" data-var="--section-header-font-weight" min="100" max="900" step="100" value="700">
+          <span class="pair-val" data-for="--section-header-font-weight">700</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Completed section bg</label>
+        <div class="inputs"><input type="color" data-var="--completed-section-bg" value="#dcfce7"></div>
+      </div>
+      <div class="control-row">
+        <label>Completed section text</label>
+        <div class="inputs"><input type="color" data-var="--completed-section-text" value="#15803d"></div>
+      </div>
+      <div class="control-row">
+        <label>Completed section border</label>
+        <div class="inputs"><input type="color" data-var="--completed-section-border" value="#bbf7d0"></div>
+      </div>
+
+      <div class="subsection">Done button</div>
+      <div class="control-row">
+        <label>Default color</label>
+        <div class="inputs"><input type="color" data-var="--done-btn-bg" value="#22c55e"></div>
+      </div>
+      <div class="control-row">
+        <label>Icon / text color</label>
+        <div class="inputs"><input type="color" data-var="--done-btn-text" value="#ffffff"></div>
+      </div>
+      <div class="control-row">
+        <label>Completed color</label>
+        <div class="inputs"><input type="color" data-var="--done-btn-done-bg" value="#93c5fd"></div>
+      </div>
+
+      <div class="subsection">Map / Directions buttons</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--action-btn-bg" value="#ffffff"></div>
+      </div>
+      <div class="control-row">
+        <label>Text color</label>
+        <div class="inputs"><input type="color" data-var="--action-btn-text" value="#71717a"></div>
+      </div>
+      <div class="control-row">
+        <label>Border color</label>
+        <div class="inputs"><input type="color" data-var="--action-btn-border" value="#e4e4e7"></div>
+      </div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--action-btn-font-size" min="9" max="20" step="0.5" value="12">
+          <span class="pair-val" data-for="--action-btn-font-size">12px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--action-btn-font-weight" min="100" max="900" step="100" value="500">
+          <span class="pair-val" data-for="--action-btn-font-weight">500</span>
+        </div>
+      </div>
+
+      <div class="subsection">Bottom action bar</div>
+      <div class="control-row">
+        <label>Bar background</label>
+        <div class="inputs"><input type="color" data-var="--action-bar-bg" value="#ffffff"></div>
+      </div>
+
+      <div class="subsection">Primary button (Day Complete)</div>
+      <div class="control-row">
+        <label>Text color</label>
+        <div class="inputs"><input type="color" data-var="--primary-btn-text" value="#ffffff"></div>
+      </div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--primary-btn-font-size" min="10" max="24" step="1" value="14">
+          <span class="pair-val" data-for="--primary-btn-font-size">14px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--primary-btn-font-weight" min="100" max="900" step="100" value="600">
+          <span class="pair-val" data-for="--primary-btn-font-weight">600</span>
+        </div>
+      </div>
+
+      <div class="subsection">Toast notification</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--toast-bg" value="#18181b"></div>
+      </div>
+      <div class="control-row">
+        <label>Text color</label>
+        <div class="inputs"><input type="color" data-var="--toast-text" value="#ffffff"></div>
+      </div>
+      <div class="control-pair">
+        <div class="pair-item">
+          <label>Size</label>
+          <input type="range" data-var="--toast-font-size" min="9" max="20" step="0.5" value="13">
+          <span class="pair-val" data-for="--toast-font-size">13px</span>
+        </div>
+        <div class="pair-item">
+          <label>Weight</label>
+          <input type="range" data-var="--toast-font-weight" min="100" max="900" step="100" value="400">
+          <span class="pair-val" data-for="--toast-font-weight">400</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ROUTE CARDS & HEADERS ── -->
+    <div class="panel-section">
+      <h2>Route Cards &amp; Colors</h2>
       <div class="control-row">
         <label>Card text color</label>
         <div class="inputs"><input type="color" data-var="route-card-text" value="#ffffff"></div>
@@ -322,6 +563,7 @@
       </div>
     </div>
 
+    <!-- ── ACTIONS ── -->
     <div class="panel-section">
       <div id="push-status"></div>
       <button class="push-btn" id="push-btn">Save &amp; Push to All Drivers</button>
@@ -329,7 +571,7 @@
       <button class="reset-btn" id="reset-btn">Reset to defaults</button>
     </div>
 
-  </div>
+  </div><!-- /panel -->
 
   <div class="preview">
     <iframe id="preview-frame" src="/"></iframe>
@@ -339,6 +581,15 @@
 <script>
 const frame = document.getElementById('preview-frame');
 const pushStatus = document.getElementById('push-status');
+
+// Any var whose stored value is a unitless number and should render as px
+function needsPx(key) {
+  return key === '--radius' ||
+    key === '--route-card-radius' ||
+    key === '--home-header-padding' ||
+    key.endsWith('-font-size') ||
+    key.endsWith('-padding');
+}
 
 function collectStyles() {
   const styles = {};
@@ -356,11 +607,9 @@ function applyToPreview(styles) {
   if (!iframeDoc) return;
   const iframeRoot = iframeDoc.documentElement;
 
-  // Apply CSS custom properties
   for (const [key, val] of Object.entries(styles)) {
     if (key.startsWith('--')) {
-      const needsPx = ['--font-size','--radius','--route-card-radius','--home-header-padding'].includes(key);
-      iframeRoot.style.setProperty(key, needsPx ? val + 'px' : val);
+      iframeRoot.style.setProperty(key, needsPx(key) ? val + 'px' : val);
     }
   }
 
@@ -378,7 +627,7 @@ function applyToPreview(styles) {
     }).join('');
   }
 
-  // Apply editable text content to preview (empty string collapses via CSS :empty)
+  // Apply editable text content
   const setText = (id, val) => { const el = iframeDoc.getElementById(id); if (el) el.textContent = val ?? ''; };
   setText('site-logo',    styles['site-logo']);
   setText('site-heading', styles['site-heading']);
@@ -386,10 +635,10 @@ function applyToPreview(styles) {
 }
 
 function updateDisplay(varName, value) {
-  const el = document.querySelector(`.val-display[data-for="${varName}"]`);
-  if (!el) return;
-  const needsPx = ['--font-size','--radius','--route-card-radius','--home-header-padding'].includes(varName);
-  el.textContent = needsPx ? value + 'px' : value;
+  // Update both .val-display and .pair-val
+  document.querySelectorAll(`[data-for="${varName}"]`).forEach(el => {
+    el.textContent = needsPx(varName) ? value + 'px' : value;
+  });
 }
 
 document.querySelectorAll('[data-var], [data-text]').forEach(el => {
@@ -403,10 +652,12 @@ async function loadStyles() {
   const res = await fetch('/api/styles');
   const styles = await res.json();
   for (const [key, val] of Object.entries(styles)) {
-    const varEl  = document.querySelector(`[data-var="${key}"]`);
+    document.querySelectorAll(`[data-var="${key}"]`).forEach(el => {
+      el.value = val;
+      updateDisplay(key, val);
+    });
     const textEl = document.querySelector(`[data-text="${key}"]`);
-    if (varEl)  { varEl.value  = val; updateDisplay(key, val); }
-    if (textEl) { textEl.value = val; }
+    if (textEl) textEl.value = val;
   }
   applyToPreview(styles);
 }
@@ -434,8 +685,10 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
   const res = await fetch('/api/styles/reset', { method: 'POST' });
   const styles = await res.json();
   for (const [key, val] of Object.entries(styles)) {
-    const el = document.querySelector(`[data-var="${key}"]`);
-    if (el) { el.value = val; updateDisplay(key, val); }
+    document.querySelectorAll(`[data-var="${key}"]`).forEach(el => {
+      el.value = val;
+      updateDisplay(key, val);
+    });
   }
   applyToPreview(styles);
   pushStatus.textContent = '✓ Reset and pushed!';

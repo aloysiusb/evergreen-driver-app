@@ -31,7 +31,7 @@ fetch('/api/styles').then(r => r.json()).then(styles => {
   const root = document.documentElement;
   for (const [key, val] of Object.entries(styles)) {
     if (key.startsWith('--')) {
-      const needsPx = key === '--font-size' || key === '--radius' || key === '--route-card-radius';
+      const needsPx = key === '--radius' || key === '--route-card-radius' || key.endsWith('-font-size') || key.endsWith('-padding');
       root.style.setProperty(key, needsPx ? val + 'px' : val);
     }
   }

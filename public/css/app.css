@@ -8,25 +8,81 @@
   --border: #e4e4e7;
   --text: #18181b;
   --text-muted: #71717a;
+  --radius: 12px;
+
+  /* Home header */
+  --home-header-bg: #18181b;
+  --home-header-text: #ffffff;
+  --home-header-padding: 36px;
+  --home-heading-font-size: 22px;
+  --home-heading-font-weight: 800;
+  --home-subhead-font-size: 14px;
+  --home-subhead-font-weight: 400;
+
+  /* Route cards */
+  --route-card-radius: 16px;
+
+  /* Route header */
+  --route-header-text: #ffffff;
+  --route-title-font-size: 22px;
+  --route-title-font-weight: 700;
+  --progress-bar-fill: #ffffff;
+
+  /* Section headers */
+  --section-header-font-size: 11.5px;
+  --section-header-font-weight: 700;
+  --completed-section-bg: #dcfce7;
+  --completed-section-text: #15803d;
+  --completed-section-border: #bbf7d0;
+
+  /* Stop card */
+  --stop-account-font-size: 16px;
+  --stop-account-font-weight: 600;
+  --stop-address-font-size: 13px;
+  --stop-address-font-weight: 400;
+  --stop-done-bg: #f0fdf4;
+  --stop-done-border: #bbf7d0;
+
+  /* Note chips */
   --urgent-bg: #fee2e2;
   --urgent-text: #991b1b;
   --hold-bg: #fef3c7;
   --hold-text: #92400e;
-  --radius: 12px;
-  --home-header-bg: #18181b;
-  --home-header-text: #ffffff;
-  --route-card-radius: 16px;
-  --home-header-padding: 36px;
+  --stop-note-font-size: 13px;
+  --stop-note-font-weight: 400;
+
+  /* Note textarea */
+  --note-edit-bg: #ffffff;
+  --note-edit-font-size: 13px;
+  --note-edit-font-weight: 400;
+
+  /* Done button */
   --done-btn-bg: #22c55e;
   --done-btn-text: #ffffff;
   --done-btn-done-bg: #93c5fd;
-  --route-header-text: #ffffff;
-  --stop-done-bg: #f0fdf4;
-  --stop-done-border: #bbf7d0;
-  --action-bar-bg: #ffffff;
+
+  /* Map / Directions buttons */
   --action-btn-bg: #ffffff;
   --action-btn-text: #71717a;
   --action-btn-border: #e4e4e7;
+  --action-btn-font-size: 12px;
+  --action-btn-font-weight: 500;
+
+  /* Bottom action bar */
+  --action-bar-bg: #ffffff;
+
+  /* Primary button */
+  --primary-btn-text: #ffffff;
+  --primary-btn-font-size: 14px;
+  --primary-btn-font-weight: 600;
+
+  /* Toast */
+  --toast-bg: #18181b;
+  --toast-text: #ffffff;
+  --toast-font-size: 13px;
+  --toast-font-weight: 400;
+
+  /* Global typography */
   --font-size: 16px;
   --font-weight: 400;
   --line-height: 1.5;
@@ -64,7 +120,7 @@ body {
   margin-bottom: 12px;
 }
 
-.route-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.route-title { font-size: var(--route-title-font-size); font-weight: var(--route-title-font-weight); line-height: 1.2; }
 .route-day   { font-size: 13px; opacity: 0.85; margin-top: 2px; }
 .route-date  { font-size: 12px; opacity: 0.75; text-align: right; padding-top: 2px; }
 
@@ -76,7 +132,7 @@ body {
   overflow: hidden;
 }
 .progress-bar {
-  background: white;
+  background: var(--progress-bar-fill);
   height: 100%;
   border-radius: 999px;
   transition: width 0.3s ease;
@@ -106,13 +162,19 @@ body {
 .section-header {
   background: var(--route-color-light);
   color: var(--route-color-dark);
-  font-size: 11.5px;
-  font-weight: 700;
+  font-size: var(--section-header-font-size);
+  font-weight: var(--section-header-font-weight);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 7px 12px;
   border-radius: 8px;
   margin: 16px 0 8px;
+}
+
+.completed-section-header {
+  background: var(--completed-section-bg);
+  color: var(--completed-section-text);
+  border: 1px solid var(--completed-section-border);
 }
 
 /* ── Stop card ── */
@@ -129,12 +191,6 @@ body {
   border-color: var(--stop-done-border);
 }
 
-.completed-section-header {
-  background: #dcfce7;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
-
 .stop-main {
   display: flex;
   align-items: flex-start;
@@ -145,20 +201,22 @@ body {
 .stop-info { flex: 1; min-width: 0; }
 
 .stop-account {
-  font-size: 1em;
-  font-weight: 600;
+  font-size: var(--stop-account-font-size);
+  font-weight: var(--stop-account-font-weight);
   color: var(--text);
   line-height: 1.3;
 }
 
 .stop-address {
-  font-size: 0.81em;
+  font-size: var(--stop-address-font-size);
+  font-weight: var(--stop-address-font-weight);
   color: var(--text-muted);
   margin-top: 3px;
 }
 
 .stop-note {
-  font-size: 0.81em;
+  font-size: var(--stop-note-font-size);
+  font-weight: var(--stop-note-font-weight);
   margin-top: 8px;
   padding: 6px 10px;
   border-radius: 8px;
@@ -167,7 +225,7 @@ body {
 }
 
 .stop-note-add {
-  font-size: 0.81em;
+  font-size: var(--stop-note-font-size);
   color: var(--text-muted);
   margin-top: 6px;
   padding: 4px 0;
@@ -245,8 +303,8 @@ body {
 }
 
 .stop-action-btn {
-  font-size: 0.75em;
-  font-weight: 500;
+  font-size: var(--action-btn-font-size);
+  font-weight: var(--action-btn-font-weight);
   padding: 5px 12px;
   border-radius: 999px;
   border: 1.5px solid var(--action-btn-border);
@@ -312,11 +370,12 @@ body {
 textarea.note-edit {
   width: 100%;
   font-family: var(--font);
-  font-size: 13px;
+  font-size: var(--note-edit-font-size);
+  font-weight: var(--note-edit-font-weight);
   padding: 8px 10px;
   border: 2px solid var(--route-color);
   border-radius: 8px;
-  background: white;
+  background: var(--note-edit-bg);
   color: var(--text);
   resize: none;
   margin-top: 8px;
@@ -371,11 +430,11 @@ textarea.note-edit {
 
 .btn-primary {
   background: var(--route-color);
-  color: white;
+  color: var(--primary-btn-text);
   border: none;
   border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--primary-btn-font-size);
+  font-weight: var(--primary-btn-font-weight);
   padding: 12px 28px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -424,7 +483,7 @@ textarea.note-edit {
 .error-state button {
   margin-top: 16px;
   background: var(--route-color);
-  color: white;
+  color: var(--primary-btn-text);
   border: none;
   padding: 10px 24px;
   border-radius: 8px;
@@ -438,11 +497,12 @@ textarea.note-edit {
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%) translateY(16px);
-  background: #18181b;
-  color: white;
+  background: var(--toast-bg);
+  color: var(--toast-text);
   padding: 10px 20px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: var(--toast-font-size);
+  font-weight: var(--toast-font-weight);
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
   pointer-events: none;
@@ -473,13 +533,14 @@ textarea.note-edit {
 }
 
 .home-header h1 {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: var(--home-heading-font-size);
+  font-weight: var(--home-heading-font-weight);
   letter-spacing: -0.02em;
 }
 
 .home-header p {
-  font-size: 14px;
+  font-size: var(--home-subhead-font-size);
+  font-weight: var(--home-subhead-font-weight);
   opacity: 0.55;
   margin-top: 4px;
 }
