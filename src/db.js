@@ -27,7 +27,8 @@ export const DEFAULT_STYLES = {
   "--font-size":        "16",
   "--font-weight":      "400",
   "--line-height":      "1.5",
-  "--route-card-radius": "16",
+  "--route-card-radius":     "16",
+  "--home-header-padding":   "36",
   // Home page content
   "site-logo":          "🌿",
   "site-heading":       "Evergreen Compost",

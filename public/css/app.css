@@ -16,6 +16,7 @@
   --home-header-bg: #18181b;
   --home-header-text: #ffffff;
   --route-card-radius: 16px;
+  --home-header-padding: 36px;
   --font-size: 16px;
   --font-weight: 400;
   --line-height: 1.5;
@@ -448,9 +449,13 @@ textarea.note-edit {
 .home-header {
   background: var(--home-header-bg);
   color: var(--home-header-text);
-  padding: 36px 20px 28px;
+  padding: var(--home-header-padding) 20px;
   text-align: center;
 }
+
+.home-logo:empty,
+#site-heading:empty,
+#site-subhead:empty { display: none; }
 
 .home-logo {
   font-size: 32px;

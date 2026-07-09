@@ -35,10 +35,10 @@ fetch('/api/styles').then(r => r.json()).then(styles => {
       root.style.setProperty(key, needsPx ? val + 'px' : val);
     }
   }
-  // Apply editable home page content
-  if (styles['site-logo'])    document.getElementById('site-logo').textContent    = styles['site-logo'];
-  if (styles['site-heading']) document.getElementById('site-heading').textContent = styles['site-heading'];
-  if (styles['site-subhead']) document.getElementById('site-subhead').textContent = styles['site-subhead'];
+  // Apply editable home page content (empty string → element hidden via CSS :empty)
+  document.getElementById('site-logo').textContent    = styles['site-logo']    ?? '🌿';
+  document.getElementById('site-heading').textContent = styles['site-heading'] ?? 'Evergreen Compost';
+  document.getElementById('site-subhead').textContent = styles['site-subhead'] ?? '';
   // Render route cards using stored colors
   const cardText = styles['route-card-text'] || '#ffffff';
   grid.innerHTML = ROUTES.map(r => {

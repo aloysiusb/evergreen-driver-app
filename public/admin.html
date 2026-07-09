@@ -159,6 +159,13 @@
         <label>Home header text</label>
         <div class="inputs"><input type="color" data-var="--home-header-text" value="#ffffff"></div>
       </div>
+      <div class="control-row">
+        <label>Header padding</label>
+        <div class="inputs">
+          <input type="range" data-var="--home-header-padding" min="8" max="80" step="2" value="36">
+          <span class="val-display" data-for="--home-header-padding">36px</span>
+        </div>
+      </div>
     </div>
 
     <div class="panel-section">
@@ -308,7 +315,7 @@ function applyToPreview(styles) {
   // Apply CSS custom properties
   for (const [key, val] of Object.entries(styles)) {
     if (key.startsWith('--')) {
-      const needsPx = key === '--font-size' || key === '--radius' || key === '--route-card-radius';
+      const needsPx = ['--font-size','--radius','--route-card-radius','--home-header-padding'].includes(key);
       iframeRoot.style.setProperty(key, needsPx ? val + 'px' : val);
     }
   }
@@ -327,19 +334,17 @@ function applyToPreview(styles) {
     }).join('');
   }
 
-  // Apply editable text content to preview
-  const logoEl   = iframeDoc.getElementById('site-logo');
-  const headEl   = iframeDoc.getElementById('site-heading');
-  const subEl    = iframeDoc.getElementById('site-subhead');
-  if (logoEl && styles['site-logo'])    logoEl.textContent   = styles['site-logo'];
-  if (headEl && styles['site-heading']) headEl.textContent   = styles['site-heading'];
-  if (subEl  && styles['site-subhead']) subEl.textContent    = styles['site-subhead'];
+  // Apply editable text content to preview (empty string collapses via CSS :empty)
+  const setText = (id, val) => { const el = iframeDoc.getElementById(id); if (el) el.textContent = val ?? ''; };
+  setText('site-logo',    styles['site-logo']);
+  setText('site-heading', styles['site-heading']);
+  setText('site-subhead', styles['site-subhead']);
 }
 
 function updateDisplay(varName, value) {
   const el = document.querySelector(`.val-display[data-for="${varName}"]`);
   if (!el) return;
-  const needsPx = varName === '--font-size' || varName === '--radius' || varName === '--route-card-radius';
+  const needsPx = ['--font-size','--radius','--route-card-radius','--home-header-padding'].includes(varName);
   el.textContent = needsPx ? value + 'px' : value;
 }
 
