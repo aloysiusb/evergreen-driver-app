@@ -43,12 +43,11 @@ data/
 |-----|-------------|
 | `GOOGLE_SERVICE_ACCOUNT_KEY` | Full contents of the service account `.json` key file |
 | `ROUTE_SHEET_ID` | Spreadsheet ID from the Google Sheet URL (between `/d/` and `/edit`) |
-| `DATA_DIR` | Optional: path for SQLite db (defaults to `./data`). Set to a Render persistent disk path for true persistence. |
+| `DATA_DIR` | Path for the SQLite db. `render.yaml` sets this to `/data`, a mounted persistent disk (added 2026-07-11, owner is on Render's Pro tier) — defaults to `./data` if unset, e.g. for local dev. |
 
 ## Known deviations from portfolio standard
 
 - **Node.js, not Python** — predates the Python backend standard. Working production app; don't rewrite without asking Virginia.
-- **SQLite style db is ephemeral on Render free tier** — resets on redeploy without a persistent disk. Ask Virginia before adding a paid Render disk.
 
 ## Node version
 

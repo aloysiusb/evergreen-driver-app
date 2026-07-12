@@ -2,6 +2,7 @@ services:
   - type: web
     name: evergreen-driver-app
     runtime: node
+    plan: starter
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -11,3 +12,9 @@ services:
         sync: false   # set manually in Render dashboard
       - key: GOOGLE_SERVICE_ACCOUNT_KEY
         sync: false   # paste full service account JSON — set in Render dashboard only
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: evergreen-data
+      mountPath: /data
+      sizeGB: 1

@@ -4,6 +4,32 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-07-11 — Persistent disk added for the style DB
+
+Closes the "consider adding a Render persistent disk" note from the
+2026-07-09 session-1 entry below. Owner confirmed she's on Render's Pro
+tier, so the earlier free-tier cost hesitation no longer applies (see
+`render_pro_tier` in Claude's cross-session memory if this comes up again
+in other repos — evergreen-driver-app, cymatic-decoder, and
+The-Lemmon-Dociere all had free-tier caveats written into their docs at
+various points).
+
+- `render.yaml`: added `plan: starter` (required by Render for any
+  service to attach a disk), a `disk` block (`evergreen-data`, mounted at
+  `/data`, 1GB), and `DATA_DIR=/data` env var.
+- No code changes needed — `src/db.js` already read `DATA_DIR` correctly
+  (falls back to local `./data` if unset, so local dev is unaffected).
+- Not yet verified live: this repo's `render.yaml` needs to actually be
+  in sync with how the Render service was originally created. If the
+  service was set up via Render's Blueprint (render.yaml-driven) flow,
+  pushing this should offer to add the disk automatically on the next
+  deploy. If it was created by connecting the repo manually (not via
+  Blueprint), Render won't pick up the new `disk:`/`plan:` fields on its
+  own — check the Render dashboard's "Blueprint" tab for this service,
+  or add the disk manually under Settings → Disks if needed.
+
+---
+
 ## 2026-07-09 (session 2)
 
 **What was done:**
