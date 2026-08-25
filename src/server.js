@@ -186,7 +186,15 @@ app.get("/qbo/auth", (req, res) => {
   if (!process.env.QBO_CLIENT_ID) {
     return res.status(500).send("QBO_CLIENT_ID not set in Render environment.");
   }
-  res.redirect(getAuthUrl());
+  const url = getAuthUrl();
+  console.log("[qbo/auth] Redirecting to:", url);
+  res.redirect(url);
+});
+
+// Debug: show the exact auth URL without redirecting
+app.get("/qbo/auth-debug", (req, res) => {
+  const url = getAuthUrl();
+  res.send(`<p>Auth URL:</p><pre style="word-break:break-all">${url}</pre>`);
 });
 
 // Step 2: Intuit redirects here after Alyssa approves.
