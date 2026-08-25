@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay My Invoice — Evergreen Compost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
+  <style>
+    :root {
+      --bg:      #f4f8f3;
+      --surface: #ffffff;
+      --border:  #d0dece;
+      --text:    #1a2b18;
+      --muted:   #5a7054;
+      --green:   #16a34a;
+      --green-lt:#dcfce7;
+      --red:     #dc2626;
+      --red-lt:  #fee2e2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--green);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .logo-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    input[type="email"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="email"]:focus {
+      border-color: var(--green);
+    }
+
+    button {
+      margin-top: 16px;
+      width: 100%;
+      padding: 13px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    button:hover { opacity: 0.88; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .result.success {
+      background: var(--green-lt);
+      color: #14532d;
+      display: block;
+    }
+
+    .result.error {
+      background: var(--red-lt);
+      color: #7f1d1d;
+      display: block;
+    }
+
+    .pay-btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 12px 24px;
+      background: var(--green);
+      color: #fff;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      text-align: center;
+      width: 100%;
+    }
+
+    .balance-info {
+      font-size: 13px;
+      color: #14532d;
+      margin-bottom: 4px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    .help {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .help a {
+      color: var(--green);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <div>
+      <div class="logo-name">Evergreen Compost</div>
+      <div class="logo-sub">Customer Payment Portal</div>
+    </div>
+  </div>
+
+  <h1>Pay or manage your invoice</h1>
+  <p class="subtitle">Enter the email address on your Evergreen account and we'll send you directly to your invoice — where you can pay or set up autopay.</p>
+
+  <form id="payForm">
+    <label for="email">Email address on your account</label>
+    <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    <button type="submit" id="submitBtn">Get my payment link</button>
+  </form>
+
+  <div class="result" id="result"></div>
+
+  <hr class="divider">
+
+  <p class="help">
+    Questions? Email us at
+    <a href="mailto:hello@evergreenzerowaste.com">hello@evergreenzerowaste.com</a>
+  </p>
+</div>
+
+<script>
+  const form = document.getElementById('payForm');
+  const result = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span>Looking up your account…';
+    result.className = 'result';
+    result.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (data.noInvoice && !data.error) {
+        result.className = 'result success';
+        result.innerHTML = '✅ <strong>You\'re all caught up!</strong> No outstanding balance found on your account.';
+      } else if (data.paymentLink) {
+        const balance = data.balance ? `$${parseFloat(data.balance).toFixed(2)}` : '';
+        const due = data.dueDate ? ` · Due ${data.dueDate}` : '';
+        result.className = 'result success';
+        result.innerHTML = `
+          ${balance ? `<div class="balance-info">Balance: <strong>${balance}</strong>${due}</div>` : ''}
+          <div>Your invoice is ready — tap below to pay or set up autopay through QuickBooks.</div>
+          <a class="pay-btn" href="${data.paymentLink}" target="_blank" rel="noopener">Pay my invoice →</a>
+        `;
+      } else {
+        result.className = 'result error';
+        result.innerHTML = data.error || 'Something went wrong. Please try again or contact Evergreen.';
+      }
+    } catch (err) {
+      result.className = 'result error';
+      result.innerHTML = 'Connection error — please try again in a moment.';
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Get my payment link';
+  });
+</script>
+
+</body>
+</html>

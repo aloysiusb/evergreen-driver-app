@@ -8,9 +8,11 @@
     "start": "node src/server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
     "googleapis": "^140.0.1",
-    "cors": "^2.8.5",
+    "intuit-oauth": "^4.2.5",
+    "node-quickbooks": "^2.0.50",
     "ws": "^8.18.0"
   }
 }

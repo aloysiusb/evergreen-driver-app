@@ -9,6 +9,7 @@ import { readRange, readRangeWithColors, writeRange, duplicateSheet } from "./sh
 import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
+import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -160,6 +161,7 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
+<<<<<<< HEAD
 // --- Style API -----------------------------------------------------------
 
 app.get("/api/styles", (req, res) => {
@@ -176,6 +178,76 @@ app.post("/api/styles/reset", (req, res) => {
   const styles = setStyles(DEFAULT_STYLES);
   broadcast({ type: "style-updated", styles });
   res.json(styles);
+});
+
+// --- QuickBooks OAuth setup routes (one-time, run by Alyssa) ---------------
+
+// Step 1: Visit this URL in the browser to start the OAuth flow.
+app.get("/qbo/auth", (req, res) => {
+  if (!process.env.QBO_CLIENT_ID) {
+    return res.status(500).send("QBO_CLIENT_ID not set in Render environment.");
+  }
+  res.redirect(getAuthUrl());
+});
+
+// Step 2: Intuit redirects here after Alyssa approves.
+// Tokens are printed to logs — copy them into Render env vars.
+app.get("/qbo/callback", async (req, res) => {
+  try {
+    const tokens = await exchangeCodeForTokens(req.url);
+    console.log("=== QBO TOKENS — add these to Render env vars ===");
+    console.log("QBO_REFRESH_TOKEN =", tokens.refreshToken);
+    console.log("QBO_REALM_ID      =", tokens.realmId);
+    console.log("=================================================");
+    res.send(`
+      <h2>QuickBooks connected!</h2>
+      <p>Check Render logs for QBO_REFRESH_TOKEN and QBO_REALM_ID, then add them to your Render environment variables.</p>
+      <p>After that, customers can use the self-service payment page.</p>
+    `);
+  } catch (err) {
+    console.error("[qbo/callback]", err.message);
+    res.status(500).send("OAuth error: " + err.message);
+  }
+});
+
+// --- Customer self-service: request a payment link by email ----------------
+// POST /api/payment-link  { email: "customer@example.com" }
+// Returns { paymentLink } or { error, noInvoice: true }
+app.post("/api/payment-link", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ error: "A valid email address is required." });
+    }
+
+    const customer = await findCustomerByEmail(email.trim().toLowerCase());
+    if (!customer) {
+      return res.status(404).json({
+        error: "No account found with that email. Please contact Evergreen.",
+        notFound: true,
+      });
+    }
+
+    const invoice = await findOpenInvoiceForCustomer(customer.Id);
+    if (!invoice) {
+      return res.json({
+        message: "No outstanding balance found on your account — you're all set!",
+        noInvoice: true,
+      });
+    }
+
+    const paymentLink = await getInvoicePaymentLink(invoice.Id);
+    if (!paymentLink) {
+      return res.status(500).json({
+        error: "Could not generate a payment link. Please contact Evergreen directly.",
+      });
+    }
+
+    res.json({ paymentLink, balance: invoice.Balance, dueDate: invoice.DueDate });
+  } catch (err) {
+    console.error("[payment-link]", err.message);
+    res.status(500).json({ error: "Something went wrong. Please try again or contact Evergreen." });
+  }
 });
 
 // Read-only access to backup tabs (named like "Tues DV backup 2026-06-29")
