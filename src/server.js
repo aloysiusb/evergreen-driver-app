@@ -161,7 +161,6 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
-<<<<<<< HEAD
 // --- Style API -----------------------------------------------------------
 
 app.get("/api/styles", (req, res) => {
