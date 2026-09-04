@@ -316,6 +316,17 @@ function renderNavCard() {
     : '';
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.address + (stop.city ? ', ' + stop.city : '') + ', TX')}&travelmode=driving`;
+  const tabName = window._routeTabName || '';
+  const row = stop.rowNumber;
+
+  // Classify existing note for styling
+  const noteClass = stop.noteUrgency === 'urgent' ? 'nav-note urgent'
+                  : stop.noteUrgency === 'hold'   ? 'nav-note hold'
+                  : 'nav-note';
+
+  const noteHtmlStyled = stop.notes
+    ? `<div class="${noteClass}">${escHtml(stop.notes)}</div>`
+    : '';
 
   card.style.display = 'block';
   card.innerHTML = `
@@ -325,7 +336,13 @@ function renderNavCard() {
     </div>
     <div class="nav-stop-name" style="${color ? `border-left:4px solid ${color};padding-left:10px;` : ''}">${escHtml(nameOrAddr)}</div>
     ${addrLine ? `<div class="nav-stop-addr">${escHtml(addrLine)}</div>` : ''}
-    ${noteHtml}
+    ${noteHtmlStyled}
+    <div class="nav-report-btns">
+      <button class="report-quick-btn contamination" onclick="reportOpen('contamination',${row},'${escHtml(tabName)}')">🚫 Contamination</button>
+      <button class="report-quick-btn overflow"      onclick="reportOpen('overflow',${row},'${escHtml(tabName)}')">📦 Overflow</button>
+      <button class="report-quick-btn skip"          onclick="reportOpen('skip',${row},'${escHtml(tabName)}')">⏭ Skip</button>
+      <button class="report-quick-btn photo"         onclick="reportOpen('photo',${row},'${escHtml(tabName)}')">📷 Photo</button>
+    </div>
     <div class="nav-actions">
       <button class="nav-btn nav-btn-prev" onclick="navStep(-1)" ${currentIdx === 0 ? 'disabled' : ''}>← Prev</button>
       <a class="nav-btn nav-btn-maps" href="${mapsUrl}" target="_blank" rel="noopener">↗ Navigate</a>
@@ -383,6 +400,8 @@ window.navUndo = async function() {
     if (window.syncStopDone) window.syncStopDone(stop.rowNumber, false);
   }
 };
+
+window.renderNavCard = renderNavCard;
 
 window.notifyStopsUpdated = function() {
   if (!window._mapInitialized || !gMap) return;

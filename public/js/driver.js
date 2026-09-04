@@ -279,7 +279,8 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       allStops = data.items;
-      window.allStops = allStops; // expose for map.js
+      window.allStops = allStops;         // expose for map.js
+      window._routeTabName = route.tabName; // expose for report.js
       routeDate = data.routeDate || '';
       render();
       if (window.notifyStopsUpdated) window.notifyStopsUpdated();
