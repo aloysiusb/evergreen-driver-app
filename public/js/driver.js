@@ -132,8 +132,9 @@
     const mapBtn = item.address
       ? `<a class="stop-action-btn" href="https://maps.google.com/?q=${mapQuery}" target="_blank" rel="noopener">📍 Map</a>`
       : '';
-    const dirBtn = item.directions
-      ? `<button class="stop-action-btn" data-dir-row="${item.rowNumber}">↗ Directions</button>`
+    const dirBtn = '';  // directions shown as chip now
+    const accessChip = item.directions
+      ? `<div class="stop-access-chip">🔑 ${esc(item.directions)}</div>`
       : '';
 
     // Row color from sheet as card background
@@ -153,12 +154,12 @@
           <div class="stop-info">
             <div class="stop-account">${esc(nameOrAddr)}</div>
             ${addrLine ? `<div class="stop-address">${esc(addrLine)}</div>` : ''}
-            ${(mapBtn || dirBtn) ? `<div class="stop-action-row">${mapBtn}${dirBtn}</div>` : ''}
+            ${mapBtn ? `<div class="stop-action-row">${mapBtn}</div>` : ''}
+            ${accessChip}
             ${noteHtml}
           </div>
           ${actionBtn}
         </div>
-        ${item.directions ? `<div class="stop-directions" id="dir-${item.rowNumber}">${esc(item.directions)}</div>` : ''}
       </div>`;
   }
 
@@ -175,16 +176,7 @@
     container.querySelectorAll('.stop-note, .stop-note-add').forEach(el => {
       el.addEventListener('click', () => editNote(Number(el.dataset.row), el));
     });
-    container.querySelectorAll('[data-dir-row]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const row = btn.dataset.dirRow;
-        const dirEl = document.getElementById('dir-' + row);
-        if (!dirEl) return;
-        const visible = dirEl.style.display !== 'none';
-        dirEl.style.display = visible ? 'none' : 'block';
-        btn.textContent = visible ? '↗ Directions' : '↙ Hide';
-      });
-    });
+
   }
 
   // ── Actions ──────────────────────────────────────────────────────────────

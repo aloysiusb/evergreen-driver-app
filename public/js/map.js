@@ -311,8 +311,8 @@ function renderNavCard() {
     ? `<span class="nav-mode-badge live">⚡ Live</span>`
     : `<span class="nav-mode-badge planned">📋 Planned</span>`;
 
-  const noteHtml = stop.notes
-    ? `<div class="nav-note">${escHtml(stop.notes)}</div>`
+  const accessHtml = stop.directions
+    ? `<div class="nav-access-chip">🔑 ${escHtml(stop.directions)}</div>`
     : '';
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.address + (stop.city ? ', ' + stop.city : '') + ', TX')}&travelmode=driving`;
@@ -336,6 +336,7 @@ function renderNavCard() {
     </div>
     <div class="nav-stop-name" style="${color ? `border-left:4px solid ${color};padding-left:10px;` : ''}">${escHtml(nameOrAddr)}</div>
     ${addrLine ? `<div class="nav-stop-addr">${escHtml(addrLine)}</div>` : ''}
+    ${accessHtml}
     ${noteHtmlStyled}
     <div class="nav-report-btns">
       <button class="report-quick-btn contamination" onclick="reportOpen('contamination',${row},'${escHtml(tabName)}')">🚫 Contamination</button>

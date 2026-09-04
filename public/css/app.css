@@ -320,6 +320,31 @@ body {
   flex: 1.2;
 }
 
+/* ── Access / directions chip ── */
+.nav-access-chip, .stop-access-chip {
+  font-size: 12px;
+  font-weight: 600;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin-bottom: 6px;
+  display: inline-block;
+  line-height: 1.4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .nav-access-chip,
+  :root:not([data-theme="light"]) .stop-access-chip {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+}
+:root[data-theme="dark"] .nav-access-chip,
+:root[data-theme="dark"] .stop-access-chip {
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
 /* ── Note styles by urgency ── */
 .nav-note         { font-size: 13px; background: var(--route-color-light, #dcfce7); border-left: 3px solid var(--route-color, #22c55e); padding: 7px 10px; border-radius: 0 8px 8px 0; color: var(--text); margin-bottom: 8px; line-height: 1.5; }
 .nav-note.urgent  { background: #fee2e2; border-left-color: #dc2626; }
