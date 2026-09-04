@@ -1,0 +1,693 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Evergreen Account</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap">
+
+<style>
+  :root {
+    --bg:       #f3f7f2;
+    --surface:  #ffffff;
+    --surface2: #eaf2e7;
+    --border:   #cddec9;
+    --text:     #1b2e19;
+    --muted:    #587552;
+    --green:    #2d9e4f;
+    --green-dk: #1a6b33;
+    --green-lt: #d4edda;
+    --accent:   #4aab2c;
+    --warn-bg:  #fef9ec;
+    --warn-br:  #f0c040;
+    --err-bg:   #fef2f2;
+    --err-br:   #f87171;
+    --radius:   14px;
+    --font:     'DM Sans', system-ui, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:       #101c0f;
+      --surface:  #182416;
+      --surface2: #1f2e1d;
+      --border:   #2a3d27;
+      --text:     #e2eedf;
+      --muted:    #7aaa73;
+      --green:    #4ade80;
+      --green-dk: #86efac;
+      --green-lt: #14532d;
+      --accent:   #4ade80;
+      --warn-bg:  #1c1700;
+      --warn-br:  #ca8a04;
+      --err-bg:   #1c0a0a;
+      --err-br:   #f87171;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:       #101c0f;
+    --surface:  #182416;
+    --surface2: #1f2e1d;
+    --border:   #2a3d27;
+    --text:     #e2eedf;
+    --muted:    #7aaa73;
+    --green:    #4ade80;
+    --green-dk: #86efac;
+    --green-lt: #14532d;
+    --accent:   #4ade80;
+    --warn-bg:  #1c1700;
+    --warn-br:  #ca8a04;
+    --err-bg:   #1c0a0a;
+    --err-br:   #f87171;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--green-dk);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    gap: 12px;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .topbar-logo {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .topbar-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .topbar-tag {
+    font-size: 11px;
+    opacity: 0.7;
+    font-weight: 300;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(160deg, var(--green-dk) 0%, #1d5c2e 100%);
+    color: white;
+    padding: 40px 24px 36px;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.15;
+    text-wrap: balance;
+    margin-bottom: 10px;
+  }
+
+  .hero p {
+    font-size: 15px;
+    opacity: 0.8;
+    max-width: 420px;
+    margin: 0 auto;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 16px 80px;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 6px;
+    border: none;
+    background: none;
+    border-radius: 9px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-align: center;
+  }
+
+  .tab.active {
+    background: var(--surface);
+    color: var(--green-dk);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  /* ── Panel ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .panel-header p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .panel-body { padding: 22px; }
+
+  /* ── Form elements ── */
+  .field { margin-bottom: 18px; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  select,
+  textarea {
+    width: 100%;
+    font-family: var(--font);
+    font-size: 15px;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--green);
+  }
+
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── Radio cards ── */
+  .radio-group { display: flex; flex-direction: column; gap: 8px; }
+
+  .radio-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .radio-card:has(input:checked) {
+    border-color: var(--green);
+    background: var(--green-lt);
+  }
+
+  .radio-card input { margin-top: 2px; accent-color: var(--green); }
+
+  .radio-card-label { font-size: 14px; font-weight: 500; }
+  .radio-card-desc  { font-size: 12.5px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+
+  /* ── Date picker row ── */
+  .date-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .date-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  /* ── Notice banner ── */
+  .notice {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    border-left: 3px solid;
+  }
+
+  .notice-warn { background: var(--warn-bg); border-color: var(--warn-br); color: var(--text); }
+  .notice-info { background: var(--green-lt); border-color: var(--green); color: var(--green-dk); }
+
+  /* ── Submit ── */
+  .btn-submit {
+    width: 100%;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 11px;
+    font-family: var(--font);
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .btn-submit:active { transform: scale(0.98); background: var(--green-dk); }
+
+  .form-footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Success state ── */
+  .success {
+    display: none;
+    text-align: center;
+    padding: 48px 24px;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--green-lt);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+  }
+
+  .success h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .success p {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 320px;
+    margin: 0 auto 24px;
+    line-height: 1.6;
+  }
+
+  .btn-back {
+    font-size: 14px;
+    color: var(--green-dk);
+    background: none;
+    border: 1.5px solid var(--green);
+    border-radius: 9px;
+    padding: 10px 24px;
+    font-family: var(--font);
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  /* ── Account info strip ── */
+  .account-strip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .account-name { font-weight: 600; font-size: 15px; }
+  .account-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .status-pill {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--green-lt);
+    color: var(--green-dk);
+  }
+
+  /* ── Footer ── */
+  .foot {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+  }
+
+  @media (max-width: 480px) {
+    .field-row { grid-template-columns: 1fr; }
+    .topbar-tag { display: none; }
+  }
+</style>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">🌿</div>
+    <div>
+      <div class="topbar-name">EverGreen ZeroWaste</div>
+      <div class="topbar-tag">Customer Self-Service</div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Manage your service</h1>
+  <p>Request a hold, report a missed pickup, or update your address — no phone call needed.</p>
+</div>
+
+<div class="wrap">
+
+  <!-- Account strip (would be populated after lookup) -->
+  <div class="account-strip">
+    <div>
+      <div class="account-name">Smith, Jennifer</div>
+      <div class="account-meta">476 Midland Ave · Carbondale · Route: Weds DV</div>
+    </div>
+    <div class="status-pill">Active</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" onclick="switchTab('hold', this)">Request Hold</button>
+    <button class="tab" onclick="switchTab('missed', this)">Missed Pickup</button>
+    <button class="tab" onclick="switchTab('update', this)">Update Info</button>
+    <button class="tab" onclick="switchTab('pay', this)">Pay Invoice</button>
+  </div>
+
+  <!-- HOLD TAB -->
+  <div id="tab-hold" class="panel">
+    <div class="panel-header">
+      <h2>Request a hold</h2>
+      <p>Need to pause your service for a month or more? We're happy to hold your account and resume when you're ready.</p>
+    </div>
+    <div class="panel-body">
+      <div class="notice notice-warn">
+        ⏰ EverGreen offers holds of <strong>one month or longer</strong>. For shorter pauses, please contact us directly.
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Hold start date</label>
+          <input type="text" placeholder="e.g. Sep 1, 2026">
+        </div>
+        <div class="field">
+          <label>Resume date</label>
+          <input type="text" placeholder="e.g. Oct 1, 2026">
+          <div class="date-hint">Minimum one month from start date.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Reason <span style="font-weight:300;opacity:0.7">(optional)</span></label>
+        <textarea placeholder="Vacation, renovation, moving…"></textarea>
+      </div>
+
+      <button class="btn-submit" onclick="showSuccess('hold')">Submit hold request</button>
+      <p class="form-footer">You'll receive a confirmation email. Alyssa's team reviews all requests the same day.</p>
+    </div>
+    <div class="success" id="success-hold">
+      <div class="success-icon">✅</div>
+      <h3>Hold requested</h3>
+      <p>We've received your request and will send a confirmation to your email shortly. Your service will resume automatically.</p>
+      <button class="btn-back" onclick="hideSuccess('hold')">Submit another request</button>
+    </div>
+  </div>
+
+  <!-- MISSED PICKUP TAB -->
+  <div id="tab-missed" class="panel" style="display:none;">
+    <div class="panel-header">
+      <h2>Report a missed pickup</h2>
+      <p>We're sorry we missed you. Tell us what happened and we'll follow up.</p>
+    </div>
+    <div class="panel-body">
+      <div class="notice notice-info">
+        🌿 Reports submitted before noon are usually resolved same day.
+      </div>
+
+      <div class="field">
+        <label>Date of missed pickup</label>
+        <input type="text" placeholder="e.g. Aug 26, 2026">
+      </div>
+
+      <div class="field">
+        <label>Was your bin out at the curb?</label>
+        <div class="radio-group">
+          <label class="radio-card">
+            <input type="radio" name="bin-out" value="yes" checked>
+            <div>
+              <div class="radio-card-label">Yes, bin was out</div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="bin-out" value="no">
+            <div>
+              <div class="radio-card-label">No, I forgot to put it out</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Any additional details?</label>
+        <textarea placeholder="Bin location, access notes, what you saw…"></textarea>
+      </div>
+
+      <button class="btn-submit" onclick="showSuccess('missed')">Submit report</button>
+      <p class="form-footer">We'll review and reach out within one business day.</p>
+    </div>
+    <div class="success" id="success-missed">
+      <div class="success-icon">📬</div>
+      <h3>Report received</h3>
+      <p>Thank you for letting us know. Alyssa's team will review and follow up by end of day.</p>
+      <button class="btn-back" onclick="hideSuccess('missed')">Submit another report</button>
+    </div>
+  </div>
+
+  <!-- PAY INVOICE TAB -->
+  <div id="tab-pay" class="panel" style="display:none;">
+    <div class="panel-header">
+      <h2>Pay your invoice</h2>
+      <p>Enter the email address on your Evergreen account and we'll send you directly to your invoice — where you can pay or set up autopay through QuickBooks.</p>
+    </div>
+    <div class="panel-body">
+      <div class="notice notice-info">
+        💳 Autopay is available through QuickBooks — tap "Set up AutoPay" on your invoice page to authorize recurring billing.
+      </div>
+
+      <div class="field">
+        <label>Email address on your account</label>
+        <input type="email" id="pay-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+
+      <button class="btn-submit" onclick="requestPayLink()">Get my invoice link</button>
+      <p class="form-footer">Your payment is handled securely through QuickBooks / Intuit — Evergreen never sees your card details.</p>
+
+      <div id="pay-result" style="display:none;margin-top:20px;padding:16px;border-radius:10px;font-size:14px;line-height:1.5;"></div>
+    </div>
+    <div class="success" id="success-pay" style="display:none;">
+      <div class="success-icon">💳</div>
+      <h3>Invoice link sent!</h3>
+      <p>Check your email for your QuickBooks invoice link. From there you can pay or set up autopay in one tap.</p>
+      <button class="btn-back" onclick="hideSuccess('pay')">Try another email</button>
+    </div>
+  </div>
+
+  <!-- UPDATE INFO TAB -->
+  <div id="tab-update" class="panel" style="display:none;">
+    <div class="panel-header">
+      <h2>Update your information</h2>
+      <p>Moving? New phone? Let us know and we'll update your account.</p>
+    </div>
+    <div class="panel-body">
+
+      <div class="field">
+        <label>What needs updating?</label>
+        <select>
+          <option>Service address</option>
+          <option>Phone number</option>
+          <option>Email address</option>
+          <option>Billing address</option>
+          <option>Access / gate instructions</option>
+          <option>Cancel service</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Current value</label>
+          <input type="text" placeholder="What it says now">
+        </div>
+        <div class="field">
+          <label>New value</label>
+          <input type="text" placeholder="What it should be">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Effective date <span style="font-weight:300;opacity:0.7">(optional)</span></label>
+        <input type="text" placeholder="e.g. Sep 1, 2026 — leave blank for immediately">
+      </div>
+
+      <div class="field">
+        <label>Anything else we should know?</label>
+        <textarea placeholder="Additional notes…"></textarea>
+      </div>
+
+      <button class="btn-submit" onclick="showSuccess('update')">Submit change request</button>
+      <p class="form-footer">Changes are reviewed by Alyssa's team and confirmed by email within one business day.</p>
+    </div>
+    <div class="success" id="success-update">
+      <div class="success-icon">✏️</div>
+      <h3>Change request sent</h3>
+      <p>We'll update your account and confirm the change by email once it's processed.</p>
+      <button class="btn-back" onclick="hideSuccess('update')">Submit another request</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="foot">
+  Questions? Call us or email <strong>info@evergreenzerowaste.com</strong><br>
+  EverGreen ZeroWaste · Serving the Roaring Fork Valley
+</div>
+
+<script>
+  function switchTab(id, btn) {
+    ['hold','missed','update','pay'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = t === id ? '' : 'none';
+    });
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  async function requestPayLink() {
+    const email = document.getElementById('pay-email').value.trim();
+    const result = document.getElementById('pay-result');
+    if (!email || !email.includes('@')) {
+      result.style.display = 'block';
+      result.style.background = 'var(--err-bg)';
+      result.style.border = '1px solid var(--err-br)';
+      result.style.color = 'var(--text)';
+      result.textContent = 'Please enter a valid email address.';
+      return;
+    }
+    result.style.display = 'block';
+    result.style.background = 'var(--surface2)';
+    result.style.border = '1px solid var(--border)';
+    result.style.color = 'var(--muted)';
+    result.textContent = 'Looking up your account…';
+    try {
+      const res = await fetch('/api/payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.paymentLink) {
+        result.style.display = 'none';
+        showSuccess('pay');
+        setTimeout(() => window.open(data.paymentLink, '_blank'), 800);
+      } else if (data.noInvoice) {
+        result.style.background = 'var(--surface2)';
+        result.style.border = '1px solid var(--border)';
+        result.textContent = "✅ You're all caught up — no outstanding balance on your account.";
+      } else {
+        result.style.background = 'var(--err-bg)';
+        result.style.border = '1px solid var(--err-br)';
+        result.textContent = data.error || 'Something went wrong. Please contact Evergreen directly.';
+      }
+    } catch {
+      result.style.background = 'var(--err-bg)';
+      result.style.border = '1px solid var(--err-br)';
+      result.textContent = 'Connection error — please try again in a moment.';
+    }
+  }
+
+  function showSuccess(id) {
+    const panel = document.getElementById('tab-' + id);
+    panel.querySelector('.panel-header').style.display = 'none';
+    panel.querySelector('.panel-body').style.display   = 'none';
+    panel.querySelector('.success').style.display      = 'block';
+  }
+
+  function hideSuccess(id) {
+    const panel = document.getElementById('tab-' + id);
+    panel.querySelector('.panel-header').style.display = '';
+    panel.querySelector('.panel-body').style.display   = '';
+    panel.querySelector('.success').style.display      = 'none';
+  }
+</script>
+
+</body></html>
+</body></html>

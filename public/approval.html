@@ -1,0 +1,563 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evergreen Requests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+
+<style>
+  :root {
+    --bg:        #f4f7f3;
+    --surface:   #ffffff;
+    --border:    #dae5d7;
+    --text:      #1a2e18;
+    --muted:     #556b52;
+    --header:    #1b4332;
+    --header-lt: #2d6a4f;
+    --green:     #16a34a;
+    --green-lt:  #dcfce7;
+    --green-tx:  #14532d;
+    --amber:     #d97706;
+    --amber-lt:  #fef3c7;
+    --amber-tx:  #78350f;
+    --red:       #dc2626;
+    --red-lt:    #fee2e2;
+    --red-tx:    #7f1d1d;
+    --blue:      #2563eb;
+    --blue-lt:   #dbeafe;
+    --blue-tx:   #1e3a8a;
+    --nav-h:     56px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0f1a0e;
+      --surface:   #182416;
+      --border:    #2a3d27;
+      --text:      #e2eedf;
+      --muted:     #7aaa73;
+      --header:    #0d2818;
+      --header-lt: #1a4a30;
+      --green:     #4ade80;
+      --green-lt:  #14532d;
+      --green-tx:  #bbf7d0;
+      --amber:     #fbbf24;
+      --amber-lt:  #451a03;
+      --amber-tx:  #fde68a;
+      --red:       #f87171;
+      --red-lt:    #450a0a;
+      --red-tx:    #fca5a5;
+      --blue:      #60a5fa;
+      --blue-lt:   #1e3a5f;
+      --blue-tx:   #bfdbfe;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #0f1a0e;
+    --surface:   #182416;
+    --border:    #2a3d27;
+    --text:      #e2eedf;
+    --muted:     #7aaa73;
+    --header:    #0d2818;
+    --header-lt: #1a4a30;
+    --green:     #4ade80;
+    --green-lt:  #14532d;
+    --green-tx:  #bbf7d0;
+    --amber:     #fbbf24;
+    --amber-lt:  #451a03;
+    --amber-tx:  #fde68a;
+    --red:       #f87171;
+    --red-lt:    #450a0a;
+    --red-tx:    #fca5a5;
+    --blue:      #60a5fa;
+    --blue-lt:   #1e3a5f;
+    --blue-tx:   #bfdbfe;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Top nav ── */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--header);
+    height: var(--nav-h);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--header-lt);
+  }
+
+  .nav-brand {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+    margin-right: 24px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-brand-icon {
+    width: 26px;
+    height: 26px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    flex: 1;
+  }
+
+  .nav-links::-webkit-scrollbar { display: none; }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .nav-link.active { background: rgba(255,255,255,0.18); color: #fff; }
+
+  /* ── Page header ── */
+  .page-header {
+    background: var(--header);
+    padding: 20px 24px 24px;
+    color: #fff;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  /* ── Summary strip ── */
+  .summary {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .summary-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .chip-count {
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .chip-label { opacity: 0.8; }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    padding: 14px 24px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover { border-color: var(--green); color: var(--green); }
+  .filter-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+
+  /* ── Request list ── */
+  .list {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 860px;
+  }
+
+  .request-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+
+  .request-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+  .request-card.resolved { opacity: 0.55; }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px 12px;
+  }
+
+  .type-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .badge-hold    { background: var(--blue-lt);  color: var(--blue-tx); }
+  .badge-missed  { background: var(--amber-lt); color: var(--amber-tx); }
+  .badge-update  { background: var(--blue-lt);  color: var(--blue-tx); }
+  .badge-payment { background: var(--green-lt); color: var(--green-tx); }
+
+  .card-info { flex: 1; min-width: 0; }
+
+  .card-customer {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .card-detail {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .card-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .pill-pending  { background: var(--amber-lt); color: var(--amber-tx); }
+  .pill-approved { background: var(--green-lt); color: var(--green-tx); }
+  .pill-declined { background: var(--red-lt);   color: var(--red-tx); }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 18px 14px;
+  }
+
+  .btn-approve, .btn-decline, .btn-send {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+
+  .btn-approve { background: var(--green);  color: #fff; }
+  .btn-decline { background: var(--red-lt); color: var(--red-tx); }
+  .btn-send    { background: var(--blue-lt); color: var(--blue-tx); }
+
+  .btn-approve:hover, .btn-decline:hover, .btn-send:hover { opacity: 0.8; }
+
+  .empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  /* ── Demo links section ── */
+  .demo-section {
+    max-width: 860px;
+    margin: 0 24px 32px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .demo-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .demo-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .demo-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 9px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+  }
+
+  .demo-link:hover { border-color: var(--green); background: var(--green-lt); color: var(--green-tx); }
+
+  @media (max-width: 600px) {
+    .list, .demo-section { padding-left: 14px; padding-right: 14px; margin-left: 0; margin-right: 0; }
+    .filter-bar { padding: 12px 14px; }
+    .page-header { padding: 16px 14px 20px; }
+    .topnav { padding: 0 14px; }
+  }
+</style>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">🌿</div>
+    Evergreen
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" href="#">Requests</a>
+    <a class="nav-link" href="https://claude.ai/code/artifact/ba8f42fd-74ac-4941-ace7-4e114c420d02" target="_blank">Customer Portal</a>
+    <a class="nav-link" href="https://claude.ai/code/artifact/efd69787-b103-47af-b980-f5a6b5840feb" target="_blank">Presentation</a>
+    <a class="nav-link" href="https://claude.ai/code/artifact/747274ca-1663-41fe-bf92-b0c8fcea9621" target="_blank">iPhone Preview</a>
+    <a class="nav-link" href="https://evergreen-driver-app.onrender.com" target="_blank">Driver App ↗</a>
+    <a class="nav-link" href="https://evergreen-driver-app.onrender.com/admin.html" target="_blank">Style Editor ↗</a>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-title">Customer Requests</div>
+  <div class="summary">
+    <div class="summary-chip">
+      <span class="chip-count" id="count-pending">4</span>
+      <span class="chip-label">Pending</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-count" id="count-today">6</span>
+      <span class="chip-label">Today</span>
+    </div>
+    <div class="summary-chip">
+      <span class="chip-count" id="count-approved">2</span>
+      <span class="chip-label">Approved</span>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+  <button class="filter-btn" onclick="setFilter('hold', this)">Holds</button>
+  <button class="filter-btn" onclick="setFilter('missed', this)">Missed Pickups</button>
+  <button class="filter-btn" onclick="setFilter('update', this)">Account Updates</button>
+  <button class="filter-btn" onclick="setFilter('payment', this)">Payment</button>
+</div>
+
+<!-- REQUEST LIST -->
+<div class="list" id="request-list"></div>
+
+<!-- DEMO LINKS -->
+<div class="demo-section">
+  <div class="demo-title">All demo pages</div>
+  <div class="demo-links">
+    <a class="demo-link" href="https://claude.ai/code/artifact/efd69787-b103-47af-b980-f5a6b5840feb" target="_blank">🌿 Presentation</a>
+    <a class="demo-link" href="https://claude.ai/code/artifact/ba8f42fd-74ac-4941-ace7-4e114c420d02" target="_blank">📋 Customer Portal</a>
+    <a class="demo-link" href="https://claude.ai/code/artifact/747274ca-1663-41fe-bf92-b0c8fcea9621" target="_blank">📱 iPhone Preview</a>
+    <a class="demo-link" href="https://evergreen-driver-app.onrender.com" target="_blank">🚛 Driver App</a>
+    <a class="demo-link" href="https://evergreen-driver-app.onrender.com/admin.html" target="_blank">🎨 Style Editor</a>
+  </div>
+</div>
+
+<script>
+  const REQUESTS = [
+    {
+      id: 1, type: 'hold', status: 'pending',
+      customer: 'Jane Whitmore', email: 'jane.whitmore@gmail.com',
+      detail: 'Hold Oct 1 → Nov 1 · Reason: Vacation',
+      time: 'Today 9:14 am',
+    },
+    {
+      id: 2, type: 'missed', status: 'pending',
+      customer: 'Bob Callahan', email: 'bob@callahanlaw.com',
+      detail: 'Sep 2 — Bin was out at curb. No driver showed.',
+      time: 'Today 10:02 am',
+    },
+    {
+      id: 3, type: 'payment', status: 'pending',
+      customer: 'City Market Glenwood', email: 'mgr@citymarket.com',
+      detail: 'Requested invoice link · Balance: $340.00',
+      time: 'Today 10:48 am',
+    },
+    {
+      id: 4, type: 'update', status: 'pending',
+      customer: 'Mary Torres', email: 'mary.torres@outlook.com',
+      detail: 'Phone: (970) 555-0182 → (970) 555-9341',
+      time: 'Today 11:30 am',
+    },
+    {
+      id: 5, type: 'hold', status: 'approved',
+      customer: 'Aspen Glen HOA', email: 'admin@aspenglen.org',
+      detail: 'Hold Sep 15 → Oct 15 · Property renovations',
+      time: 'Yesterday 3:22 pm',
+    },
+    {
+      id: 6, type: 'missed', status: 'approved',
+      customer: 'Coryell Ranch', email: 'office@coryellranch.com',
+      detail: 'Aug 31 — Gate was locked, driver couldn\'t access.',
+      time: 'Yesterday 4:05 pm',
+    },
+  ];
+
+  let currentFilter = 'all';
+  let statuses = {};
+  REQUESTS.forEach(r => statuses[r.id] = r.status);
+
+  function typeLabel(t) {
+    return { hold:'Hold', missed:'Missed Pickup', update:'Account Update', payment:'Payment' }[t] || t;
+  }
+
+  function badgeClass(t) {
+    return { hold:'badge-hold', missed:'badge-missed', update:'badge-update', payment:'badge-payment' }[t] || '';
+  }
+
+  function pillClass(s) {
+    return { pending:'pill-pending', approved:'pill-approved', declined:'pill-declined' }[s] || '';
+  }
+
+  function pillLabel(s) {
+    return { pending:'Pending', approved:'Approved', declined:'Declined' }[s] || s;
+  }
+
+  function actionsHtml(r) {
+    const s = statuses[r.id];
+    if (s !== 'pending') return '';
+    const sendBtn = r.type === 'payment'
+      ? `<button class="btn-send" onclick="doSend(${r.id})">Send Invoice Link</button>`
+      : `<button class="btn-approve" onclick="doApprove(${r.id})">Approve</button>`;
+    return `<div class="card-actions">${sendBtn}<button class="btn-decline" onclick="doDecline(${r.id})">Decline</button></div>`;
+  }
+
+  function render() {
+    const list = document.getElementById('request-list');
+    const filtered = REQUESTS.filter(r => {
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'pending') return statuses[r.id] === 'pending';
+      return r.type === currentFilter;
+    });
+
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty">No requests to show.</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(r => {
+      const s = statuses[r.id];
+      return `<div class="request-card ${s !== 'pending' ? 'resolved' : ''}" id="card-${r.id}">
+        <div class="card-top">
+          <span class="type-badge ${badgeClass(r.type)}">${typeLabel(r.type)}</span>
+          <div class="card-info">
+            <div class="card-customer">${r.customer}</div>
+            <div class="card-detail">${r.detail}</div>
+            <div class="card-meta">${r.email} · ${r.time}</div>
+          </div>
+          <span class="status-pill ${pillClass(s)}">${pillLabel(s)}</span>
+        </div>
+        ${actionsHtml(r)}
+      </div>`;
+    }).join('');
+
+    updateCounts();
+  }
+
+  function updateCounts() {
+    const pending  = REQUESTS.filter(r => statuses[r.id] === 'pending').length;
+    const approved = REQUESTS.filter(r => statuses[r.id] === 'approved').length;
+    document.getElementById('count-pending').textContent  = pending;
+    document.getElementById('count-approved').textContent = approved;
+  }
+
+  function doApprove(id) { statuses[id] = 'approved'; render(); }
+  function doDecline(id) { statuses[id] = 'declined'; render(); }
+  function doSend(id)    { statuses[id] = 'approved'; render(); }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  render();
+</script>
+
+</body></html>
