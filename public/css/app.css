@@ -113,6 +113,23 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+.home-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 20px;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: 10px;
+  line-height: 1;
+}
+.home-btn:hover { background: rgba(255,255,255,0.32); }
+
 .route-header-top {
   display: flex;
   justify-content: space-between;
