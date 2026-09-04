@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vee's Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+
+<style>
+  :root {
+    --bg:      #f4f7f3;
+    --surface: #ffffff;
+    --border:  #d8e8d4;
+    --text:    #1a2e18;
+    --muted:   #556b52;
+    --green:   #1b4332;
+    --green-lt:#dcfce7;
+    --green-tx:#14532d;
+    --amber:   #92400e;
+    --amber-lt:#fef3c7;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:      #0f1a0e;
+      --surface: #182416;
+      --border:  #2a3d27;
+      --text:    #e2eedf;
+      --muted:   #7aaa73;
+      --green:   #4ade80;
+      --green-lt:#14532d;
+      --green-tx:#bbf7d0;
+      --amber:   #fbbf24;
+      --amber-lt:#451a03;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:      #0f1a0e;
+    --surface: #182416;
+    --border:  #2a3d27;
+    --text:    #e2eedf;
+    --muted:   #7aaa73;
+    --green:   #4ade80;
+    --green-lt:#14532d;
+    --green-tx:#bbf7d0;
+    --amber:   #fbbf24;
+    --amber-lt:#451a03;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 20px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 560px; margin: 0 auto; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 4px;
+    text-wrap: balance;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  .section { margin-bottom: 28px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .opener-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .opener {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .opener em {
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .tip {
+    background: var(--amber-lt);
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--amber);
+  }
+
+  .remind-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .remind-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .remind-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  .qbo-note {
+    background: var(--green-lt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--green-tx);
+  }
+
+  .foot {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">For Vee · Sept 3 meeting</div>
+  <h1>Your notes for today</h1>
+  <p class="subtitle">Keep this open on your phone or laptop. Not for showing — just for you.</p>
+
+  <div class="section">
+    <div class="section-label">How to open</div>
+    <div class="opener-list">
+      <div class="opener">
+        Pull up the driver app on your phone. Show a route loading, a stop being marked done. <em>Say nothing yet — let them react first.</em>
+      </div>
+      <div class="opener">
+        "I've been tinkering with this on my own time — wanted to see what was possible with what you already have."
+      </div>
+      <div class="opener">
+        "Before I get into the rest — I'd love to pick your brains. What's the biggest headache day to day right now?"
+      </div>
+      <div class="opener">
+        <em>Then listen. Whatever they name — lead with that next.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">If payment comes up</div>
+    <div class="opener-list">
+      <div class="opener">
+        "Customers can enter their email on a page and it pulls their QuickBooks invoice — their own personalized link — so they can pay or set up autopay without calling you."
+      </div>
+      <div class="opener">
+        "It connects directly to your existing QuickBooks account. There's a one-time setup on the Intuit developer side, and after that it runs automatically."
+      </div>
+    </div>
+    <div class="qbo-note" style="margin-top:10px;">
+      💳 The QBO connection just needs a one-time authorization from Alyssa — ask if she'd be open to doing that together some time. Everything else is already built.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">If Starlink / cameras come up</div>
+    <div class="opener-list">
+      <div class="opener">
+        "Once the trucks have reliable data, the app could show live GPS for every driver, and pickups would timestamp automatically. Disputes about missed stops would have photo evidence."
+      </div>
+      <div class="opener">
+        "I don't know if the cost makes sense for you yet — just something to keep in the back of your mind as the business grows."
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Things to remember</div>
+    <div class="remind-list">
+      <div class="remind-item"><div class="remind-dot"></div><div>You built this on your own time — it's a gift, not a pitch.</div></div>
+      <div class="remind-item"><div class="remind-dot"></div><div>You don't need to show everything. Let them steer.</div></div>
+      <div class="remind-item"><div class="remind-dot"></div><div>Holds are minimum one month — that's already in the portal.</div></div>
+      <div class="remind-item"><div class="remind-dot"></div><div>Notes update in real time — drivers see changes instantly.</div></div>
+      <div class="remind-item"><div class="remind-dot"></div><div>If they love something, suggest one small next step — not the whole plan.</div></div>
+      <div class="remind-item"><div class="remind-dot"></div><div>You're not the expert on their business — they are. You're just offering tools.</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">A good way to close</div>
+    <div class="opener-list">
+      <div class="opener">
+        "I'd love to try it on one route for a week and just see how the drivers feel about it — nothing to commit to, easy to adjust."
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    ✨ You've got this, Vee. You know the routes, you know the team, and you built something genuinely useful. Go in curious and warm — that's already the right energy.
+  </div>
+
+  <div class="foot">For Vee · Evergreen meeting · Sept 3, 2026</div>
+
+</div>
+</body>
+</html>
