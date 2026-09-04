@@ -166,19 +166,48 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-#optimize-btn {
-  padding: 8px 16px;
-  background: var(--route-color);
-  color: #fff;
+.route-mode-toggle {
+  display: flex;
+  background: var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 7px 14px;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
 }
-#optimize-btn:disabled { opacity: 0.5; cursor: default; }
-#optimize-status { font-size: 13px; color: var(--text-muted); }
+.mode-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+.mode-btn:disabled { opacity: 0.4; cursor: default; }
+
+#optimize-status { font-size: 12px; color: var(--text-muted); flex: 1; }
+
+.nav-mode-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 99px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.nav-mode-badge.planned { background: #dcfce7; color: #15803d; }
+.nav-mode-badge.live    { background: #fef3c7; color: #b45309; }
 
 #route-map {
   width: 100%;
