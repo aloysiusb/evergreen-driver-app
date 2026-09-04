@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evergreen Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #f5f7f4;
+    --surface:   #ffffff;
+    --surface2:  #eef2ec;
+    --border:    #d4ddd0;
+    --text:      #1c2b1a;
+    --muted:     #5a7054;
+    --green:     #22c55e;
+    --green-dk:  #15803d;
+    --green-lt:  #dcfce7;
+    --amber:     #d97706;
+    --amber-lt:  #fef3c7;
+    --teal:      #0d9488;
+    --teal-lt:   #ccfbf1;
+    --blue:      #2563eb;
+    --blue-lt:   #dbeafe;
+    --rule:      #c8d8c4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:       #111a10;
+      --surface:  #1a2618;
+      --surface2: #222f20;
+      --border:   #2d3d2a;
+      --text:     #e8f0e6;
+      --muted:    #7fa876;
+      --green:    #4ade80;
+      --green-dk: #86efac;
+      --green-lt: #14532d;
+      --amber:    #fbbf24;
+      --amber-lt: #451a03;
+      --teal:     #2dd4bf;
+      --teal-lt:  #042f2e;
+      --blue:     #60a5fa;
+      --blue-lt:  #1e3a5f;
+      --rule:     #2a3a28;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:       #111a10;
+    --surface:  #1a2618;
+    --surface2: #222f20;
+    --border:   #2d3d2a;
+    --text:     #e8f0e6;
+    --muted:    #7fa876;
+    --green:    #4ade80;
+    --green-dk: #86efac;
+    --green-lt: #14532d;
+    --amber:    #fbbf24;
+    --amber-lt: #451a03;
+    --teal:     #2dd4bf;
+    --teal-lt:  #042f2e;
+    --blue:     #60a5fa;
+    --blue-lt:  #1e3a5f;
+    --rule:     #2a3a28;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    padding: 56px 24px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--green) 12%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green-dk);
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 1.1;
+    text-wrap: balance;
+    color: var(--text);
+    max-width: 720px;
+    margin: 0 auto 20px;
+  }
+
+  .hero h1 em {
+    color: var(--green-dk);
+    font-style: italic;
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto 32px;
+    text-wrap: balance;
+  }
+
+  .hero-meta {
+    display: inline-flex;
+    gap: 24px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  section {
+    padding: 56px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--green-dk);
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(26px, 4vw, 38px);
+    line-height: 1.15;
+    text-wrap: balance;
+    margin-bottom: 12px;
+  }
+
+  .section-intro {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 36px;
+    line-height: 1.65;
+  }
+
+  /* ── What's live now ── */
+  .live-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .live-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 20px;
+  }
+
+  .live-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .live-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .live-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .icon-green  { background: var(--green-lt); }
+  .icon-amber  { background: var(--amber-lt); }
+  .icon-teal   { background: var(--teal-lt);  }
+  .icon-blue   { background: var(--blue-lt);  }
+
+  /* ── Opportunity cards ── */
+  .opp-list { display: flex; flex-direction: column; gap: 20px; }
+
+  .opp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .opp-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    line-height: 1;
+    color: var(--border);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    min-width: 48px;
+  }
+
+  .opp-body h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .opp-body p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .tag {
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid;
+  }
+
+  .tag-green { background: var(--green-lt); color: var(--green-dk); border-color: color-mix(in srgb, var(--green) 30%, transparent); }
+  .tag-amber { background: var(--amber-lt); color: var(--amber);    border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
+  .tag-teal  { background: var(--teal-lt);  color: var(--teal);     border-color: color-mix(in srgb, var(--teal)  30%, transparent); }
+  .tag-blue  { background: var(--blue-lt);  color: var(--blue);     border-color: color-mix(in srgb, var(--blue)  30%, transparent); }
+
+  /* ── Alyssa's pain points ── */
+  .pain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .pain-card {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 18px 16px;
+    border-left: 3px solid var(--amber);
+  }
+
+  .pain-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .pain-card p  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .solution-card {
+    background: var(--green-lt);
+    border-radius: 12px;
+    padding: 18px 16px;
+    border-left: 3px solid var(--green-dk);
+  }
+
+  .solution-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--green-dk); }
+  .solution-card p  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── Talking points ── */
+  .talking {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .talking-header {
+    background: var(--green-lt);
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green-dk);
+    letter-spacing: 0.04em;
+  }
+
+  .talking ol {
+    padding: 20px 24px 20px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .talking li {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .talking li strong {
+    color: var(--green-dk);
+  }
+
+  /* ── Next steps ── */
+  .next-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .next-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 20px;
+  }
+
+  .next-card .step-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .next-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .next-card p  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── Footer ── */
+  .foot {
+    text-align: center;
+    padding: 40px 24px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+  }
+
+  .foot strong { color: var(--text); }
+
+  @media (max-width: 560px) {
+    .opp-card { grid-template-columns: 1fr; }
+    .opp-num  { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Prepared for Evergreen Compost · August 2026</div>
+  <h1>Some <em>Ideas</em></h1>
+  <p class="hero-sub">A look at what's already running and a few ideas that might help. You know your business far better than I do — I just want to show what's possible and hear what would actually make a difference.</p>
+  <div class="hero-meta">
+    <span>Presented by Virginia (Vee)</span>
+    <span>Built on Google Sheets + Node.js</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;justify-content:center;">
+    <a href="https://evergreen-driver-app.onrender.com" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--green);color:#fff;border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;">🚛 Driver App</a>
+    <a href="https://evergreen-driver-app.onrender.com/admin.html" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;">🎨 Style Editor</a>
+    <a href="https://evergreen-driver-app.onrender.com/portal.html" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;">📋 Customer Portal</a>
+    <a href="https://evergreen-driver-app.onrender.com/approval.html" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;">✅ Approval View</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- WHAT'S LIVE -->
+  <section>
+    <div class="section-label">What's live today</div>
+    <h2 class="section-title">The driver app — running now</h2>
+    <p class="section-intro">Each driver gets a color-coded route on their phone. No paper, no spreadsheet hunting. Everything talks back to the Google Sheet the office already uses.</p>
+
+    <div class="live-grid">
+      <div class="live-card">
+        <div class="live-card-icon icon-green">📱</div>
+        <h3>Per-driver route view</h3>
+        <p>Each route has its own color scheme, its own URL, and only shows that driver's stops for the day.</p>
+      </div>
+      <div class="live-card">
+        <div class="live-card-icon icon-green">✅</div>
+        <h3>Real-time done/undo</h3>
+        <p>Tap to mark a stop complete — it writes back to the Google Sheet instantly. Tap Undo if it was accidental.</p>
+      </div>
+      <div class="live-card">
+        <div class="live-card-icon icon-teal">🔄</div>
+        <h3>Live sync across devices</h3>
+        <p>If the office changes a note or Alyssa updates the sheet, drivers see it in seconds — no refresh needed.</p>
+      </div>
+      <div class="live-card">
+        <div class="live-card-icon icon-amber">📋</div>
+        <h3>Daily backup</h3>
+        <p>"Start My Day" snapshots the route before any changes, so there's always a clean original to reference.</p>
+      </div>
+      <div class="live-card">
+        <div class="live-card-icon icon-green">🗺️</div>
+        <h3>Map + directions built in</h3>
+        <p>Every stop has a Map button that opens Google Maps, and driving directions pulled directly from the sheet.</p>
+      </div>
+      <div class="live-card">
+        <div class="live-card-icon icon-blue">🎨</div>
+        <h3>Sheet colors preserved</h3>
+        <p>Orange, purple, and other highlight colors from the route sheet carry through to the app — the legend still works.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT WE'RE WORKING TOWARD -->
+  <section>
+    <div class="section-label">The bigger picture</div>
+    <h2 class="section-title">Making the day a little easier</h2>
+    <p class="section-intro">I'd love to pick your brains — what's the biggest headache day to day? These are just some areas I've been thinking about, but you and your team are the ones who really know where things get heavy. That's where I'd want to focus.</p>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <h4>Customer requests</h4>
+        <p>Holds, missed pickups, address changes — what if customers could handle those themselves with a simple link?</p>
+      </div>
+      <div class="pain-card">
+        <h4>Driver updates</h4>
+        <p>Notes and skips from the road, visible to the office in real time — no phone tag in the middle of a route.</p>
+      </div>
+      <div class="pain-card">
+        <h4>New customer flow</h4>
+        <p>Website inquiries that find their way to the right place automatically, with a confirmation already sent.</p>
+      </div>
+      <div class="pain-card">
+        <h4>End-of-day summary</h4>
+        <p>A quick digest of what happened on each route — skips, notes, flags — without anyone having to compile it.</p>
+      </div>
+    </div>
+
+    <div class="solution-card">
+      <h4>How we'd approach it together</h4>
+      <p>None of this has to happen at once. The driver app is already running — everything else can be added one piece at a time, only where it actually helps. The goal is just to make the information flow to the right person without someone having to carry it there manually.</p>
+    </div>
+  </section>
+
+  <!-- OPPORTUNITIES -->
+  <section>
+    <div class="section-label">What's possible next</div>
+    <h2 class="section-title">Automation opportunities</h2>
+    <p class="section-intro">Each of these builds on what's already in place and can be phased in one at a time.</p>
+
+    <div class="opp-list">
+
+      <div class="opp-card">
+        <div class="opp-num">1</div>
+        <div class="opp-body">
+          <h3>Starlink + dashcam fleet</h3>
+          <p>With Starlink on each truck and a dashcam, the driver app becomes a live operations dashboard. GPS location, stop confirmation with timestamp, and camera footage tied to each route. Alyssa can see where every truck is without a phone call — and disputes about pickups have video evidence.</p>
+          <div class="tag-row">
+            <span class="tag tag-teal">Fleet visibility</span>
+            <span class="tag tag-amber">Dispute resolution</span>
+            <span class="tag tag-green">Driver accountability</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-num">2</div>
+        <div class="opp-body">
+          <h3>Website form → auto-routing</h3>
+          <p>New customer submissions on the site get automatically added to a staging list, sent a confirmation email, and flagged for Alyssa to approve — without her manually forwarding anything. An approval click adds them to the correct route tab in the sheet.</p>
+          <div class="tag-row">
+            <span class="tag tag-green">Less inbox triaging</span>
+            <span class="tag tag-blue">No lost leads</span>
+            <span class="tag tag-amber">Faster onboarding</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-num">3</div>
+        <div class="opp-body">
+          <h3>Driver notes → office log</h3>
+          <p>Notes drivers add in the app (skip, hold, access issue, damaged bin) are already stored in real time. This can be extended to a daily summary that emails Alyssa each evening — what was skipped, what needs follow-up, what complaints came in — so nothing falls through the cracks overnight.</p>
+          <div class="tag-row">
+            <span class="tag tag-green">Already partially built</span>
+            <span class="tag tag-amber">Daily digest email</span>
+            <span class="tag tag-teal">Searchable history</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-num">4</div>
+        <div class="opp-body">
+          <h3>Customer payment self-service</h3>
+          <p>A simple page customers can reach from any email or link — they enter their email address and the system looks them up in QuickBooks, finds <em>their</em> invoice, and generates a link personalized to their account. They click it and land on their own Intuit payment page showing their balance, with the option to pay or set up autopay. No phone call, no manual send from Alyssa. The infrastructure is already built and ready to connect once QuickBooks is authorized.</p>
+          <div class="tag-row">
+            <span class="tag tag-blue">Fewer payment calls</span>
+            <span class="tag tag-green">Autopay sign-up</span>
+            <span class="tag tag-amber">Works with existing QBO</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opp-card">
+        <div class="opp-num">5</div>
+        <div class="opp-body">
+          <h3>Customer self-service portal</h3>
+          <p>A simple page where customers can update their address, request a hold, or flag a missed pickup — without calling the office. Requests appear in the sheet as pending changes for Alyssa to confirm with one click. This is the single highest-leverage thing for reducing inbound calls.</p>
+          <div class="tag-row">
+            <span class="tag tag-teal">Fewer phone calls</span>
+            <span class="tag tag-blue">Customer satisfaction</span>
+            <span class="tag tag-green">Route accuracy</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- NEXT STEPS -->
+  <section>
+    <div class="section-label">If it feels right</div>
+    <h2 class="section-title">Some possible next steps — no rush</h2>
+
+    <div class="next-steps">
+      <div class="next-card">
+        <div class="step-label">This week</div>
+        <h3>Pilot the app</h3>
+        <p>One driver, one route, one week. Gather feedback before rolling out to all routes.</p>
+      </div>
+      <div class="next-card">
+        <div class="step-label">Short term</div>
+        <h3>Connect the intake form</h3>
+        <p>Route website form submissions directly to a staging sheet and trigger a confirmation email automatically.</p>
+      </div>
+      <div class="next-card">
+        <div class="step-label">Medium term</div>
+        <h3>Starlink pilot</h3>
+        <p>Price one unit for one truck. Test real-time GPS + the driver app together before committing to the fleet.</p>
+      </div>
+      <div class="next-card">
+        <div class="step-label">Ongoing</div>
+        <h3>Daily driver digest</h3>
+        <p>Auto-email Alyssa each evening with that day's skips, notes, and anything flagged — no chasing needed.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="foot">
+  Prepared by <strong>Virginia (Vee)</strong> · Built on the driver's own time ·
+  Questions? <strong>perryaloysius@gmail.com</strong>
+</div>
+
+</body>
+</html>
