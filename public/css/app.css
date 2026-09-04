@@ -182,8 +182,8 @@ body {
 
 #route-map {
   width: 100%;
-  height: calc(100vh - 220px);
-  min-height: 400px;
+  height: calc(100vh - 330px);
+  min-height: 280px;
 }
 
 #map-loading {
@@ -194,6 +194,101 @@ body {
   padding: 40px;
   color: var(--text-muted);
   font-size: 14px;
+  background: var(--bg);
+  z-index: 10;
+}
+
+/* ── Nav card ── */
+#nav-card {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 14px 16px 18px;
+  position: relative;
+}
+
+.nav-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.nav-stop-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.nav-stop-addr {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.nav-note {
+  font-size: 13px;
+  background: var(--route-color-light, #dcfce7);
+  border-left: 3px solid var(--route-color, #22c55e);
+  padding: 7px 10px;
+  border-radius: 0 8px 8px 0;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:disabled { opacity: 0.35; cursor: default; }
+
+.nav-btn-prev, .nav-btn-next {
+  background: var(--border);
+  color: var(--text);
+  flex: 0.7;
+}
+
+.nav-btn-maps {
+  background: #dbeafe;
+  color: #1d4ed8;
+  flex: 0.9;
+}
+
+.nav-btn-done {
+  background: var(--route-color, #22c55e);
+  color: #fff;
+  flex: 1.2;
+}
+
+.nav-btn-undo {
+  background: #fee2e2;
+  color: #dc2626;
+  flex: 1.2;
 }
 
 .route-header-top {

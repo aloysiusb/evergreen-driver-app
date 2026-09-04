@@ -1,4 +1,4 @@
-// Map tab — Google Maps with stop markers, notes, traffic, and route optimization
+// Map tab — navigation mode with stop card, notes, and route optimization
 
 window.switchView = function(view) {
   document.getElementById('view-stops').style.display = view === 'stops' ? 'block' : 'none';
@@ -13,59 +13,58 @@ window.switchView = function(view) {
 };
 
 let gMap = null;
-let markers = [];
-let infoWindow = null;
+let markers = [];       // parallel to navStops[]
+let navStops = [];      // ordered stops with addresses
+let currentIdx = 0;
 let directionsRenderer = null;
+let directionsService = null;
 
 async function initMap() {
-  const statusEl = document.getElementById('map-loading');
-  statusEl.textContent = 'Loading map…';
+  const loadingEl = document.getElementById('map-loading');
+  loadingEl.textContent = 'Loading map…';
+  loadingEl.style.display = 'block';
 
-  // Fetch Maps API key from server
   let apiKey;
   try {
     const res = await fetch('/api/maps-key');
-    if (!res.ok) throw new Error('key not found');
-    const data = await res.json();
-    apiKey = data.key;
+    if (!res.ok) throw new Error();
+    apiKey = (await res.json()).key;
   } catch {
-    statusEl.textContent = 'Maps not configured — add GOOGLE_MAPS_API_KEY in Render.';
+    loadingEl.textContent = 'Maps not configured — add GOOGLE_MAPS_API_KEY in Render.';
     return;
   }
 
-  // Load Google Maps JS API dynamically
   await new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error('Maps script failed to load'));
-    document.head.appendChild(script);
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Maps failed'));
+    document.head.appendChild(s);
   });
 
-  statusEl.style.display = 'none';
+  loadingEl.style.display = 'none';
 
-  const mapEl = document.getElementById('route-map');
-
-  gMap = new google.maps.Map(mapEl, {
-    zoom: 12,
-    center: { lat: 29.4241, lng: -98.4936 }, // San Antonio default — recenters on stops
+  gMap = new google.maps.Map(document.getElementById('route-map'), {
+    zoom: 15,
+    center: { lat: 29.4241, lng: -98.4936 },
     mapTypeControl: false,
     fullscreenControl: false,
     streetViewControl: false,
+    zoomControl: true,
+    gestureHandling: 'greedy',
   });
 
-  // Live traffic layer
-  const trafficLayer = new google.maps.TrafficLayer();
-  trafficLayer.setMap(gMap);
+  new google.maps.TrafficLayer().setMap(gMap);
 
-  infoWindow = new google.maps.InfoWindow();
+  directionsService = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer({
-    suppressMarkers: false,
-    polylineOptions: { strokeColor: '#22c55e', strokeWeight: 5 },
+    suppressMarkers: true,
+    polylineOptions: { strokeColor: '#22c55e', strokeWeight: 5, strokeOpacity: 0.8 },
   });
+  directionsRenderer.setMap(gMap);
 
-  plotStops();
+  await geocodeAndPlot();
 }
 
 function rowColorToHex(rowColor) {
@@ -73,148 +72,258 @@ function rowColorToHex(rowColor) {
   const r = Math.round((rowColor.red   ?? 0) * 255);
   const g = Math.round((rowColor.green ?? 0) * 255);
   const b = Math.round((rowColor.blue  ?? 0) * 255);
-  // Treat near-white as no color
   if (r > 240 && g > 240 && b > 240) return null;
   return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
-function makeMarkerIcon(color, done) {
-  const fill = done ? '#9ca3af' : (color || '#22c55e');
+function makePin(color, done, isCurrent) {
+  if (isCurrent) {
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: color || '#22c55e',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 3,
+      scale: 14,
+    };
+  }
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    fillColor: fill,
+    fillColor: done ? '#d1d5db' : (color || '#86efac'),
     fillOpacity: 1,
     strokeColor: '#ffffff',
     strokeWeight: 2,
-    scale: 10,
+    scale: 8,
   };
 }
 
-function plotStops() {
-  if (!window.allStops) return;
-  const bounds = new google.maps.LatLngBounds();
-  const geocoder = new google.maps.Geocoder();
-  const stops = window.allStops.filter(s => !s.isSectionHeader && s.address);
+async function geocodeAndPlot() {
+  const loadingEl = document.getElementById('map-loading');
+  const stops = (window.allStops || []).filter(s => !s.isSectionHeader && s.address);
+  if (!stops.length) { loadingEl.textContent = 'No stops to show.'; loadingEl.style.display = 'block'; return; }
 
+  loadingEl.textContent = `Locating ${stops.length} stops…`;
+  loadingEl.style.display = 'block';
+
+  const geocoder = new google.maps.Geocoder();
   markers.forEach(m => m.setMap(null));
   markers = [];
+  navStops = [];
 
-  let geocoded = 0;
-  const total = stops.length;
-
-  stops.forEach((stop, idx) => {
+  await Promise.all(stops.map(stop => new Promise(resolve => {
     const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', TX';
     geocoder.geocode({ address: addr }, (results, status) => {
-      geocoded++;
       if (status === 'OK' && results[0]) {
-        const pos = results[0].geometry.location;
-        bounds.extend(pos);
-
-        const color = rowColorToHex(stop.rowColor);
-        const marker = new google.maps.Marker({
-          position: pos,
-          map: gMap,
-          icon: makeMarkerIcon(color, stop.done),
-          title: stop.accountName || stop.address,
-          zIndex: stop.done ? 1 : 10,
-        });
-
-        const nameOrAddr = stop.accountName || stop.address;
-        const addrLine = stop.accountName ? stop.address + (stop.city ? ', ' + stop.city : '') : '';
-        const noteHtml = stop.notes
-          ? `<div style="margin-top:6px;font-size:13px;background:#f0fdf4;border-left:3px solid #22c55e;padding:6px 8px;border-radius:0 6px 6px 0;">${stop.notes}</div>`
-          : '';
-        const statusBadge = stop.done
-          ? `<span style="font-size:11px;background:#dcfce7;color:#166534;padding:2px 7px;border-radius:99px;font-weight:600;">✓ Done</span>`
-          : '';
-
-        const content = `
-          <div style="font-family:system-ui,sans-serif;max-width:240px;padding:4px 0;">
-            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">${nameOrAddr}</div>
-            ${addrLine ? `<div style="font-size:12px;color:#6b7280;">${addrLine}</div>` : ''}
-            ${statusBadge}
-            ${noteHtml}
-          </div>`;
-
-        marker.addListener('click', () => {
-          infoWindow.setContent(content);
-          infoWindow.open(gMap, marker);
-        });
-
-        // Store position for optimization
-        stop._latLng = pos;
-        markers.push(marker);
+        stop._latLng = results[0].geometry.location;
+        navStops.push(stop);
       }
-
-      if (geocoded === total && !bounds.isEmpty()) {
-        gMap.fitBounds(bounds);
-      }
+      resolve();
     });
+  })));
+
+  // Sort navStops to match original stop order
+  navStops.sort((a, b) => (window.allStops.indexOf(a) - window.allStops.indexOf(b)));
+
+  // Place all markers
+  navStops.forEach((stop, idx) => {
+    const color = rowColorToHex(stop.rowColor);
+    const isCurrent = idx === currentIdx;
+    const marker = new google.maps.Marker({
+      position: stop._latLng,
+      map: gMap,
+      icon: makePin(color, stop.done, isCurrent),
+      zIndex: isCurrent ? 100 : (stop.done ? 1 : 10),
+      title: stop.accountName || stop.address,
+    });
+    marker.addListener('click', () => jumpTo(idx));
+    markers.push(marker);
+  });
+
+  loadingEl.style.display = 'none';
+
+  // Start at first undone stop
+  currentIdx = navStops.findIndex(s => !s.done);
+  if (currentIdx < 0) currentIdx = 0;
+
+  drawRouteLine();
+  renderNavCard();
+  centerOnCurrent();
+}
+
+function centerOnCurrent() {
+  const stop = navStops[currentIdx];
+  if (stop?._latLng) gMap.panTo(stop._latLng);
+}
+
+function updateMarkerIcons() {
+  navStops.forEach((stop, idx) => {
+    const color = rowColorToHex(stop.rowColor);
+    markers[idx]?.setIcon(makePin(color, stop.done, idx === currentIdx));
+    markers[idx]?.setZIndex(idx === currentIdx ? 100 : (stop.done ? 1 : 10));
   });
 }
+
+function drawRouteLine() {
+  const remaining = navStops.filter(s => !s.done && s._latLng);
+  if (remaining.length < 2) { directionsRenderer.setDirections({ routes: [] }); return; }
+
+  directionsService.route({
+    origin: remaining[0]._latLng,
+    destination: remaining[remaining.length - 1]._latLng,
+    waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: false })),
+    travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+  }, (result, status) => {
+    if (status === 'OK') directionsRenderer.setDirections(result);
+  });
+}
+
+function renderNavCard() {
+  const card = document.getElementById('nav-card');
+  if (!navStops.length) { card.style.display = 'none'; return; }
+
+  const stop = navStops[currentIdx];
+  const total = navStops.length;
+  const doneCount = navStops.filter(s => s.done).length;
+  const color = rowColorToHex(stop.rowColor);
+  const nameOrAddr = stop.accountName || stop.address;
+  const addrLine = stop.accountName ? (stop.address + (stop.city ? ', ' + stop.city : '')) : (stop.city || '');
+
+  const noteHtml = stop.notes
+    ? `<div class="nav-note">${escHtml(stop.notes)}</div>`
+    : '';
+
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.address + (stop.city ? ', ' + stop.city : '') + ', TX')}&travelmode=driving`;
+
+  card.style.display = 'block';
+  card.innerHTML = `
+    <div class="nav-progress-row">
+      <span class="nav-stop-count">${currentIdx + 1} of ${total}</span>
+      <span class="nav-done-count">${doneCount} done</span>
+    </div>
+    <div class="nav-stop-name" style="${color ? `border-left:4px solid ${color};padding-left:10px;` : ''}">${escHtml(nameOrAddr)}</div>
+    ${addrLine ? `<div class="nav-stop-addr">${escHtml(addrLine)}</div>` : ''}
+    ${noteHtml}
+    <div class="nav-actions">
+      <button class="nav-btn nav-btn-prev" onclick="navStep(-1)" ${currentIdx === 0 ? 'disabled' : ''}>← Prev</button>
+      <a class="nav-btn nav-btn-maps" href="${mapsUrl}" target="_blank" rel="noopener">↗ Navigate</a>
+      ${stop.done
+        ? `<button class="nav-btn nav-btn-undo" onclick="navUndo()">Undo</button>`
+        : `<button class="nav-btn nav-btn-done" onclick="navDone()">✓ Done</button>`}
+      <button class="nav-btn nav-btn-next" onclick="navStep(1)" ${currentIdx === total - 1 ? 'disabled' : ''}>Next →</button>
+    </div>`;
+}
+
+function jumpTo(idx) {
+  currentIdx = idx;
+  updateMarkerIcons();
+  renderNavCard();
+  centerOnCurrent();
+}
+
+window.navStep = function(dir) {
+  const next = currentIdx + dir;
+  if (next < 0 || next >= navStops.length) return;
+  jumpTo(next);
+};
+
+window.navDone = async function() {
+  const stop = navStops[currentIdx];
+  if (!stop) return;
+  stop.done = true;
+  updateMarkerIcons();
+  drawRouteLine();
+  renderNavCard();
+  // Sync with driver.js API
+  if (window.allStops) {
+    const s = window.allStops.find(x => x.rowNumber === stop.rowNumber);
+    if (s) s.done = true;
+    if (window.notifyMapDone) window.notifyMapDone(stop.rowNumber, true);
+  }
+  // Advance to next undone stop
+  const nextIdx = navStops.findIndex((s, i) => i > currentIdx && !s.done);
+  if (nextIdx >= 0) { setTimeout(() => jumpTo(nextIdx), 300); }
+};
+
+window.navUndo = async function() {
+  const stop = navStops[currentIdx];
+  if (!stop) return;
+  stop.done = false;
+  updateMarkerIcons();
+  drawRouteLine();
+  renderNavCard();
+  if (window.allStops) {
+    const s = window.allStops.find(x => x.rowNumber === stop.rowNumber);
+    if (s) s.done = false;
+    if (window.notifyMapDone) window.notifyMapDone(stop.rowNumber, false);
+  }
+};
 
 window.optimizeRoute = async function() {
   const btn = document.getElementById('optimize-btn');
   const statusEl = document.getElementById('optimize-status');
-  const stops = (window.allStops || []).filter(s => !s.isSectionHeader && s.address && s._latLng && !s.done);
-
-  if (stops.length < 2) {
-    statusEl.textContent = 'Need at least 2 remaining stops to optimize.';
-    return;
-  }
+  const remaining = navStops.filter(s => !s.done && s._latLng);
+  if (remaining.length < 2) { statusEl.textContent = 'Need 2+ remaining stops.'; return; }
 
   btn.disabled = true;
-  statusEl.textContent = 'Calculating best route…';
+  statusEl.textContent = 'Optimizing…';
 
-  const origin = stops[0]._latLng;
-  const destination = stops[stops.length - 1]._latLng;
-  const waypoints = stops.slice(1, -1).map(s => ({
-    location: s._latLng,
-    stopover: true,
-  }));
-
-  const directionsService = new google.maps.DirectionsService();
   directionsService.route({
-    origin,
-    destination,
-    waypoints,
+    origin: remaining[0]._latLng,
+    destination: remaining[remaining.length - 1]._latLng,
+    waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: true })),
     optimizeWaypoints: true,
     travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: {
-      departureTime: new Date(),
-      trafficModel: google.maps.TrafficModel.BEST_GUESS,
-    },
+    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
   }, (result, status) => {
     btn.disabled = false;
-    if (status !== 'OK') {
-      statusEl.textContent = 'Could not calculate route — try again.';
-      return;
-    }
+    if (status !== 'OK') { statusEl.textContent = 'Could not optimize — try again.'; return; }
 
-    directionsRenderer.setMap(gMap);
     directionsRenderer.setDirections(result);
-
     const order = result.routes[0].waypoint_order;
-    const reordered = [stops[0], ...order.map(i => stops[i + 1]), stops[stops.length - 1]];
-    const leg = result.routes[0].legs;
-    const totalTime = leg.reduce((sum, l) => sum + l.duration_in_traffic.value, 0);
-    const mins = Math.round(totalTime / 60);
-    statusEl.textContent = `Optimized — ~${mins} min with traffic`;
+    const reordered = [remaining[0], ...order.map(i => remaining[i + 1]), remaining[remaining.length - 1]];
+    const mins = Math.round(result.routes[0].legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60);
 
-    // Open a full Google Maps multi-stop URL
+    // Reorder navStops: done stops stay at end, remaining reordered
+    const done = navStops.filter(s => s.done);
+    navStops = [...reordered, ...done];
+    markers.forEach(m => m.setMap(null));
+    markers = navStops.map((stop, idx) => {
+      const color = rowColorToHex(stop.rowColor);
+      const m = new google.maps.Marker({
+        position: stop._latLng, map: gMap,
+        icon: makePin(color, stop.done, idx === currentIdx),
+        zIndex: idx === currentIdx ? 100 : (stop.done ? 1 : 10),
+        title: stop.accountName || stop.address,
+      });
+      m.addListener('click', () => jumpTo(idx));
+      return m;
+    });
+
+    currentIdx = 0;
+    statusEl.textContent = `~${mins} min with traffic`;
+
     const mapsUrl = 'https://www.google.com/maps/dir/' +
       reordered.map(s => encodeURIComponent(s.address + (s.city ? ', ' + s.city : ''))).join('/');
     const link = document.createElement('a');
-    link.href = mapsUrl;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.textContent = ' Open in Maps →';
-    link.style.cssText = 'font-size:13px;color:#22c55e;font-weight:600;';
+    link.href = mapsUrl; link.target = '_blank'; link.rel = 'noopener';
+    link.textContent = ' · Open in Maps →';
+    link.style.cssText = 'color:#22c55e;font-weight:600;font-size:13px;';
     statusEl.appendChild(link);
+
+    renderNavCard();
+    centerOnCurrent();
   });
 };
 
-// Called by driver.js after stops load so the map can re-plot if already open
 window.notifyStopsUpdated = function() {
-  if (window._mapInitialized && gMap) plotStops();
+  if (!window._mapInitialized || !gMap) return;
+  geocodeAndPlot();
 };
+
+// Allow driver.js mark-done to sync back to map markers
+window.notifyMapDone = null; // set by driver.js if needed
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
