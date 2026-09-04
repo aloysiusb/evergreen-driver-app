@@ -130,6 +130,72 @@ body {
 }
 .home-btn:hover { background: rgba(255,255,255,0.32); }
 
+/* ── View tabs (Stops / Map) ── */
+.view-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px 4px;
+}
+.view-tab {
+  flex: 1;
+  padding: 7px 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.view-tab.active {
+  background: rgba(255,255,255,0.95);
+  color: var(--route-color-dark, #166534);
+}
+
+/* ── Map view ── */
+#view-map { position: relative; }
+
+#map-optimize-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+#optimize-btn {
+  padding: 8px 16px;
+  background: var(--route-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+#optimize-btn:disabled { opacity: 0.5; cursor: default; }
+#optimize-status { font-size: 13px; color: var(--text-muted); }
+
+#route-map {
+  width: 100%;
+  height: calc(100vh - 220px);
+  min-height: 400px;
+}
+
+#map-loading {
+  position: absolute;
+  top: 60px;
+  left: 0; right: 0;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
 .route-header-top {
   display: flex;
   justify-content: space-between;

@@ -161,6 +161,14 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
+// --- Maps config ---------------------------------------------------------
+
+app.get("/api/maps-key", (req, res) => {
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) return res.status(404).json({ error: "Maps key not configured" });
+  res.json({ key });
+});
+
 // --- Style API -----------------------------------------------------------
 
 app.get("/api/styles", (req, res) => {

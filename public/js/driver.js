@@ -279,8 +279,10 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       allStops = data.items;
+      window.allStops = allStops; // expose for map.js
       routeDate = data.routeDate || '';
       render();
+      if (window.notifyStopsUpdated) window.notifyStopsUpdated();
       document.getElementById('loading').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
     } catch (e) {
@@ -312,11 +314,11 @@
 
       if (msg.type === 'stop-updated') {
         const s = allStops.find(s => s.rowNumber === msg.rowNumber);
-        if (s) { s.done = msg.done; render(); }
+        if (s) { s.done = msg.done; render(); if (window.notifyStopsUpdated) window.notifyStopsUpdated(); }
       }
       if (msg.type === 'note-updated') {
         const s = allStops.find(s => s.rowNumber === msg.rowNumber);
-        if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; render(); }
+        if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; render(); if (window.notifyStopsUpdated) window.notifyStopsUpdated(); }
       }
       if (msg.type === 'style-updated') {
         applyStyles(msg.styles);

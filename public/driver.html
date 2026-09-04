@@ -28,6 +28,10 @@
     <div class="progress-bar" id="progress-bar"></div>
   </div>
   <div class="progress-text" id="progress-text">Loading route…</div>
+  <div class="view-tabs">
+    <button class="view-tab active" id="tab-stops" onclick="switchView('stops')">Stops</button>
+    <button class="view-tab" id="tab-map" onclick="switchView('map')">🗺 Map</button>
+  </div>
 </header>
 
 <div id="ws-status">⚠ Reconnecting — changes may not sync live</div>
@@ -38,8 +42,16 @@
 </div>
 
 <div id="main-content" style="display:none;">
-  <div class="content">
+  <div class="content" id="view-stops">
     <div id="stops-list"></div>
+  </div>
+  <div id="view-map" style="display:none;">
+    <div id="map-optimize-bar">
+      <button id="optimize-btn" onclick="optimizeRoute()">⚡ Optimize Route Order</button>
+      <span id="optimize-status"></span>
+    </div>
+    <div id="route-map"></div>
+    <div id="map-loading">Loading map…</div>
   </div>
 </div>
 
@@ -63,5 +75,6 @@
 
 <script src="/js/routes.js"></script>
 <script src="/js/driver.js"></script>
+<script src="/js/map.js"></script>
 </body>
 </html>
