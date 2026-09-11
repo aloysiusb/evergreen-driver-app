@@ -300,6 +300,96 @@ body {
   padding: 8px 20px 24px;
 }
 .footer-note a { color: var(--accent); font-weight: 600; }
+
+/* ── View toggle ── */
+.view-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--border);
+  border-radius: 10px;
+  padding: 3px;
+}
+.vt-btn {
+  flex: 1;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.vt-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ── Turn-by-turn banner ── */
+#turn-banner {
+  background: #1a2b1d;
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: none;
+  align-items: center;
+  gap: 14px;
+}
+#turn-banner.show { display: flex; }
+.turn-arrow {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 44px;
+  text-align: center;
+}
+.turn-info { flex: 1; min-width: 0; }
+.turn-dist {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.turn-text {
+  font-size: 13px;
+  opacity: 0.85;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.turn-street {
+  font-weight: 600;
+  opacity: 1;
+}
+.turn-next {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 4px;
+}
+
+/* Speed readout */
+.speed-pill {
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 5px 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.speed-num {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.speed-unit { font-size: 9px; opacity: 0.7; letter-spacing: 0.05em; }
+
+/* Driving mode map sizing */
+#demo-map.driving { height: 400px; }
 </style>
 </head>
 <body>
@@ -319,8 +409,26 @@ body {
     <span id="caption-text">Loading a real route from your Google Sheet…</span>
   </div>
 
+  <div class="view-toggle">
+    <button class="vt-btn" id="vt-overview" onclick="setView('overview')">🗺 Overview</button>
+    <button class="vt-btn active" id="vt-driving" onclick="setView('driving')">🧭 Driving</button>
+  </div>
+
+  <div id="turn-banner" class="show">
+    <div class="turn-arrow" id="turn-arrow">↑</div>
+    <div class="turn-info">
+      <div class="turn-dist" id="turn-dist">—</div>
+      <div class="turn-text" id="turn-text">Starting route…</div>
+      <div class="turn-next" id="turn-next"></div>
+    </div>
+    <div class="speed-pill">
+      <div class="speed-num" id="speed-num">0</div>
+      <div class="speed-unit">MPH</div>
+    </div>
+  </div>
+
   <div id="demo-loading">Loading map and route data…</div>
-  <div id="demo-map" style="display:none;"></div>
+  <div id="demo-map" class="driving" style="display:none;"></div>
 
   <div class="stop-dots" id="stop-dots"></div>
 
@@ -341,6 +449,24 @@ let driverMarker, markers = [], playing = false, rafId = null;
 let speed = 1;
 const SPEEDS = [1, 2, 4];
 let doneSet = new Set();
+let viewMode = 'driving';   // 'driving' | 'overview'
+let turnSteps = [];         // flattened maneuver steps from Directions
+let curHeading = 0;
+
+const DRIVING_ZOOM = 18;
+const OVERVIEW_ZOOM = 14;
+
+// Maneuver → arrow glyph
+const MANEUVER_ICONS = {
+  'turn-right': '↱', 'turn-left': '↰',
+  'turn-slight-right': '↗', 'turn-slight-left': '↖',
+  'turn-sharp-right': '⤳', 'turn-sharp-left': '⤪',
+  'uturn-right': '⤵', 'uturn-left': '⤴',
+  'merge': '⤸', 'fork-right': '↗', 'fork-left': '↖',
+  'ramp-right': '↗', 'ramp-left': '↖',
+  'roundabout-right': '⟳', 'roundabout-left': '⟲',
+  'straight': '↑',
+};
 
 const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
 
@@ -393,9 +519,9 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
   document.getElementById('demo-loading').style.display = 'none';
   document.getElementById('demo-map').style.display = 'block';
   map = new google.maps.Map(document.getElementById('demo-map'), {
-    zoom: 14, center: stops[0].pos,
+    zoom: DRIVING_ZOOM, center: stops[0].pos,
     mapTypeControl: false, fullscreenControl: false, streetViewControl: false,
-    gestureHandling: 'greedy',
+    gestureHandling: 'greedy', tilt: 45,
   });
   new google.maps.TrafficLayer().setMap(map);
 
@@ -421,7 +547,22 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
     }, (result, status) => {
       if (status === 'OK') {
         dr.setDirections(result);
-        path = result.routes[0].overview_path;
+        // Build a dense path from every step's polyline for smooth close-up motion
+        const dense = [];
+        result.routes[0].legs.forEach(leg => {
+          leg.steps.forEach(st => {
+            turnSteps.push({
+              start: st.start_location,
+              instruction: st.instructions.replace(/<[^>]+>/g, ''),
+              distanceText: st.distance.text,
+              distanceM: st.distance.value,
+              maneuver: st.maneuver || 'straight',
+              pathStart: dense.length,
+            });
+            st.path.forEach(p => dense.push(p));
+          });
+        });
+        path = dense.length ? dense : result.routes[0].overview_path;
       }
       res();
     });
@@ -429,16 +570,85 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
 
   driverMarker = new google.maps.Marker({
     position: stops[0].pos, map,
-    icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: '#2563eb', fillOpacity: 1,
-            strokeColor: '#fff', strokeWeight: 3, scale: 9 },
+    icon: driverIcon(0),
     zIndex: 200,
   });
 
   renderDots();
   renderCard();
   document.getElementById('nav-card').style.display = 'block';
-  setCaption('🚛', `Real route loaded — <b>${stops.length} stops</b> with live notes from your sheet. Press <b>Play</b> to watch a driver run it.`);
+  setView('driving');
+  setCaption('🧭', `Real route loaded — <b>${stops.length} stops</b> with live notes from your sheet. Press <b>Play</b> for close-up turn-by-turn navigation.`);
 })();
+
+// ── Driver arrow (rotates with heading) ───────────────────────────────────
+function driverIcon(rotation) {
+  return {
+    path: 'M 0,-9 L 6,7 L 0,3 L -6,7 Z',   // chevron pointing "up"
+    fillColor: '#2563eb',
+    fillOpacity: 1,
+    strokeColor: '#ffffff',
+    strokeWeight: 2,
+    scale: 1.5,
+    rotation: rotation,
+    anchor: new google.maps.Point(0, 0),
+  };
+}
+
+// ── View mode ─────────────────────────────────────────────────────────────
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('vt-driving').classList.toggle('active', mode === 'driving');
+  document.getElementById('vt-overview').classList.toggle('active', mode === 'overview');
+  document.getElementById('turn-banner').classList.toggle('show', mode === 'driving');
+  document.getElementById('demo-map').classList.toggle('driving', mode === 'driving');
+
+  if (!map) return;
+  if (mode === 'driving') {
+    map.setZoom(DRIVING_ZOOM);
+    map.setTilt(45);
+    if (driverMarker) map.panTo(driverMarker.getPosition());
+  } else {
+    map.setZoom(OVERVIEW_ZOOM);
+    map.setTilt(0);
+    map.setHeading(0);
+    // Fit all stops
+    const b = new google.maps.LatLngBounds();
+    stops.forEach(s => b.extend(s.pos));
+    map.fitBounds(b, 40);
+  }
+}
+
+// ── Turn banner ───────────────────────────────────────────────────────────
+function updateTurnBanner(pos) {
+  if (viewMode !== 'driving' || !turnSteps.length) return;
+
+  // Find the next step whose start is ahead of us on the path
+  const idx = Math.floor(pathIdx);
+  let next = turnSteps.find(s => s.pathStart > idx);
+  const upcoming = next ? turnSteps[turnSteps.indexOf(next) + 1] : null;
+
+  if (!next) {
+    document.getElementById('turn-arrow').textContent = '🏁';
+    document.getElementById('turn-dist').textContent = 'Arriving';
+    document.getElementById('turn-text').textContent = stops[curStop]?.accountName || 'Destination';
+    document.getElementById('turn-next').textContent = '';
+    return;
+  }
+
+  const distM = google.maps.geometry.spherical.computeDistanceBetween(pos, next.start);
+  const feet = Math.round(distM * 3.281);
+  const distLabel = feet > 1000
+    ? (distM / 1609).toFixed(1) + ' mi'
+    : Math.max(50, Math.round(feet / 50) * 50) + ' ft';
+
+  document.getElementById('turn-arrow').textContent = MANEUVER_ICONS[next.maneuver] || '↑';
+  document.getElementById('turn-dist').textContent = distLabel;
+  document.getElementById('turn-text').innerHTML = esc(next.instruction);
+  document.getElementById('turn-next').textContent = upcoming
+    ? 'Then: ' + upcoming.instruction.slice(0, 46)
+    : 'Then: arrive at stop';
+}
 
 // ── Pin styles ────────────────────────────────────────────────────────────
 function pin(kind) {
@@ -461,16 +671,37 @@ function cycleSpeed() {
 
 function step() {
   if (!playing || !path.length) return;
-  pathIdx += speed * 1.6;
+  pathIdx += speed * 0.9;
 
   if (pathIdx >= path.length) {
     finishDemo();
     return;
   }
 
-  const p = path[Math.floor(pathIdx)];
+  const i = Math.floor(pathIdx);
+  const p = path[i];
+  const ahead = path[Math.min(i + 3, path.length - 1)];
+
+  // Heading — smooth toward the direction of travel
+  if (ahead && ahead !== p) {
+    const target = google.maps.geometry.spherical.computeHeading(p, ahead);
+    let delta = ((target - curHeading + 540) % 360) - 180;
+    curHeading = (curHeading + delta * 0.18 + 360) % 360;
+  }
+
   driverMarker.setPosition(p);
-  map.panTo(p);
+  driverMarker.setIcon(driverIcon(curHeading));
+
+  if (viewMode === 'driving') {
+    map.panTo(p);
+    map.setHeading(curHeading);   // rotates so travel is always "up"
+    // Simulated speed readout — faster on straights, slower near turns
+    const mph = Math.round(18 + Math.sin(pathIdx / 25) * 9);
+    document.getElementById('speed-num').textContent = Math.max(5, mph);
+    updateTurnBanner(p);
+  } else {
+    map.panTo(p);
+  }
 
   // Distance to current stop
   const target = stops[curStop];
@@ -494,6 +725,10 @@ function arriveAt(idx) {
   playing = false;
   cancelAnimationFrame(rafId);
   document.getElementById('play-btn').textContent = '▶ Play';
+
+  document.getElementById('speed-num').textContent = '0';
+  document.getElementById('turn-arrow').textContent = '🏁';
+  document.getElementById('turn-dist').textContent = 'Arrived';
 
   const st = stops[idx];
   const toast = document.getElementById('arrival-toast');
