@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street View Route Walkthrough</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f8f6; --surface:#ffffff; --surface-2:#f0f3ef; --border:#dde3d9;
+  --forest:#1b3a2a; --accent:#2d7d4f; --accent-l:#e3f0e8;
+  --text:#1c2a21; --muted:#64786b;
+  --amber:#b45309; --amber-l:#fdf0dc;
+  --red:#b91c1c; --red-l:#fde8e8;
+  --blue:#1e4e79; --blue-l:#e4edf5;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
+    --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
+    --text:#e4ede7; --muted:#7d9686;
+    --amber:#e0a35c; --amber-l:#2e2113;
+    --red:#f08b8b; --red-l:#33191a; --blue:#8fbadd; --blue-l:#14242f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
+  --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
+  --text:#e4ede7; --muted:#7d9686;
+  --amber:#e0a35c; --amber-l:#2e2113;
+  --red:#f08b8b; --red-l:#33191a; --blue:#8fbadd; --blue-l:#14242f;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.55;font-size:15px}
+.page{max-width:880px;margin:0 auto;padding:0 16px 56px}
+
+/* Header */
+.head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 12px;
+  border-bottom:2px solid var(--forest);margin-bottom:14px}
+.h-title{font-family:'Source Serif 4',Georgia,serif;font-size:21px;font-weight:600;color:var(--forest)}
+.live-chip{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--accent-l);color:var(--accent);border:1px solid var(--accent);
+  border-radius:3px;padding:3px 8px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);
+  animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
+.route-pick{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select{font-family:inherit;font-size:13px;font-weight:600;padding:7px 11px;
+  border:1.5px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)}
+
+/* Panorama */
+.pano-wrap{position:relative;border-radius:10px;overflow:hidden;border:1.5px solid var(--border);
+  background:var(--surface-2)}
+#pano{width:100%;height:400px}
+#pano-msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  text-align:center;padding:24px;color:var(--muted);font-size:14px;background:var(--surface-2)}
+#pano-msg.show{display:flex}
+
+/* Floating note card over the pano */
+.note-card{position:absolute;left:14px;right:14px;bottom:14px;
+  background:var(--surface);border-radius:11px;padding:13px 15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.28);
+  max-width:400px;
+  transform:translateY(0);opacity:1;
+  transition:transform .38s cubic-bezier(.32,.72,0,1),opacity .28s}
+.note-card.hidden{transform:translateY(18px);opacity:0;pointer-events:none}
+.nc-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.nc-idx{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  background:var(--forest);color:var(--bg);border-radius:3px;padding:2px 7px}
+.nc-done{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;background:var(--accent-l);color:var(--accent)}
+.nc-name{font-family:'Source Serif 4',Georgia,serif;font-size:19px;font-weight:600;
+  color:var(--forest);line-height:1.2;margin-bottom:2px}
+.nc-addr{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.nc-chip{display:inline-block;font-size:12px;font-weight:600;background:var(--blue-l);
+  color:var(--blue);border-radius:7px;padding:5px 10px;margin-bottom:7px;line-height:1.4}
+.nc-note{font-size:13px;line-height:1.5;background:var(--accent-l);
+  border-left:3px solid var(--accent);border-radius:0 7px 7px 0;padding:8px 11px}
+.nc-note.urgent{background:var(--red-l);border-left-color:var(--red)}
+.nc-note.hold{background:var(--amber-l);border-left-color:var(--amber)}
+.nc-empty{font-size:12.5px;color:var(--muted);font-style:italic}
+
+/* Controls */
+.ctrls{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.btn{padding:10px 18px;border:1.5px solid var(--border);border-radius:8px;
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;
+  font-weight:600;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--forest);border-color:var(--forest);color:var(--bg)}
+.progress{flex:1;min-width:120px;display:flex;align-items:center;gap:9px}
+.ptrack{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pfill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.pcount{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Stop rail */
+.rail{display:flex;gap:6px;overflow-x:auto;padding:12px 0 4px;margin-top:6px}
+.rail-item{flex-shrink:0;min-width:118px;max-width:150px;padding:9px 11px;
+  border:1.5px solid var(--border);border-radius:8px;background:var(--surface);
+  cursor:pointer;font-size:12px;line-height:1.35;transition:border-color .12s}
+.rail-item:hover{border-color:var(--accent)}
+.rail-item.on{border-color:var(--forest);background:var(--surface-2)}
+.ri-n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);font-weight:600}
+.ri-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.ri-flag{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
+
+.intro{font-size:14px;color:var(--muted);margin-bottom:14px;max-width:66ch}
+.footer{border-top:1px solid var(--border);padding-top:18px;margin-top:32px;
+  font-size:12.5px;color:var(--muted);line-height:1.6}
+.footer a{color:var(--accent);font-weight:600}
+#loading{padding:50px 20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="head">
+    <div class="h-title">Street View Walkthrough</div>
+    <span class="live-chip"><span class="live-dot"></span>Live from the sheet</span>
+    <div class="route-pick">
+      <select id="route-select" onchange="loadRoute(this.value)"></select>
+    </div>
+  </div>
+
+  <p class="intro">Walk any route as the driver sees it. Each stop opens in Street View with that property's
+  actual notes and access details pulled live from the route sheet — change a note in the sheet, reload, and it appears here.</p>
+
+  <div id="loading">Loading route data…</div>
+
+  <div id="viewer" style="display:none;">
+    <div class="pano-wrap">
+      <div id="pano"></div>
+      <div id="pano-msg"></div>
+      <div class="note-card hidden" id="note-card"></div>
+    </div>
+
+    <div class="ctrls">
+      <button class="btn" id="btn-prev" onclick="go(-1)">← Prev</button>
+      <button class="btn primary" id="btn-next" onclick="go(1)">Next stop →</button>
+      <div class="progress">
+        <div class="ptrack"><div class="pfill" id="pfill" style="width:0%"></div></div>
+        <span class="pcount" id="pcount">—</span>
+      </div>
+    </div>
+
+    <div class="rail" id="rail"></div>
+  </div>
+
+  <div class="footer">
+    Street View imagery is Google's most recent capture for that location and may predate current conditions.
+    Notes, access details and account names come live from the route sheet.<br><br>
+    <a href="/hub.html">← Operations Hub</a> · <a href="/weekly.html">Weekly route map</a> · <a href="/demo.html">Navigation demo</a>
+  </div>
+</div>
+
+<script>
+const ROUTES = [
+  {tab:'Weds Commercial',   name:'Weds Commercial — valley-wide'},
+  {tab:'Friday',            name:'Friday — Aspen commercial'},
+  {tab:'Monday',            name:'Monday — Aspen commercial'},
+  {tab:'Thurs UV',          name:'Thurs UV — Aspen residential'},
+  {tab:'Tues DV',           name:'Tues DV — Carbondale'},
+  {tab:'TUES 4WD ACTION',   name:'Tues 4WD — Basalt'},
+  {tab:'Weds DV Res',       name:'Weds DV Res — Glenwood'},
+  {tab:'Thursday COMEAGLE', name:'Thursday COMEAGLE — Eagle County'},
+];
+
+let pano, svService, geocoder, stops = [], idx = 0;
+
+(async function boot(){
+  const sel = document.getElementById('route-select');
+  sel.innerHTML = ROUTES.map(r => `<option value="${r.tab}">${r.name}</option>`).join('');
+
+  let key;
+  try { key = (await (await fetch('/api/maps-key')).json()).key; }
+  catch { document.getElementById('loading').textContent = 'Maps key not configured.'; return; }
+
+  await new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=geometry';
+    s.async = true; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+
+  svService = new google.maps.StreetViewService();
+  geocoder  = new google.maps.Geocoder();
+  pano = new google.maps.StreetViewPanorama(document.getElementById('pano'), {
+    visible:false, addressControl:false, fullscreenControl:true,
+    motionTracking:false, motionTrackingControl:false,
+    zoomControl:true, linksControl:true, panControl:true,
+  });
+
+  loadRoute(ROUTES[0].tab);
+})();
+
+window.loadRoute = async function(tab){
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('loading').textContent = 'Loading ' + tab + ' from the sheet…';
+  document.getElementById('viewer').style.display = 'none';
+  stops = []; idx = 0;
+
+  let items = [];
+  try {
+    const r = await fetch('/api/routes/' + encodeURIComponent(tab));
+    items = (await r.json()).items || [];
+  } catch {
+    document.getElementById('loading').textContent = 'Could not load that route.';
+    return;
+  }
+
+  // Real stops only — must start with a house number
+  const real = items.filter(s => !s.isSectionHeader && /^\d+\s+\S/.test((s.address||'').trim()));
+  // Prefer stops that actually carry notes or access details, then fill in
+  const withNotes = real.filter(s => (s.notes||'').trim() || (s.directions||'').trim());
+  const chosen = (withNotes.length >= 6 ? withNotes : real).slice(0, 12);
+
+  if (!chosen.length) {
+    document.getElementById('loading').textContent = 'No mappable stops on that route.';
+    return;
+  }
+
+  document.getElementById('loading').textContent = 'Locating ' + chosen.length + ' stops…';
+
+  await Promise.all(chosen.map(st => new Promise(res => {
+    geocoder.geocode({ address: st.address + (st.city ? ', ' + st.city : '') + ', CO' }, (r, status) => {
+      if (status === 'OK' && r[0]) { st.pos = r[0].geometry.location; stops.push(st); }
+      res();
+    });
+  })));
+
+  stops.sort((a,b) => chosen.indexOf(a) - chosen.indexOf(b));
+
+  if (!stops.length) {
+    document.getElementById('loading').textContent = 'Could not locate those stops.';
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('viewer').style.display = 'block';
+  idx = 0;
+  renderRail();
+  showStop(0);
+};
+
+window.go = function(d){
+  const n = idx + d;
+  if (n < 0 || n >= stops.length) return;
+  showStop(n);
+};
+
+window.jump = function(n){ showStop(n); };
+
+function showStop(n){
+  idx = n;
+  const st = stops[n];
+  const card = document.getElementById('note-card');
+  const msg = document.getElementById('pano-msg');
+
+  card.classList.add('hidden');
+  msg.classList.remove('show');
+
+  svService.getPanorama({ location: st.pos, radius: 60, source: 'outdoor' }, (data, status) => {
+    if (status === 'OK' && data && data.location) {
+      // Face the camera toward the property
+      const heading = google.maps.geometry.spherical.computeHeading(data.location.latLng, st.pos);
+      pano.setPano(data.location.pano);
+      pano.setPov({ heading, pitch: 2 });
+      pano.setZoom(0.7);
+      pano.setVisible(true);
+    } else {
+      pano.setVisible(false);
+      msg.textContent = 'No Street View imagery within 60 m of ' + (st.address || 'this stop') + '.';
+      msg.classList.add('show');
+    }
+    setTimeout(() => renderCard(st, n), 260);
+  });
+
+  updateControls();
+  renderRail();
+}
+
+function noteClass(text){
+  const t = (text || '').toLowerCase();
+  if (/skip|hold|cancel|on hold/.test(t)) return 'hold';
+  if (/get |asap|today|now|eow|🚫|contamina|fine|ticket/.test(t)) return 'urgent';
+  return '';
+}
+
+function renderCard(st, n){
+  const card = document.getElementById('note-card');
+  const name = st.accountName || st.address;
+  const addr = st.accountName ? (st.address + (st.city ? ', ' + st.city : '')) : (st.city || '');
+  const hasAny = (st.notes||'').trim() || (st.directions||'').trim();
+
+  card.innerHTML = `
+    <div class="nc-top">
+      <span class="nc-idx">STOP ${n+1} / ${stops.length}</span>
+      ${st.done ? '<span class="nc-done">✓ Done</span>' : ''}
+    </div>
+    <div class="nc-name">${esc(name)}</div>
+    ${addr ? `<div class="nc-addr">${esc(addr)}</div>` : ''}
+    ${st.directions ? `<div class="nc-chip">🔑 ${esc(st.directions)}</div>` : ''}
+    ${st.notes ? `<div class="nc-note ${noteClass(st.notes)}">${esc(st.notes)}</div>` : ''}
+    ${!hasAny ? `<div class="nc-empty">No notes on file for this stop.</div>` : ''}`;
+  card.classList.remove('hidden');
+}
+
+function updateControls(){
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = idx === stops.length - 1;
+  document.getElementById('pfill').style.width = ((idx+1)/stops.length*100) + '%';
+  document.getElementById('pcount').textContent = (idx+1) + ' of ' + stops.length;
+}
+
+function renderRail(){
+  document.getElementById('rail').innerHTML = stops.map((s, i) => {
+    const cls = noteClass(s.notes);
+    const col = cls === 'urgent' ? 'var(--red)' : cls === 'hold' ? 'var(--amber)'
+              : (s.notes || s.directions) ? 'var(--accent)' : 'var(--border)';
+    return `<div class="rail-item${i===idx?' on':''}" onclick="jump(${i})">
+      <div class="ri-n">${i+1}</div>
+      <div class="ri-name"><span class="ri-flag" style="background:${col}"></span>${esc(s.accountName || s.address)}</div>
+    </div>`;
+  }).join('');
+  const on = document.querySelector('.rail-item.on');
+  if (on) on.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
