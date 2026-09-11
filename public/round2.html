@@ -116,6 +116,69 @@ body {
 .hero-btn.primary { background: #fff; color: var(--accent-d); }
 .hero-btn.secondary { background: rgba(255,255,255,0.18); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
 
+/* ── Onboarding ── */
+.onboard {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 22px 20px;
+  margin: -28px auto 8px;
+  max-width: 700px;
+  position: relative;
+  z-index: 2;
+}
+.onboard-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.onboard-sub {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 18px;
+}
+.onboard-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+.ob-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 7px;
+}
+.ob-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ob-text { font-size: 14px; line-height: 1.45; }
+.ob-text b { font-weight: 600; }
+.onboard-foot {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.55;
+}
+.onboard-foot b { color: var(--accent); font-weight: 600; }
+
 /* ── Section ── */
 .section {
   max-width: 700px;
@@ -313,6 +376,29 @@ body {
   <div class="hero-links">
     <a class="hero-btn primary" href="/demo.html">▶ Watch the Navigation Demo</a>
     <a class="hero-btn secondary" href="/dispatch.html">Dispatcher Dashboard</a>
+  </div>
+</div>
+
+<!-- Onboarding -->
+<div class="onboard">
+  <div class="onboard-title">Getting started takes 30 seconds</div>
+  <div class="onboard-sub">Nothing to install. Nothing to set up. No passwords.</div>
+  <div class="onboard-steps">
+    <div class="ob-step">
+      <div class="ob-num">1</div>
+      <div class="ob-text">Open the link on your phone and <b>bookmark it</b></div>
+    </div>
+    <div class="ob-step">
+      <div class="ob-num">2</div>
+      <div class="ob-text">Tap <b>your route</b> for the day</div>
+    </div>
+    <div class="ob-step">
+      <div class="ob-num">3</div>
+      <div class="ob-text">Tap <b>✓</b> as you finish each stop</div>
+    </div>
+  </div>
+  <div class="onboard-foot">
+    That's the whole job. <b>Everything else is optional</b> — the map, navigation, and reporting buttons are there when a driver wants them, and stay out of the way when they don't.
   </div>
 </div>
 
