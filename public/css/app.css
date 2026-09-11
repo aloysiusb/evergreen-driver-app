@@ -346,6 +346,27 @@ body {
 }
 
 /* ── Note styles by urgency ── */
+/* ── Navigation app picker ── */
+#nav-app-picker {
+  display: none;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.nav-app-btn {
+  flex: 1;
+  padding: 9px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+}
+.nav-app-btn:active { transform: scale(0.97); }
+
 .nav-eta {
   display: inline-block;
   font-size: 11px;

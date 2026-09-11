@@ -31,6 +31,13 @@ let nextEtaMins = null;
 let etaService = null;
 const ARRIVAL_RADIUS_M = 80; // metres from stop to auto-prompt arrival
 
+// ── Traffic + auto-reroute state ──────────────────────────────────────────
+let trafficDelayMins = null;   // minutes lost to traffic vs free-flow
+let rerouteTimer = null;
+let rerouteDismissed = false;  // driver said "no thanks" this session
+const REROUTE_CHECK_MS = 3 * 60 * 1000;  // re-check every 3 minutes
+const REROUTE_MIN_SAVING = 8;            // only nudge if it saves 8+ minutes
+
 const PLANNED_COLOR = '#22c55e';
 const LIVE_COLOR    = '#f59e0b';
 
@@ -82,6 +89,7 @@ async function initMap() {
   etaService = new google.maps.DistanceMatrixService();
   await geocodeAndPlot();
   startGpsTracking();
+  startRerouteWatcher();
 }
 
 function rowColorToHex(rowColor) {
@@ -220,10 +228,105 @@ function fetchPlannedTime() {
     drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
   }, (result, status) => {
     if (status === 'OK') {
-      plannedMins = Math.round(result.routes[0].legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60);
+      const legs = result.routes[0].legs;
+      plannedMins = Math.round(legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60);
+      const freeFlow = Math.round(legs.reduce((s, l) => s + l.duration.value, 0) / 60);
+      trafficDelayMins = Math.max(0, plannedMins - freeFlow);
       updateModeUI();
     }
   });
+}
+
+// ── Traffic conditions ────────────────────────────────────────────────────
+function trafficLabel() {
+  if (trafficDelayMins === null) return '';
+  if (trafficDelayMins <= 3)  return '🟢 Light traffic';
+  if (trafficDelayMins <= 12) return `🟡 Moderate · +${trafficDelayMins} min`;
+  return `🔴 Heavy · +${trafficDelayMins} min`;
+}
+
+// ── Auto-reroute watcher ──────────────────────────────────────────────────
+// Every few minutes, silently check whether traffic has shifted enough that
+// re-optimizing would meaningfully help. Only nudges — never switches on its own.
+function startRerouteWatcher() {
+  if (rerouteTimer) clearInterval(rerouteTimer);
+  rerouteTimer = setInterval(checkForBetterRoute, REROUTE_CHECK_MS);
+}
+
+function checkForBetterRoute() {
+  if (routeMode !== 'planned') return;
+  if (rerouteDismissed) return;
+  const remaining = plannedOrder.filter(s => !s.done && s._latLng);
+  if (remaining.length < 3) return;
+
+  directionsService.route({
+    origin: remaining[0]._latLng,
+    destination: remaining[remaining.length - 1]._latLng,
+    waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: true })),
+    optimizeWaypoints: true,
+    travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+  }, (result, status) => {
+    if (status !== 'OK') return;
+    const optMins = Math.round(
+      result.routes[0].legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60
+    );
+    if (plannedMins === null) return;
+    const saving = plannedMins - optMins;
+    if (saving >= REROUTE_MIN_SAVING) showRerouteNudge(saving);
+  });
+}
+
+function showRerouteNudge(saving) {
+  const toast = document.getElementById('toast');
+  toast.innerHTML =
+    `Traffic shifted — <b>Live route saves ~${saving} min</b> ` +
+    `<button id="reroute-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:6px;background:${LIVE_COLOR};color:#fff;font-weight:700;cursor:pointer;">⚡ Switch</button>` +
+    `<button id="reroute-no" style="margin-left:4px;padding:4px 8px;border:none;border-radius:6px;background:transparent;color:inherit;opacity:0.6;cursor:pointer;">Dismiss</button>`;
+  toast.classList.add('show');
+
+  document.getElementById('reroute-yes').addEventListener('click', () => {
+    toast.classList.remove('show');
+    window.setRouteMode('live');
+  });
+  document.getElementById('reroute-no').addEventListener('click', () => {
+    toast.classList.remove('show');
+    rerouteDismissed = true;  // don't nag again this session
+  });
+
+  setTimeout(() => toast.classList.remove('show'), 15000);
+}
+
+// ── Navigation app handoff ────────────────────────────────────────────────
+window.navOpenIn = function(app) {
+  const stop = navStops[currentIdx];
+  if (!stop) return;
+  const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', TX';
+  const lat = stop._latLng ? stop._latLng.lat() : null;
+  const lng = stop._latLng ? stop._latLng.lng() : null;
+
+  let url;
+  if (app === 'waze') {
+    url = lat !== null
+      ? `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`
+      : `https://www.waze.com/ul?q=${encodeURIComponent(addr)}&navigate=yes`;
+  } else if (app === 'apple') {
+    url = `https://maps.apple.com/?daddr=${encodeURIComponent(addr)}&dirflg=d`;
+  } else {
+    url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}&travelmode=driving`;
+  }
+  window.open(url, '_blank', 'noopener');
+  closeNavPicker();
+};
+
+window.toggleNavPicker = function() {
+  const el = document.getElementById('nav-app-picker');
+  if (el) el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+};
+
+function closeNavPicker() {
+  const el = document.getElementById('nav-app-picker');
+  if (el) el.style.display = 'none';
 }
 
 function updateModeUI() {
@@ -231,16 +334,19 @@ function updateModeUI() {
   document.getElementById('mode-live').classList.toggle('active',    routeMode === 'live');
 
   const statusEl = document.getElementById('optimize-status');
+  const tl = trafficLabel();
   if (routeMode === 'planned') {
-    statusEl.textContent = plannedMins ? `~${plannedMins} min with traffic` : '';
+    statusEl.textContent = plannedMins
+      ? `~${plannedMins} min${tl ? ' · ' + tl : ''}`
+      : (tl || '');
   } else if (routeMode === 'live') {
     if (liveMins !== null && plannedMins !== null) {
       const saved = plannedMins - liveMins;
       statusEl.textContent = saved > 0
-        ? `~${liveMins} min · saves ~${saved} min vs planned`
-        : `~${liveMins} min · already optimal`;
+        ? `~${liveMins} min · saves ~${saved} min${tl ? ' · ' + tl : ''}`
+        : `~${liveMins} min · already optimal${tl ? ' · ' + tl : ''}`;
     } else if (liveMins !== null) {
-      statusEl.textContent = `~${liveMins} min with traffic`;
+      statusEl.textContent = `~${liveMins} min${tl ? ' · ' + tl : ''}`;
     } else {
       statusEl.textContent = 'Calculating…';
     }
@@ -444,7 +550,6 @@ function renderNavCard() {
     ? `<div class="nav-access-chip">🔑 ${escHtml(stop.directions)}</div>`
     : '';
 
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.address + (stop.city ? ', ' + stop.city : '') + ', TX')}&travelmode=driving`;
   const tabName = window._routeTabName || '';
   const row = stop.rowNumber;
 
@@ -477,9 +582,14 @@ function renderNavCard() {
       <button class="report-quick-btn skip"          onclick="reportOpen('skip',${row},'${escHtml(tabName)}')">⏭ Skip</button>
       <button class="report-quick-btn photo"         onclick="reportOpen('photo',${row},'${escHtml(tabName)}')">📷 Photo</button>
     </div>
+    <div id="nav-app-picker">
+      <button class="nav-app-btn" onclick="navOpenIn('google')">🗺 Google Maps</button>
+      <button class="nav-app-btn" onclick="navOpenIn('waze')">🚦 Waze</button>
+      <button class="nav-app-btn" onclick="navOpenIn('apple')">🍎 Apple Maps</button>
+    </div>
     <div class="nav-actions">
       <button class="nav-btn nav-btn-prev" onclick="navStep(-1)" ${currentIdx === 0 ? 'disabled' : ''}>← Prev</button>
-      <a class="nav-btn nav-btn-maps" href="${mapsUrl}" target="_blank" rel="noopener">↗ Navigate</a>
+      <button class="nav-btn nav-btn-maps" onclick="toggleNavPicker()">↗ Navigate</button>
       ${stop.done
         ? `<button class="nav-btn nav-btn-undo" onclick="navUndo()">Undo</button>`
         : `<button class="nav-btn nav-btn-done" onclick="navDone()">✓ Done</button>`}
