@@ -4,6 +4,8 @@ node_modules/
 *.json
 !package.json
 !package-lock.json
+# PWA manifest is public metadata, no credentials — served to browsers
+!public/manifest.json
 
 # Environment files
 .env

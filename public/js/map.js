@@ -41,8 +41,32 @@ const REROUTE_MIN_SAVING = 8;            // only nudge if it saves 8+ minutes
 const PLANNED_COLOR = '#22c55e';
 const LIVE_COLOR    = '#f59e0b';
 
+// The Google Maps bundle is ~300 KB. On a weak mountain signal or with data
+// saver on, make the driver opt in rather than spending their data by default.
+function onSlowConnection() {
+  const c = navigator.connection;
+  if (!c) return false;
+  return c.saveData === true || /^(slow-)?2g$/.test(c.effectiveType || '');
+}
+
 async function initMap() {
   const loadingEl = document.getElementById('map-loading');
+
+  if (onSlowConnection() && !window._mapForced) {
+    loadingEl.style.display = 'block';
+    loadingEl.innerHTML =
+      'Slow connection detected.<br>' +
+      '<span style="font-size:12px;opacity:.8">The map uses about 300 KB of data.</span><br>' +
+      '<button id="map-load-anyway" style="margin-top:10px;padding:9px 18px;border:none;' +
+      'border-radius:8px;background:var(--route-color,#22c55e);color:#fff;font-weight:600;' +
+      'font-family:inherit;font-size:14px;cursor:pointer;">Load map anyway</button>';
+    document.getElementById('map-load-anyway').addEventListener('click', () => {
+      window._mapForced = true;
+      initMap();
+    });
+    return;
+  }
+
   loadingEl.textContent = 'Loading map…';
   loadingEl.style.display = 'block';
 

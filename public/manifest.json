@@ -1,0 +1,15 @@
+{
+  "name": "Evergreen Compost Routes",
+  "short_name": "Evergreen",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c160e",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
