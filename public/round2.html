@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What's New — Evergreen</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #f5faf6;
+  --surface:  #ffffff;
+  --border:   #d8ead9;
+  --accent:   #16a34a;
+  --accent-l: #dcfce7;
+  --accent-d: #14532d;
+  --text:     #1a2b1d;
+  --muted:    #5e7e63;
+  --amber:    #d97706;
+  --amber-l:  #fef3c7;
+  --blue:     #1d4ed8;
+  --blue-l:   #dbeafe;
+  --red:      #dc2626;
+  --red-l:    #fee2e2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:       #0c160e;
+    --surface:  #141f16;
+    --border:   #1e3022;
+    --accent:   #4ade80;
+    --accent-l: #14532d;
+    --text:     #e2ede4;
+    --muted:    #6b9070;
+    --amber-l:  #451a03;
+    --blue-l:   #0c1e40;
+    --blue:     #93c5fd;
+    --red-l:    #450a0a;
+    --red:      #fca5a5;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:       #0c160e;
+  --surface:  #141f16;
+  --border:   #1e3022;
+  --accent:   #4ade80;
+  --accent-l: #14532d;
+  --text:     #e2ede4;
+  --muted:    #6b9070;
+  --amber-l:  #451a03;
+  --blue-l:   #0c1e40;
+  --blue:     #93c5fd;
+  --red-l:    #450a0a;
+  --red:      #fca5a5;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* ── Hero ── */
+.hero {
+  background: var(--accent);
+  color: #fff;
+  padding: 52px 24px 48px;
+  text-align: center;
+}
+.hero-eyebrow {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-bottom: 12px;
+}
+.hero-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+  margin-bottom: 16px;
+}
+.hero-sub {
+  font-size: 16px;
+  opacity: 0.9;
+  max-width: 520px;
+  margin: 0 auto 28px;
+  text-wrap: balance;
+}
+.hero-links {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.hero-btn {
+  display: inline-block;
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.hero-btn:hover { opacity: 0.88; }
+.hero-btn.primary { background: #fff; color: var(--accent-d); }
+.hero-btn.secondary { background: rgba(255,255,255,0.18); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+
+/* ── Section ── */
+.section {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+.chapter-label {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  padding: 36px 0 4px;
+}
+.chapter-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 24px;
+  text-wrap: balance;
+}
+
+/* ── Feature card ── */
+.feature-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.feature-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.feature-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.feature-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.feature-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 5px;
+  margin-top: 3px;
+  display: inline-block;
+}
+.tag-driver   { background: var(--blue-l);   color: var(--blue); }
+.tag-dispatch { background: var(--accent-l); color: var(--accent); }
+.tag-both     { background: var(--amber-l);  color: var(--amber); }
+
+.feature-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.feature-desc {
+  font-size: 15px;
+  line-height: 1.65;
+}
+.feature-desc b { font-weight: 600; }
+
+.value-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.value-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.value-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.value-text b { color: var(--text); font-weight: 600; }
+
+/* ── Chip demo ── */
+.chip-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 7px;
+}
+.chip.red    { background: var(--red-l);   color: var(--red);   }
+.chip.amber  { background: var(--amber-l); color: var(--amber); }
+.chip.gray   { background: var(--border);  color: var(--muted); }
+.chip.blue   { background: var(--blue-l);  color: var(--blue);  }
+.chip.green  { background: var(--accent-l);color: var(--accent);}
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+
+/* ── Summary ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.summary-tile {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 14px;
+  text-align: center;
+}
+.summary-icon { font-size: 24px; margin-bottom: 6px; }
+.summary-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* ── CTA ── */
+.cta-block {
+  background: var(--accent);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  color: #fff;
+}
+.cta-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.cta-sub { font-size: 14px; opacity: 0.9; margin-bottom: 20px; }
+.cta-links { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.cta-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: 10px;
+  padding: 10px 18px;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  width: 100%;
+  max-width: 380px;
+  transition: background 0.15s;
+}
+.cta-link:hover { background: rgba(255,255,255,0.25); }
+.cta-link-label { flex: 1; text-align: left; }
+.cta-link-url { font-size: 11px; opacity: 0.75; font-weight: 400; }
+
+/* ── Footer ── */
+.page-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 24px 20px 40px;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow">Evergreen Compost · Round 2</div>
+  <div class="hero-title">Your routes, smarter.<br>Your drivers, supported.</div>
+  <div class="hero-sub">Here's everything that's been added to the Evergreen system — built around how your team actually works.</div>
+  <div class="hero-links">
+    <a class="hero-btn primary" href="/dispatch.html">Open Dispatcher Dashboard</a>
+    <a class="hero-btn secondary" href="/">Driver App</a>
+  </div>
+</div>
+
+<!-- For Drivers -->
+<div class="section">
+  <div class="chapter-label">For your drivers</div>
+  <div class="chapter-title">Navigation that knows your routes</div>
+
+  <!-- Maps tab -->
+  <div class="feature-card">
+    <div class="feature-head">
+      <div class="feature-icon">🗺️</div>
+      <div>
+        <div class="feature-title">Live Route Map</div>
+        <div class="feature-tag tag-driver">Driver app</div>
+      </div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-desc">Drivers tap the <b>Map tab</b> and see their entire route plotted — every stop, in order, on a live Google Map with real-time traffic. No address entry, no setup. The route is already there.</div>
+      <div class="value-row">
+        <div class="value-icon">✅</div>
+        <div class="value-text"><b>Stops are color-coded</b> to match your Google Sheet row colors — so drivers instantly recognize accounts they know.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Planned vs Live -->
+  <div class="feature-card">
+    <div class="feature-head">
+      <div class="feature-icon">⚡</div>
+      <div>
+        <div class="feature-title">Planned vs. Live Route</div>
+        <div class="feature-tag tag-driver">Driver app</div>
+      </div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-desc">Two modes, one tap to switch:<br><br>
+        <b>📋 Planned</b> — follows the order in your Google Sheet exactly, shown in green.<br>
+        <b>⚡ Live</b> — recalculates the remaining stops using real-time traffic to find the fastest order, shown in amber.
+      </div>
+      <div class="value-row">
+        <div class="value-icon">🕐</div>
+        <div class="value-text">Live mode shows <b>estimated time saved</b> vs. the planned order — drivers can decide if the optimization is worth it that day.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GPS tracking -->
+  <div class="feature-card">
+    <div class="feature-head">
+      <div class="feature-icon">📍</div>
+      <div>
+        <div class="feature-title">Real-Time GPS Navigation</div>
+        <div class="feature-tag tag-driver">Driver app</div>
+      </div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-desc">A blue dot tracks the driver's live position on the map. A card at the bottom of the screen shows the current stop — name, address, any special notes — and a live <b>ETA badge</b> that updates as they drive.</div>
+      <div class="value-row">
+        <div class="value-icon">🚗</div>
+        <div class="value-text">When the driver pulls within <b>80 metres</b> of their next stop, the app gently prompts: <em>"Arrived? ✓ Done"</em> — one tap marks it complete and moves to the next stop automatically.</div>
+      </div>
+      <div class="value-row">
+        <div class="value-icon">↗️</div>
+        <div class="value-text">The <b>Navigate</b> button hands off to Google Maps for turn-by-turn — so drivers get the best of both worlds: your route data here, Google's navigation there.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Access chips -->
+  <div class="feature-card">
+    <div class="feature-head">
+      <div class="feature-icon">🔑</div>
+      <div>
+        <div class="feature-title">Gate Codes &amp; Access Notes</div>
+        <div class="feature-tag tag-both">Driver + Dispatch</div>
+      </div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-desc">Whatever dispatch types in the <b>Driving Directions column</b> of the sheet — gate codes, bin colors, driveway notes, "ring the bell" — now shows as a visible blue chip on every stop card and in the navigation view. Drivers never have to search for it.</div>
+      <div class="value-row">
+        <div class="value-icon">📋</div>
+        <div class="value-text">Dispatch updates the sheet → drivers see it <b>instantly</b>, no app update needed.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident reports -->
+  <div class="feature-card">
+    <div class="feature-head">
+      <div class="feature-icon">📋</div>
+      <div>
+        <div class="feature-title">2-Tap Incident Reports</div>
+        <div class="feature-tag tag-both">Driver + Dispatch</div>
+      </div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-desc">Four quick buttons appear on every stop. Tap one, answer one follow-up question, done. The report saves directly to the Google Sheet as a structured note — no phone calls, no paper, no guessing later what happened.</div>
+      <div class="chip-demo">
+        <span class="chip red">🚫 Contamination</span>
+        <span class="chip amber">📦 Overflow</span>
+        <span class="chip gray">⏭ Skip</span>
+        <span class="chip blue">📷 Photo</span>
+      </div>
+      <div class="value-row">
+        <div class="value-icon">🔍</div>
+        <div class="value-text">Each type drills down to specifics — contamination asks <b>what kind</b> (black bags, recyclables, food waste…) and <b>how much</b>. Overflow asks severity and what the driver did. Skip asks the reason. Every report is traceable.</div>
+      </div>
+      <div class="value-row">
+        <div class="value-icon">📷</div>
+        <div class="value-text">Photo reports open the phone camera directly. The note records that a photo was taken for follow-up.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- For Dispatch -->
+<div class="section">
+  <div class="chapter-label">For dispatch</div>
+  <div class="chapter-title">See everything, from anywhere</div>
+
+  <!-- Dispatcher dashboard -->
+  <div class="feature-card">
+    <div class="feature-head">
+      <div class="feature-icon">📡</div>
+      <div>
+        <div class="feature-title">Dispatcher Dashboard</div>
+        <div class="feature-tag tag-dispatch">Dispatch</div>
+      </div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-desc">One page — open on any browser, any device — shows every route at a glance. No login, no refresh. Leave it on a second monitor or tablet all day and it stays current.</div>
+
+      <div class="value-row">
+        <div class="value-icon">📊</div>
+        <div class="value-text"><b>Fleet summary bar</b> at the top: total stops done across all routes, overall progress, and today's incident count.</div>
+      </div>
+      <div class="value-row">
+        <div class="value-icon">🃏</div>
+        <div class="value-text">Each route card shows: <b>live progress bar</b> with stops done, the <b>current stop</b> the driver is at, and <b>incident chips</b> for anything filed that day — color-coded so problems jump out immediately.</div>
+      </div>
+      <div class="value-row">
+        <div class="value-icon">🟢</div>
+        <div class="value-text">The <b>green live dot</b> means the page is connected. The second a driver marks a stop done or files a report, the dashboard updates — no refresh ever needed.</div>
+      </div>
+      <div class="value-row">
+        <div class="value-icon">☀️</div>
+        <div class="value-text">Dark mode for a second monitor. Light mode for a bright office. Toggle anytime.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- What it all means -->
+<div class="section">
+  <div class="chapter-label">The big picture</div>
+  <div class="chapter-title">Everything connected, nothing lost</div>
+
+  <div class="summary-grid">
+    <div class="summary-tile">
+      <div class="summary-icon">📱</div>
+      <div class="summary-label">Works on any phone — no install</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon">📊</div>
+      <div class="summary-label">Syncs to your existing Google Sheet</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon">⚡</div>
+      <div class="summary-label">Real-time — changes appear instantly</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon">🔒</div>
+      <div class="summary-label">Billing columns never exposed to drivers</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon">🗺️</div>
+      <div class="summary-label">GPS navigation built in</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon">📋</div>
+      <div class="summary-label">Every incident traceable in the sheet</div>
+    </div>
+  </div>
+
+  <div class="cta-block">
+    <div class="cta-title">Try it now</div>
+    <div class="cta-sub">Everything is live — open on any device, right now.</div>
+    <div class="cta-links">
+      <a class="cta-link" href="/dispatch.html">
+        <span>📡</span>
+        <span class="cta-link-label">Dispatcher Dashboard</span>
+        <span class="cta-link-url">See all routes live</span>
+      </a>
+      <a class="cta-link" href="/">
+        <span>🚛</span>
+        <span class="cta-link-label">Driver App</span>
+        <span class="cta-link-url">Tap a route to explore</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-footer">
+  Built for Evergreen Compost · Syncs to your Google Sheet · Nothing to install · Always improving
+</div>
+
+</body>
+</html>
