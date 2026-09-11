@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evergreen Internal Briefing</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f7f8f6;
+  --surface:   #ffffff;
+  --surface-2: #f0f3ef;
+  --border:    #dde3d9;
+  --forest:    #1b3a2a;
+  --accent:    #2d7d4f;
+  --accent-l:  #e3f0e8;
+  --text:      #1c2a21;
+  --muted:     #64786b;
+  --amber:     #b45309;
+  --amber-l:   #fdf0dc;
+  --red:       #b91c1c;
+  --red-l:     #fde8e8;
+  --blue:      #1e4e79;
+  --blue-l:    #e4edf5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1410; --surface: #161f19; --surface-2: #1b2620; --border: #253328;
+    --forest: #a8d5bb; --accent: #5cb37f; --accent-l: #16311f; --text: #e4ede7;
+    --muted: #7d9686; --amber: #e0a35c; --amber-l: #2e2113;
+    --red: #f08b8b; --red-l: #33191a; --blue: #8fbadd; --blue-l: #14242f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1410; --surface: #161f19; --surface-2: #1b2620; --border: #253328;
+  --forest: #a8d5bb; --accent: #5cb37f; --accent-l: #16311f; --text: #e4ede7;
+  --muted: #7d9686; --amber: #e0a35c; --amber-l: #2e2113;
+  --red: #f08b8b; --red-l: #33191a; --blue: #8fbadd; --blue-l: #14242f;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  line-height: 1.6; font-size: 15px;
+}
+.page { max-width: 760px; margin: 0 auto; padding: 0 22px 64px; }
+
+/* Masthead */
+.internal-tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--amber-l); color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: 3px; padding: 3px 9px;
+  margin-bottom: 14px;
+}
+.masthead { padding: 34px 0 20px; border-bottom: 3px solid var(--forest); }
+.doc-h1 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: clamp(28px, 5vw, 38px); font-weight: 600;
+  line-height: 1.14; letter-spacing: -0.015em;
+  color: var(--forest); text-wrap: balance; margin-bottom: 10px;
+}
+.doc-standfirst { font-size: 16px; color: var(--muted); max-width: 58ch; }
+.byline { margin-top: 16px; font-size: 13px; color: var(--muted); }
+.byline b { color: var(--text); font-weight: 600; }
+
+/* Nav cards */
+.link-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px; margin: 24px 0 8px;
+}
+.link-card {
+  display: block; text-decoration: none;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 6px; padding: 14px 16px; color: var(--text);
+  transition: border-color 0.15s;
+}
+.link-card:hover { border-color: var(--accent); }
+.lc-eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+}
+.lc-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+.lc-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.lc-external { border-color: var(--blue); }
+.lc-external .lc-eyebrow { color: var(--blue); }
+
+/* Sections */
+section { margin-bottom: 42px; }
+.sec-num {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  font-weight: 600; color: var(--accent); letter-spacing: 0.05em;
+}
+.sec-h {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 24px; font-weight: 600; color: var(--forest);
+  margin: 4px 0 10px; text-wrap: balance; letter-spacing: -0.01em;
+}
+.sec-intro { color: var(--muted); margin-bottom: 18px; max-width: 64ch; }
+p { margin-bottom: 12px; max-width: 66ch; }
+p:last-child { margin-bottom: 0; }
+h3.sub {
+  font-size: 15px; font-weight: 600; color: var(--forest);
+  margin: 22px 0 8px;
+}
+
+/* Feature list */
+.feat-list { display: flex; flex-direction: column; gap: 10px; }
+.feat {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 5px; padding: 13px 15px;
+}
+.feat-icon { font-size: 17px; flex-shrink: 0; line-height: 1.4; }
+.feat-body { flex: 1; }
+.feat-h { font-weight: 600; font-size: 14.5px; margin-bottom: 2px; }
+.feat-p { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
+/* Finding callouts */
+.finding {
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  padding: 14px 16px; margin-bottom: 14px;
+  border-radius: 0 5px 5px 0;
+}
+.finding.warn  { border-left-color: var(--amber); }
+.finding.alert { border-left-color: var(--red); }
+.f-h { font-weight: 600; margin-bottom: 5px; font-size: 15px; color: var(--forest); }
+.f-p { font-size: 14px; line-height: 1.55; }
+.f-p b { font-weight: 600; }
+.f-so {
+  font-size: 13.5px; color: var(--muted);
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dotted var(--border);
+}
+.f-so b { color: var(--accent); font-weight: 600; }
+.finding.warn .f-so b  { color: var(--amber); }
+.finding.alert .f-so b { color: var(--red); }
+
+/* Table */
+.table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 560px; }
+thead th {
+  background: var(--surface-2); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; font-weight: 600; color: var(--muted);
+  text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td { padding: 11px 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+.mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sub-line { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Peer chips */
+.peer-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.peer {
+  font-size: 12.5px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 3px;
+  padding: 4px 10px;
+}
+
+/* Action checklist */
+.actions { display: flex; flex-direction: column; gap: 9px; }
+.action {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 5px; padding: 12px 15px;
+}
+.act-box {
+  width: 15px; height: 15px; border: 1.5px solid var(--muted);
+  border-radius: 3px; flex-shrink: 0; margin-top: 3px;
+}
+.act-body { flex: 1; }
+.act-h { font-weight: 600; font-size: 14px; }
+.act-p { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+.act-who {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;
+  font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--accent-l); color: var(--accent);
+  border-radius: 3px; padding: 2px 7px; flex-shrink: 0; margin-top: 2px;
+}
+
+.footer {
+  border-top: 1px solid var(--border); padding-top: 20px; margin-top: 40px;
+  font-size: 12.5px; color: var(--muted); line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="internal-tag">Internal — not for distribution</div>
+    <h1 class="doc-h1">Operations Update &amp; the Aspen One Opportunity</h1>
+    <p class="doc-standfirst">What's now live in the field, what the route sheet reveals about our position with Aspen One, and what needs deciding before the call with Robert.</p>
+    <div class="byline">Prepared for <b>Alyssa Reindel</b> and <b>Dave</b> · September 2026</div>
+  </div>
+
+  <div class="link-row">
+    <a class="link-card" href="/demo.html">
+      <div class="lc-eyebrow">Watch first</div>
+      <div class="lc-title">▶ Navigation Demo</div>
+      <div class="lc-desc">Drives a real route from our sheet, turn by turn</div>
+    </a>
+    <a class="link-card" href="/dispatch.html">
+      <div class="lc-eyebrow">Live now</div>
+      <div class="lc-title">📡 Dispatcher Dashboard</div>
+      <div class="lc-desc">Every route's progress, updating in real time</div>
+    </a>
+    <a class="link-card lc-external" href="/aspenone.html">
+      <div class="lc-eyebrow">Send to Robert</div>
+      <div class="lc-title">Aspen One Overview</div>
+      <div class="lc-desc">Client-facing document — no internal strategy</div>
+    </a>
+  </div>
+
+  <!-- 01 -->
+  <section style="margin-top:38px;">
+    <div class="sec-num">01</div>
+    <h2 class="sec-h">What's now live for drivers and dispatch</h2>
+    <p class="sec-intro">All of this is deployed and working today. Drivers need no install and no password — they open a link and tap their route.</p>
+
+    <div class="feat-list">
+      <div class="feat">
+        <div class="feat-icon">🧭</div>
+        <div class="feat-body">
+          <div class="feat-h">Turn-by-turn navigation with the route pre-loaded</div>
+          <div class="feat-p">Street-level view that rotates with the road, live ETA, and satellite view for spotting driveways and bin placement before pulling up. Drivers can hand off to Google Maps, Waze, or Apple Maps.</div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📍</div>
+        <div class="feat-body">
+          <div class="feat-h">Arrival detection</div>
+          <div class="feat-p">Within 80 metres of a stop the app asks "Arrived?" — one tap marks it done and advances. Less fumbling with a phone while working.</div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🚦</div>
+        <div class="feat-body">
+          <div class="feat-h">Traffic-aware routing with reroute prompts</div>
+          <div class="feat-p">Shows whether traffic is light, moderate, or heavy and how many minutes it's costing. If conditions shift enough to save 8+ minutes, the driver is offered a faster order — it never reroutes on its own.</div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📋</div>
+        <div class="feat-body">
+          <div class="feat-h">Two-tap incident reporting</div>
+          <div class="feat-p">Contamination, overflow, skip, or photo — each drills down to specifics (what kind, how much, why) and writes a structured note straight to the sheet. Replaces the free-text notes we've been keeping by hand.</div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📡</div>
+        <div class="feat-body">
+          <div class="feat-h">Dispatcher dashboard</div>
+          <div class="feat-p">Every route's progress, the stop each driver is on, and incidents filed today — all on one page, updating live. Nothing to refresh.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section>
+    <div class="sec-num">02</div>
+    <h2 class="sec-h">What the route sheet shows about Aspen One</h2>
+    <p class="sec-intro">Reading the live route sheet against the six properties in Virginia's email to Robert turned up a stronger position than the pricing alone suggests.</p>
+
+    <div class="finding">
+      <div class="f-h">Every property is already on an established route</div>
+      <div class="f-p">None of the six requires a dedicated trip. <b>The Little Nell and the Residences are consecutive stops</b> on the downtown Aspen commercial run we drive Monday, Wednesday and Friday.</div>
+      <div class="f-so"><b>So:</b> our marginal cost to serve Aspen One is far below what a competitor would face building a route from scratch across Aspen, the AABC and Basalt at three different frequencies. That is what lets us hold price without discounting.</div>
+    </div>
+
+    <div class="table-scroll" style="margin-bottom:18px;">
+      <table>
+        <thead>
+          <tr><th>Property</th><th>Route</th><th>Days</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>The Little Nell<div class="sub-line">675 E Durant</div></td><td>Downtown Aspen commercial</td><td class="mono">M · W · F</td></tr>
+          <tr><td>Residences at Little Nell<div class="sub-line">501 E Dean — consecutive with the Nell</div></td><td>Downtown Aspen commercial</td><td class="mono">M · W · F</td></tr>
+          <tr><td>Limelight Aspen<div class="sub-line">355 S Monarch</div></td><td>Downtown Aspen commercial</td><td class="mono">M · F</td></tr>
+          <tr><td>Mountain Dining — Buttermilk<div class="sub-line">38700 Hwy 82</div></td><td>Upper Valley</td><td class="mono">M · F</td></tr>
+          <tr><td>ASC Headquarters<div class="sub-line">117 AABC — four more AABC stops on the run</div></td><td>Upper Valley</td><td class="mono">Thursday</td></tr>
+          <tr><td>ASC Riverside Plaza<div class="sub-line">255 Gold Rivers Ct, Basalt</div></td><td>Tuesday 4WD</td><td class="mono">Tuesday</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <div class="f-h">We already service the Nell's entire peer group</div>
+      <div class="f-p">The stops immediately around The Little Nell on that same run:</div>
+      <div class="peer-grid" style="margin-top:10px;">
+        <span class="peer">Hotel Jerome</span><span class="peer">Matsuhisa</span><span class="peer">Casa Tua</span>
+        <span class="peer">Clark's Oyster Bar</span><span class="peer">Betula</span><span class="peer">Sant Ambroeus</span>
+        <span class="peer">Catch Steak</span><span class="peer">W Aspen</span><span class="peer">Dancing Bear</span>
+        <span class="peer">White House Tavern</span><span class="peer">316 Steakhouse</span><span class="peer">Stranahan's</span>
+        <span class="peer">The Wild Fig</span><span class="peer">Acquolina</span><span class="peer">French Alpine Bistro</span>
+        <span class="peer">Duemani</span><span class="peer">Jüs</span><span class="peer">City Market</span>
+      </div>
+      <div class="f-so"><b>So:</b> Robert doesn't have to take our word that we can handle luxury hospitality volume — we already do it for the properties on either side of his. Worth naming in the call, though see the note on client confidentiality below.</div>
+    </div>
+
+    <div class="finding">
+      <div class="f-h">Our institutional book is a credibility asset</div>
+      <div class="f-p">The sheet also shows <b>City of Aspen</b>, <b>Aspen Fire Protection District</b>, <b>ACES</b>, <b>RFTA</b>, <b>Town of Basalt</b>, and school districts across Aspen, Basalt and Carbondale. The City work goes well beyond pickup — cart repairs, dumpster swaps, welding, direct municipal billing.</div>
+      <div class="f-so"><b>So:</b> we are already trusted infrastructure in this valley, not a small vendor asking for a chance.</div>
+    </div>
+
+    <div class="finding alert">
+      <div class="f-h">Contamination is costing real money</div>
+      <div class="f-p">The notes log a <b>$265.26 contamination fee</b> from South Canyon, plus entries like <em>"1 black plastic bag (trash?) in Jimoto cart"</em> and <em>"half of the food was still in packaging."</em></div>
+      <div class="f-so"><b>So:</b> pitch contamination reporting to Robert as <b>cost avoidance for Aspen One</b>, not surveillance of their kitchens. Their F&amp;B teams generate it, it costs both of us, and structured per-site data is how it gets reduced. Framed that way it's a service, not a complaint.</div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section>
+    <div class="sec-num">03</div>
+    <h2 class="sec-h">The strategic read on Robert</h2>
+
+    <p>Robert is new in the seat and has told us plainly that Aspen One intends to <b>"centralize and standardize"</b> waste and composting. From a Head of Sourcing that usually means one of two things: consolidate to fewer vendors on better terms, or run a competitive process.</p>
+
+    <p>Six informal handshake arrangements is the most exposed version of where we could be standing when that happens. The good news is that <b>Virginia reached out before he built his strategy</b> — we have a chance to shape the standard rather than respond to it.</p>
+
+    <h3 class="sub">The trap to avoid</h3>
+    <p>If the conversation becomes "justify $2,460 a month," we are competing on a national hauler's terms. A large competitor can bundle trash, recycling and compost and show a lower headline number.</p>
+
+    <h3 class="sub">The ground to fight on instead</h3>
+    <p>Aspen One's brand rests on climate credibility, and their sustainability team has to publish diversion figures. <b>Nobody is currently capturing the tonnage we divert for them.</b> If we become the vendor supplying auditable diversion data per property, we stop being a line item and become part of their reporting infrastructure — which is considerably harder to swap out.</p>
+
+    <h3 class="sub">The upside nobody has named yet</h3>
+    <p>Six properties is a fraction of Aspen One. Snowmass, Highlands, Aspen Mountain dining, Limelight Snowmass and the rest of the Nell's outlets are not on our list. A consolidation conversation is the natural moment to ask which locations belong in scope — and we are the only bidder who can say the routes already run past most of them.</p>
+  </section>
+
+  <!-- 04 -->
+  <section>
+    <div class="sec-num">04</div>
+    <h2 class="sec-h">Decisions and loose ends before the call</h2>
+
+    <div class="actions">
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Fix the ASC folder permissions</div>
+          <div class="act-p">Alyssa can't add documents because the folder sits in a personal My Drive with view-only access. Either grant Editor, or better, move it to a Shared Drive so contracts don't depend on one person's account.</div>
+        </div>
+        <div class="act-who">Virginia</div>
+      </div>
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Decide whether to name other clients to Robert</div>
+          <div class="act-p">The peer-group argument is strong, but it means telling Aspen One which of their neighbours and competitors we service. Standard practice in B2B, and none of it is confidential — but it should be a deliberate choice, not an accident.</div>
+        </div>
+        <div class="act-who">Alyssa</div>
+      </div>
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Decide on scales at the Nell and Buttermilk</div>
+          <div class="act-p">Those two sites are roughly three-quarters of estimated Aspen One tonnage. Weighing them converts our diversion figures from estimates into numbers their sustainability team can publish. Cost and practicality need a real answer before we offer it.</div>
+        </div>
+        <div class="act-who">Dave</div>
+      </div>
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Create the Riverside Plaza draft agreement</div>
+          <div class="act-p">Noted as still missing. It's the only one of the six without a draft.</div>
+        </div>
+        <div class="act-who">Virginia</div>
+      </div>
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Confirm the full Aspen One property list</div>
+          <div class="act-p">Worth auditing the sheet for other locations under the Aspen One umbrella before Robert produces his own list. Better to bring it than be corrected.</div>
+        </div>
+        <div class="act-who">Virginia</div>
+      </div>
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Correct the Little Nell address in the sheet</div>
+          <div class="act-p">It's entered as "675 Durrant Street" — misspelled and missing the avenue. Minor, but it's why the property is easy to miss when searching our own records.</div>
+        </div>
+        <div class="act-who">Virginia</div>
+      </div>
+      <div class="action">
+        <div class="act-box"></div>
+        <div class="act-body">
+          <div class="act-h">Agree the seasonal terms position</div>
+          <div class="act-p">Off-season frequencies vary by up to a month at several sites. Better to arrive with a proposed structure than to negotiate it live.</div>
+        </div>
+        <div class="act-who">Alyssa &amp; Dave</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <b>EverGreen ZeroWaste</b> · A family-owned Colorado Public Benefit Corporation<br>
+    Compost collections, roll-off services, zero waste events, and waste diversion education for the Roaring Fork and Colorado River Valleys.<br><br>
+    Route and contamination findings drawn from the live route sheet and driver notes log, September 2026.
+  </div>
+
+</div>
+</body>
+</html>

@@ -256,6 +256,22 @@ tfoot td {
   border: 1px solid var(--border);
 }
 
+/* ── Peer chips ── */
+.peer-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.peer {
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 5px 11px;
+  color: var(--text);
+}
+
 /* ── Differentiator list ── */
 .diff-list { display: flex; flex-direction: column; gap: 14px; }
 .diff {
@@ -460,9 +476,98 @@ tfoot td {
     <p style="margin-top:18px;">At approximately <b>179 short tons diverted annually</b>, the avoided emissions of roughly <b>104 metric tons CO₂e</b> is comparable to taking about <b>23 passenger vehicles off the road for a year</b>. That figure belongs in Aspen One's reporting — and right now no one is capturing it.</p>
   </section>
 
-  <!-- 3 · Verification -->
+  <!-- 3 · Route integration -->
   <section>
     <div class="sec-num">03</div>
+    <h2 class="sec-h">These properties are already embedded in established routes</h2>
+    <p class="sec-intro">Each Aspen One location sits on a route Evergreen already runs — not as a dedicated trip, but as a stop within an existing run. This has direct bearing on both pricing stability and transition risk.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Existing route</th>
+            <th>Service days</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="prop-name">The Little Nell</div><div class="prop-addr">675 E Durant Ave</div></td>
+            <td>Downtown Aspen commercial</td>
+            <td class="num">Mon · Wed · Fri</td>
+          </tr>
+          <tr>
+            <td><div class="prop-name">Residences at Little Nell</div><div class="prop-addr">501 E Dean St</div></td>
+            <td>Downtown Aspen commercial<div class="prop-addr">Consecutive stop with The Little Nell</div></td>
+            <td class="num">Mon · Wed · Fri</td>
+          </tr>
+          <tr>
+            <td><div class="prop-name">Limelight Hotel Aspen</div><div class="prop-addr">355 S Monarch St</div></td>
+            <td>Downtown Aspen commercial</td>
+            <td class="num">Mon · Fri</td>
+          </tr>
+          <tr>
+            <td><div class="prop-name">Mountain Dining — Buttermilk</div><div class="prop-addr">38700 Hwy 82</div></td>
+            <td>Upper Valley</td>
+            <td class="num">Mon · Fri</td>
+          </tr>
+          <tr>
+            <td><div class="prop-name">Aspen Ski Co — Headquarters</div><div class="prop-addr">117 AABC</div></td>
+            <td>Upper Valley — AABC cluster<div class="prop-addr">Four additional AABC stops on the same run</div></td>
+            <td class="num">Thursday</td>
+          </tr>
+          <tr>
+            <td><div class="prop-name">Aspen Ski Co — Riverside Plaza</div><div class="prop-addr">255 Gold Rivers Ct, Basalt</div></td>
+            <td>Basalt / mid-valley</td>
+            <td class="num">Tuesday</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="method" style="margin-top:18px;">
+      <h4>Why this matters commercially</h4>
+      <p style="margin-bottom:8px;">The Little Nell and the Residences are <b>consecutive stops</b> on a downtown run that Evergreen drives three times a week. The trucks, the routing, and the driver familiarity are already committed.</p>
+      <p style="margin-bottom:0;">A competing hauler bidding on these six properties would be establishing a route from nothing — six scattered locations across Aspen, the AABC, and Basalt, at three different frequencies. Evergreen's marginal cost to serve them is a fraction of that, which is what allows pricing to hold steady rather than requiring a premium for low-density commercial stops.</p>
+    </div>
+  </section>
+
+  <!-- 4 · Peer group -->
+  <section>
+    <div class="sec-num">04</div>
+    <h2 class="sec-h">The same run already serves downtown Aspen hospitality</h2>
+    <p class="sec-intro">The Little Nell and the Residences sit mid-route on Evergreen's downtown Aspen commercial run. The stops immediately around them:</p>
+
+    <div class="peer-grid">
+      <span class="peer">Hotel Jerome</span>
+      <span class="peer">Matsuhisa</span>
+      <span class="peer">Casa Tua</span>
+      <span class="peer">Clark's Oyster Bar</span>
+      <span class="peer">Betula Aspen</span>
+      <span class="peer">Sant Ambroeus</span>
+      <span class="peer">Catch Steak</span>
+      <span class="peer">W Aspen</span>
+      <span class="peer">Dancing Bear</span>
+      <span class="peer">White House Tavern</span>
+      <span class="peer">French Alpine Bistro</span>
+      <span class="peer">316 Steakhouse</span>
+      <span class="peer">Stranahan's</span>
+      <span class="peer">The Wild Fig</span>
+      <span class="peer">Acquolina</span>
+      <span class="peer">Duemani</span>
+      <span class="peer">Jüs</span>
+      <span class="peer">Silvers Aspen</span>
+      <span class="peer">City Market</span>
+      <span class="peer">Elks Lodge</span>
+    </div>
+
+    <p style="margin-top:18px;">Evergreen's downtown organics operation is not built around a handful of accounts — it is the established infrastructure for Aspen's hospitality core. Alongside it, the same operation serves <b>the City of Aspen</b>, the <b>Aspen Fire Protection District</b>, <b>ACES</b>, <b>RFTA</b>, the <b>Town of Basalt</b>, and school districts across Aspen, Basalt and Carbondale.</p>
+  </section>
+
+  <!-- 5 · Verification -->
+  <section>
+    <div class="sec-num">05</div>
     <h2 class="sec-h">Verified service delivery</h2>
     <p class="sec-intro">Every collection is now logged by the driver in the field, in real time. This addresses the most common failure in commercial waste contracts: disputed service.</p>
 
@@ -487,7 +592,7 @@ tfoot td {
 
   <!-- 4 · Why Evergreen -->
   <section>
-    <div class="sec-num">04</div>
+    <div class="sec-num">06</div>
     <h2 class="sec-h">Why this partnership holds up under consolidation</h2>
     <div class="diff-list">
       <div class="diff">
@@ -523,7 +628,7 @@ tfoot td {
 
   <!-- 5 · Next steps -->
   <section>
-    <div class="sec-num">05</div>
+    <div class="sec-num">07</div>
     <h2 class="sec-h">Proposed next steps</h2>
     <p class="sec-intro">Evergreen is flexible on structure — a single consolidated agreement across all properties, or individual agreements per site, whichever fits Aspen One's procurement standards.</p>
     <div class="steps">
