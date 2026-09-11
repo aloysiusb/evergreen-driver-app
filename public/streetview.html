@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f7f8f6; --surface:#ffffff; --surface-2:#f0f3ef; --border:#dde3d9;
@@ -57,7 +57,7 @@ select{font-family:inherit;font-size:13px;font-weight:600;padding:7px 11px;
 /* Panorama */
 .pano-wrap{position:relative;border-radius:10px;overflow:hidden;border:1.5px solid var(--border);
   background:var(--surface-2)}
-#pano{width:100%;height:400px}
+#pano{width:100%;height:clamp(240px,48vh,400px)}
 #pano-msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   text-align:center;padding:24px;color:var(--muted);font-size:14px;background:var(--surface-2)}
 #pano-msg.show{display:flex}
@@ -73,7 +73,7 @@ select{font-family:inherit;font-size:13px;font-weight:600;padding:7px 11px;
 .nc-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .nc-idx{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
   background:var(--forest);color:var(--bg);border-radius:3px;padding:2px 7px}
-.nc-done{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+.nc-done{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
   padding:2px 7px;border-radius:3px;background:var(--accent-l);color:var(--accent)}
 .nc-name{font-family:'Source Serif 4',Georgia,serif;font-size:19px;font-weight:600;
   color:var(--forest);line-height:1.2;margin-bottom:2px}

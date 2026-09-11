@@ -1,6 +1,7 @@
 // server.js
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,6 +15,7 @@ import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoice
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 
@@ -291,7 +293,17 @@ app.get("/driver/:routeId", (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'driver.html'));
 });
 
-app.use(express.static(PUBLIC_DIR));
+// Pages revalidate so edits go live immediately; css/js/icons cache for a day
+// since drivers often reopen the app repeatedly on cell service.
+app.use(express.static(PUBLIC_DIR, {
+  etag: true,
+  setHeaders(res, filePath) {
+    res.setHeader(
+      "Cache-Control",
+      filePath.endsWith(".html") ? "no-cache" : "public, max-age=86400"
+    );
+  },
+}));
 
 // --- WebSocket layer for real-time sync across drivers -------------------
 
