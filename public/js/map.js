@@ -135,8 +135,10 @@ function makePin(color, done, isCurrent) {
 // A real stop needs a street number — filters out note rows that slipped
 // through the parser ("Testing", "GET 06/23 EOW") and would otherwise
 // geocode to random locations far off route.
+// US street addresses start with a house number: "2561 Dolores Way".
+// Note rows that happen to contain digits ("GET 06/23 EOW") do not.
 function looksLikeAddress(s) {
-  return /\d/.test(s.address || '') && (s.address || '').trim().length > 4;
+  return /^\d+\s+\S/.test((s.address || '').trim());
 }
 
 // Discard geocode results that land absurdly far from the route's centre —

@@ -606,7 +606,7 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
       if (!r.ok) continue;
       const d = await r.json();
       // Real stops only — must have a street number (filters out note rows)
-      const s = d.items.filter(x => !x.isSectionHeader && /\d/.test(x.address || '') && (x.address||'').trim().length > 4);
+      const s = d.items.filter(x => !x.isSectionHeader && /^\d+\s+\S/.test((x.address || '').trim()));
       if (s.length >= 4) { items = s.slice(0, 6); break; }
     } catch {}
   }
@@ -717,6 +717,14 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
     icon: driverIcon(0),
     zIndex: 200,
   });
+
+  // The driver begins at their first stop with it already collected, and
+  // drives to the next one — otherwise the arrival check fires instantly
+  // because the route polyline starts on top of stop 1.
+  doneSet.add(0);
+  markers[0].setIcon(pin('done'));
+  curStop = 1;
+  markers[1].setIcon(pin('current'));
 
   renderDots();
   renderCard();
@@ -919,11 +927,13 @@ function arriveAt(idx) {
   cancelAnimationFrame(rafId);
   document.getElementById('play-btn').textContent = '▶ Play';
 
+  const st = stops[idx];
   document.getElementById('speed-num').textContent = '0';
   document.getElementById('turn-arrow').textContent = '🏁';
   document.getElementById('turn-dist').textContent = 'Arrived';
+  document.getElementById('turn-text').textContent = st.accountName || st.address;
+  document.getElementById('turn-next').textContent = '';
 
-  const st = stops[idx];
   const toast = document.getElementById('arrival-toast');
   toast.innerHTML = `<span>📍 Arrived at <b>${esc(st.accountName || st.address)}</b>?</span>
     <button class="toast-done-btn" onclick="confirmArrival(${idx})">✓ Done</button>`;
