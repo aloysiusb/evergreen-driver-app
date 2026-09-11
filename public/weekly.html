@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Route Map</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f8f6; --surface:#ffffff; --surface-2:#f0f3ef; --border:#dde3d9;
+  --forest:#1b3a2a; --accent:#2d7d4f; --accent-l:#e3f0e8;
+  --text:#1c2a21; --muted:#64786b;
+  --amber:#b45309; --amber-l:#fdf0dc;
+  --red:#b91c1c; --red-l:#fde8e8;
+  --blue:#1e4e79; --blue-l:#e4edf5;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
+    --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
+    --text:#e4ede7; --muted:#7d9686;
+    --amber:#e0a35c; --amber-l:#2e2113;
+    --red:#f08b8b; --red-l:#33191a; --blue:#8fbadd; --blue-l:#14242f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
+  --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
+  --text:#e4ede7; --muted:#7d9686;
+  --amber:#e0a35c; --amber-l:#2e2113;
+  --red:#f08b8b; --red-l:#33191a; --blue:#8fbadd; --blue-l:#14242f;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.6;font-size:15px}
+.page{max-width:900px;margin:0 auto;padding:0 18px 60px}
+
+.masthead{padding:30px 0 18px;border-bottom:3px solid var(--forest);margin-bottom:18px}
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;background:var(--accent-l);color:var(--accent);
+  border:1px solid var(--accent);border-radius:3px;padding:3px 9px;margin-bottom:12px}
+.doc-h1{font-family:'Source Serif 4',Georgia,serif;font-size:clamp(26px,4.6vw,34px);font-weight:600;
+  line-height:1.15;color:var(--forest);margin-bottom:8px;letter-spacing:-.015em}
+.doc-standfirst{font-size:15px;color:var(--muted);max-width:60ch}
+
+/* Day tabs */
+.daybar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.daybtn{flex:1;min-width:86px;padding:10px 8px;border:1.5px solid var(--border);
+  background:var(--surface);border-radius:7px;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:600;color:var(--muted);transition:all .13s;text-align:center}
+.daybtn:hover{border-color:var(--accent)}
+.daybtn.on{background:var(--forest);border-color:var(--forest);color:var(--bg)}
+.daybtn .dcount{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  font-weight:500;opacity:.75;margin-top:1px}
+
+/* Summary strip */
+.summary{display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+  padding:13px 16px;margin-bottom:12px}
+.sum-day{font-family:'Source Serif 4',Georgia,serif;font-size:19px;font-weight:600;color:var(--forest)}
+.sum-stat{display:flex;align-items:baseline;gap:5px}
+.sum-n{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;
+  font-variant-numeric:tabular-nums;color:var(--forest)}
+.sum-l{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sum-flag{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;padding:3px 9px;border-radius:4px;white-space:nowrap}
+.flag-good{background:var(--accent-l);color:var(--accent)}
+.flag-watch{background:var(--amber-l);color:var(--amber)}
+.flag-review{background:var(--red-l);color:var(--red)}
+
+/* Map */
+#wmap{width:100%;height:420px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface-2)}
+#wloading{padding:50px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+/* Legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;padding:11px 14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:12.5px}
+.lg{display:flex;align-items:center;gap:7px}
+.lg-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
+.lg-name{font-weight:600}
+.lg-n{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px}
+
+/* Note */
+.daynote{background:var(--surface);border-left:3px solid var(--accent);border-radius:0 7px 7px 0;
+  padding:13px 16px;margin-top:12px;font-size:14px;line-height:1.55}
+.daynote.warn{border-left-color:var(--amber)}
+.daynote.alert{border-left-color:var(--red)}
+.daynote b{font-weight:600}
+.dn-h{font-weight:600;color:var(--forest);margin-bottom:4px;font-size:15px}
+
+/* Proposed toggle */
+.fixbar{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;
+  background:var(--amber-l);border:1px solid var(--amber);border-radius:7px;padding:11px 14px}
+.fixbar-txt{flex:1;min-width:200px;font-size:13.5px;line-height:1.5}
+.fixbar-txt b{color:var(--amber);font-weight:600}
+.fixbtn{padding:8px 16px;border:none;border-radius:6px;background:var(--amber);color:#fff;
+  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+.footer{border-top:1px solid var(--border);padding-top:20px;margin-top:36px;
+  font-size:12.5px;color:var(--muted);line-height:1.6}
+.footer a{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="tag">Internal — weekly coverage</div>
+    <h1 class="doc-h1">Where the Trucks Go Each Day</h1>
+    <p class="doc-standfirst">Every route plotted by day, sized by real stop counts from the route sheet. Pick a day to see the coverage.</p>
+  </div>
+
+  <div class="daybar" id="daybar"></div>
+
+  <div class="summary" id="summary"></div>
+
+  <div id="wloading">Loading map…</div>
+  <div id="wmap" style="display:none;"></div>
+
+  <div class="legend" id="legend"></div>
+  <div id="daynote"></div>
+
+  <div class="footer">
+    Bubble size reflects the number of stops in each town, taken from the live route sheet.
+    Bubbles sit at town centres — individual stops are spread around them.<br><br>
+    <a href="/hub.html">← Operations Hub</a> · <a href="/routing.html">Full route analysis</a>
+  </div>
+</div>
+
+<script>
+// ── Town coordinates ──────────────────────────────────────────────────────
+const TOWN = {
+  'Aspen':            {lat:39.1911, lng:-106.8175},
+  'Snowmass Village': {lat:39.2130, lng:-106.9378},
+  'Snowmass':         {lat:39.2130, lng:-106.9378},
+  'Woody Creek':      {lat:39.2680, lng:-106.8850},
+  'Basalt':           {lat:39.3689, lng:-107.0320},
+  'El Jebel':         {lat:39.3897, lng:-107.0953},
+  'Carbondale':       {lat:39.4022, lng:-107.2117},
+  'Redstone':         {lat:39.1836, lng:-107.2350},
+  'Glenwood Springs': {lat:39.5505, lng:-107.3248},
+  'New Castle':       {lat:39.5722, lng:-107.5364},
+  'Rifle':            {lat:39.5347, lng:-107.7831},
+  'Vail':             {lat:39.6403, lng:-106.3742},
+  'Avon':             {lat:39.6316, lng:-106.5225},
+  'Edwards':          {lat:39.6455, lng:-106.5981},
+  'Eagle':            {lat:39.6553, lng:-106.8287},
+};
+
+// ── Real stop counts, per route, from the route sheet ─────────────────────
+const DAYS = {
+  Monday: {
+    flag:'watch', flagText:'A few strays',
+    routes:[
+      {name:'Monday — Aspen commercial', color:'#2d7d4f',
+       towns:{'Aspen':74,'Snowmass Village':8,'Carbondale':4,'Glenwood Springs':2,'Redstone':2,'El Jebel':1,'Snowmass':1}},
+    ],
+    note:{cls:'warn', h:'Mostly tight, with four long detours',
+      body:'80% of Monday sits in Aspen — that part is efficient. But the run also carries <b>two Redstone stops and two in Glenwood Springs</b>, each a substantial drive off an otherwise compact route. Worth either moving to a route that already passes them, or pricing the detour into the account.'}
+  },
+  Tuesday: {
+    flag:'good', flagText:'Optimal',
+    routes:[
+      {name:'Tues DV — Carbondale residential', color:'#2d7d4f', towns:{'Carbondale':480}},
+      {name:'Tues 4WD Action — Basalt', color:'#1e4e79',
+       towns:{'Basalt':199,'Carbondale':23,'Aspen':4,'Woody Creek':3}},
+    ],
+    note:{cls:'', h:'The busiest day, and the best structured',
+      body:'709 stops across two routes, each anchored in a single town — Carbondale and Basalt. This is the pattern the commercial routes should copy: <b>high density, tight geography, no traverse.</b>'}
+  },
+  Wednesday: {
+    flag:'review', flagText:'Restructure',
+    routes:[
+      {name:'Weds DV Res — Glenwood residential', color:'#2d7d4f',
+       towns:{'Glenwood Springs':197,'Carbondale':13}},
+      {name:'Weds Commercial — valley-wide', color:'#b91c1c',
+       towns:{'Carbondale':30,'Aspen':27,'Basalt':4,'Glenwood Springs':3,'El Jebel':1}},
+    ],
+    note:{cls:'alert', h:'The one route genuinely worth restructuring',
+      body:'Weds Commercial carries <b>65 stops across five towns</b> with no anchor — the truck runs Glenwood → Carbondale → Basalt → Aspen, roughly 45 miles each way, for fewer stops than the Friday Aspen run alone.<br><br>And look at Glenwood Springs: <b>two trucks are there the same day.</b> Weds DV Res works 197 Glenwood stops while Weds Commercial drives in for three.'},
+    fix:{
+      text:'<b>Proposed:</b> break Wednesday Commercial into geographic legs — Glenwood\'s 3 stops absorbed by Weds DV Res, Carbondale\'s 30 into a local leg, and Aspen\'s 27 as a clean Wednesday commercial run mirroring Monday and Friday.',
+      routes:[
+        {name:'Weds DV Res + Glenwood commercial', color:'#2d7d4f', towns:{'Glenwood Springs':200,'Carbondale':13}},
+        {name:'Carbondale commercial leg', color:'#1e4e79', towns:{'Carbondale':30,'El Jebel':1,'Basalt':4}},
+        {name:'Aspen commercial — Wednesday', color:'#7c3aed', towns:{'Aspen':27}},
+      ]
+    }
+  },
+  Thursday: {
+    flag:'watch', flagText:'Decide on Eagle County',
+    routes:[
+      {name:'Thurs UV — Aspen residential', color:'#2d7d4f', towns:{'Aspen':251}},
+      {name:'Thursday COMEAGLE — Eagle County + west', color:'#b45309',
+       towns:{'Avon':8,'Vail':6,'Edwards':4,'Glenwood Springs':4,'New Castle':2,'Rifle':2,'Eagle':1,'Carbondale':1}},
+    ],
+    note:{cls:'warn', h:'Two very different routes on the same day',
+      body:'Thurs UV is 251 stops, all in Aspen — ideal. COMEAGLE is <b>28 stops spanning Vail to Rifle</b>, a round trip near 200 miles from the Carbondale yard.<br><br>The stops themselves are strong: four City Markets, two CMC campuses, Town of Avon, Avon Police, Vail Mountain School, Eagle River Water &amp; Sanitation at two sites. <b>Institutional anchors worth keeping.</b> The open question is whether to build density around them or price the corridor for what it costs.'}
+  },
+  Friday: {
+    flag:'watch', flagText:'A few strays',
+    routes:[
+      {name:'Friday — Aspen commercial', color:'#2d7d4f',
+       towns:{'Aspen':73,'Carbondale':2,'Glenwood Springs':1,'El Jebel':1,'Basalt':1,'Snowmass':1}},
+    ],
+    note:{cls:'warn', h:'92% Aspen, with single stops scattered down-valley',
+      body:'The Aspen core is tight. But single stops in Glenwood, El Jebel and Basalt each pull the truck well off route for one pickup. Same question as Monday: <b>move them, or price them properly.</b>'}
+  },
+};
+
+let map, overlays = [], curDay = 'Wednesday', showProposed = false;
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+(async function(){
+  let key;
+  try { key = (await (await fetch('/api/maps-key')).json()).key; }
+  catch { document.getElementById('wloading').textContent = 'Maps key not configured.'; return; }
+
+  await new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key;
+    s.async = true; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+
+  document.getElementById('wloading').style.display = 'none';
+  document.getElementById('wmap').style.display = 'block';
+
+  map = new google.maps.Map(document.getElementById('wmap'), {
+    zoom: 9,
+    center: {lat:39.44, lng:-107.05},
+    mapTypeControl:true, streetViewControl:false, fullscreenControl:true,
+    gestureHandling:'greedy',
+  });
+
+  buildDayBar();
+  render();
+})();
+
+function buildDayBar(){
+  const bar = document.getElementById('daybar');
+  bar.innerHTML = Object.keys(DAYS).map(d => {
+    const n = totalStops(DAYS[d].routes);
+    return `<button class="daybtn${d===curDay?' on':''}" onclick="pickDay('${d}')">
+      ${d}<span class="dcount">${n} stops</span></button>`;
+  }).join('');
+}
+
+function totalStops(routes){
+  return routes.reduce((s,r) => s + Object.values(r.towns).reduce((a,b)=>a+b,0), 0);
+}
+
+window.pickDay = function(d){
+  curDay = d;
+  showProposed = false;
+  buildDayBar();
+  render();
+};
+
+window.toggleProposed = function(){
+  showProposed = !showProposed;
+  render();
+};
+
+function render(){
+  const day = DAYS[curDay];
+  const routes = (showProposed && day.fix) ? day.fix.routes : day.routes;
+
+  // Clear
+  overlays.forEach(o => o.setMap(null));
+  overlays = [];
+
+  const bounds = new google.maps.LatLngBounds();
+
+  routes.forEach(rt => {
+    const pts = [];
+    for (const [town, n] of Object.entries(rt.towns)) {
+      const t = TOWN[town];
+      if (!t) continue;
+      const pos = new google.maps.LatLng(t.lat, t.lng);
+      pts.push({pos, n});
+      bounds.extend(pos);
+
+      const c = new google.maps.Circle({
+        map, center: pos,
+        radius: 700 + Math.sqrt(n) * 850,
+        fillColor: rt.color, fillOpacity: 0.26,
+        strokeColor: rt.color, strokeOpacity: 0.85, strokeWeight: 2,
+      });
+      overlays.push(c);
+
+      const mk = new google.maps.Marker({
+        position: pos, map,
+        label: { text: String(n), color:'#fff', fontSize:'11px', fontWeight:'700' },
+        icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: rt.color, fillOpacity:1,
+                strokeColor:'#fff', strokeWeight:2, scale:13 },
+        title: town + ' — ' + n + ' stops · ' + rt.name,
+      });
+      overlays.push(mk);
+    }
+    // Connect the route's towns to show the traverse
+    if (pts.length > 1) {
+      pts.sort((a,b) => a.pos.lng() - b.pos.lng());
+      const line = new google.maps.Polyline({
+        map, path: pts.map(p => p.pos),
+        strokeColor: rt.color, strokeOpacity: 0.5, strokeWeight: 2.5,
+      });
+      overlays.push(line);
+    }
+  });
+
+  map.fitBounds(bounds, 50);
+  renderSummary(routes);
+  renderLegend(routes);
+  renderNote();
+}
+
+function renderSummary(routes){
+  const day = DAYS[curDay];
+  const stops = totalStops(routes);
+  const towns = new Set();
+  routes.forEach(r => Object.keys(r.towns).forEach(t => towns.add(t)));
+  document.getElementById('summary').innerHTML = `
+    <span class="sum-day">${curDay}${showProposed ? ' — proposed' : ''}</span>
+    <span class="sum-stat"><span class="sum-n">${stops}</span><span class="sum-l">stops</span></span>
+    <span class="sum-stat"><span class="sum-n">${routes.length}</span><span class="sum-l">route${routes.length>1?'s':''}</span></span>
+    <span class="sum-stat"><span class="sum-n">${towns.size}</span><span class="sum-l">towns</span></span>
+    <span class="sum-flag flag-${showProposed ? 'good' : day.flag}">${showProposed ? 'Restructured' : day.flagText}</span>`;
+}
+
+function renderLegend(routes){
+  document.getElementById('legend').innerHTML = routes.map(r => {
+    const n = Object.values(r.towns).reduce((a,b)=>a+b,0);
+    return `<div class="lg"><span class="lg-dot" style="background:${r.color}"></span>
+      <span class="lg-name">${r.name}</span> <span class="lg-n">${n} stops</span></div>`;
+  }).join('');
+}
+
+function renderNote(){
+  const day = DAYS[curDay];
+  let html = `<div class="daynote ${day.note.cls}">
+    <div class="dn-h">${day.note.h}</div>${day.note.body}</div>`;
+  if (day.fix) {
+    html += `<div class="fixbar">
+      <div class="fixbar-txt">${day.fix.text}</div>
+      <button class="fixbtn" onclick="toggleProposed()">
+        ${showProposed ? '← Show current' : 'Show proposed →'}</button>
+    </div>`;
+  }
+  document.getElementById('daynote').innerHTML = html;
+}
+</script>
+</body>
+</html>
