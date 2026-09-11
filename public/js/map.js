@@ -22,6 +22,15 @@ let liveMins = null;
 let directionsRenderer = null;
 let directionsService = null;
 
+// ── GPS tracking state ────────────────────────────────────────────────────────
+let gpsWatchId = null;
+let gpsMarker = null;
+let gpsCircle = null;
+let lastGpsPos = null;
+let nextEtaMins = null;
+let etaService = null;
+const ARRIVAL_RADIUS_M = 80; // metres from stop to auto-prompt arrival
+
 const PLANNED_COLOR = '#22c55e';
 const LIVE_COLOR    = '#f59e0b';
 
@@ -70,7 +79,9 @@ async function initMap() {
   });
   directionsRenderer.setMap(gMap);
 
+  etaService = new google.maps.DistanceMatrixService();
   await geocodeAndPlot();
+  startGpsTracking();
 }
 
 function rowColorToHex(rowColor) {
@@ -236,6 +247,124 @@ function updateModeUI() {
   }
 }
 
+// ── GPS tracking ─────────────────────────────────────────────────────────────
+
+function startGpsTracking() {
+  if (!navigator.geolocation) return;
+  if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    onGpsUpdate,
+    (err) => console.warn('GPS:', err.message),
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+}
+
+function onGpsUpdate(pos) {
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  const accuracy = pos.coords.accuracy;
+  lastGpsPos = { lat, lng };
+
+  const latLng = new google.maps.LatLng(lat, lng);
+
+  // Blue GPS dot
+  if (!gpsMarker) {
+    gpsMarker = new google.maps.Marker({
+      position: latLng,
+      map: gMap,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: '#2563eb',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2.5,
+        scale: 10,
+      },
+      zIndex: 200,
+      title: 'Your location',
+    });
+    gpsCircle = new google.maps.Circle({
+      map: gMap,
+      center: latLng,
+      radius: accuracy,
+      strokeColor: '#2563eb',
+      strokeOpacity: 0.25,
+      strokeWeight: 1,
+      fillColor: '#2563eb',
+      fillOpacity: 0.08,
+    });
+  } else {
+    gpsMarker.setPosition(latLng);
+    gpsCircle.setCenter(latLng);
+    gpsCircle.setRadius(accuracy);
+  }
+
+  // ETA to next undone stop
+  fetchNextEta(latLng);
+
+  // Check proximity to current stop → auto-arrive prompt
+  const cur = navStops[currentIdx];
+  if (cur && !cur.done && cur._latLng) {
+    const dist = haversineM(lat, lng, cur._latLng.lat(), cur._latLng.lng());
+    if (dist < ARRIVAL_RADIUS_M) {
+      promptArrival(cur);
+    }
+  }
+}
+
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+let arrivalPromptRow = null; // prevent duplicate prompts for same stop
+function promptArrival(stop) {
+  if (arrivalPromptRow === stop.rowNumber) return;
+  arrivalPromptRow = stop.rowNumber;
+
+  const toast = document.getElementById('toast');
+  toast.innerHTML = `Arrived at <b>${escHtml(stop.accountName || stop.address)}</b>? <button id="arrive-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:6px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">✓ Done</button>`;
+  toast.classList.add('show');
+
+  document.getElementById('arrive-yes').addEventListener('click', () => {
+    toast.classList.remove('show');
+    arrivalPromptRow = null;
+    window.navDone();
+  });
+
+  // Auto-dismiss after 12 s if ignored
+  setTimeout(() => {
+    if (arrivalPromptRow === stop.rowNumber) {
+      toast.classList.remove('show');
+      arrivalPromptRow = null;
+    }
+  }, 12000);
+}
+
+function fetchNextEta(fromLatLng) {
+  if (!etaService) return;
+  const cur = navStops[currentIdx];
+  if (!cur || cur.done || !cur._latLng) return;
+
+  etaService.getDistanceMatrix({
+    origins: [fromLatLng],
+    destinations: [cur._latLng],
+    travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+  }, (resp, status) => {
+    if (status !== 'OK') return;
+    const el = resp.rows[0]?.elements[0];
+    if (!el || el.status !== 'OK') return;
+    nextEtaMins = Math.ceil((el.duration_in_traffic || el.duration).value / 60);
+    renderNavCard(); // refresh card with updated ETA
+  });
+}
+
 window.setRouteMode = function(mode) {
   if (mode === routeMode) return;
   routeMode = mode;
@@ -328,11 +457,15 @@ function renderNavCard() {
     ? `<div class="${noteClass}">${escHtml(stop.notes)}</div>`
     : '';
 
+  const etaHtml = (!stop.done && nextEtaMins !== null)
+    ? `<span class="nav-eta">🚗 ${nextEtaMins} min away</span>`
+    : '';
+
   card.style.display = 'block';
   card.innerHTML = `
     <div class="nav-progress-row">
       <span class="nav-stop-count">${currentIdx + 1} of ${total} ${modeBadge}</span>
-      <span class="nav-done-count">${doneCount} done</span>
+      <span class="nav-done-count">${doneCount} done ${etaHtml}</span>
     </div>
     <div class="nav-stop-name" style="${color ? `border-left:4px solid ${color};padding-left:10px;` : ''}">${escHtml(nameOrAddr)}</div>
     ${addrLine ? `<div class="nav-stop-addr">${escHtml(addrLine)}</div>` : ''}
@@ -356,9 +489,12 @@ function renderNavCard() {
 
 function jumpTo(idx) {
   currentIdx = idx;
+  nextEtaMins = null;       // clear stale ETA; fetchNextEta will refresh
+  arrivalPromptRow = null;  // reset arrival guard for new stop
   updateMarkerIcons();
   renderNavCard();
   centerOnCurrent();
+  if (lastGpsPos) fetchNextEta(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng));
 }
 
 window.navStep = function(dir) {
