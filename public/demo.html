@@ -390,6 +390,104 @@ body {
 
 /* Driving mode map sizing */
 #demo-map.driving { height: 400px; }
+
+/* ── Traffic status bar ── */
+.traffic-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.traffic-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 7px;
+}
+.traffic-pill.light    { background: var(--accent-l); color: var(--accent); }
+.traffic-pill.moderate { background: var(--amber-l);  color: var(--amber); }
+.traffic-pill.heavy    { background: var(--red-l);    color: var(--red); }
+.route-time {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.mode-mini {
+  margin-left: auto;
+  display: flex;
+  gap: 3px;
+  background: var(--border);
+  border-radius: 8px;
+  padding: 2px;
+}
+.mode-mini-btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+.mode-mini-btn.on { background: var(--surface); color: var(--text); }
+
+/* ── Nav app picker ── */
+.nav-apps {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.nav-app {
+  flex: 1;
+  padding: 8px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+}
+
+/* ── Reroute alert ── */
+#reroute-alert {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-160%);
+  background: var(--amber);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 92vw;
+}
+#reroute-alert.show { transform: translateX(-50%) translateY(0); }
+.reroute-btn {
+  background: #fff;
+  color: #b45309;
+  border: none;
+  border-radius: 7px;
+  padding: 5px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: inherit;
+}
 </style>
 </head>
 <body>
@@ -427,6 +525,15 @@ body {
     </div>
   </div>
 
+  <div class="traffic-bar" id="traffic-bar" style="display:none;">
+    <span class="route-time" id="route-time">—</span>
+    <span class="traffic-pill light" id="traffic-pill">🟢 Light traffic</span>
+    <div class="mode-mini">
+      <button class="mode-mini-btn on" id="mm-planned">📋 PLANNED</button>
+      <button class="mode-mini-btn" id="mm-live">⚡ LIVE</button>
+    </div>
+  </div>
+
   <div id="demo-loading">Loading map and route data…</div>
   <div id="demo-map" class="driving" style="display:none;"></div>
 
@@ -441,6 +548,7 @@ body {
 </div>
 
 <div id="arrival-toast"></div>
+<div id="reroute-alert"></div>
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
@@ -450,6 +558,7 @@ let speed = 1;
 const SPEEDS = [1, 2, 4];
 let doneSet = new Set();
 let viewMode = 'driving';   // 'driving' | 'overview'
+let routeMins = null, trafficDelay = null, rerouteShown = false;
 let turnSteps = [];         // flattened maneuver steps from Directions
 let curHeading = 0;
 
@@ -547,6 +656,12 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
     }, (result, status) => {
       if (status === 'OK') {
         dr.setDirections(result);
+        // Real traffic numbers for this route, right now
+        const legs = result.routes[0].legs;
+        routeMins = Math.round(legs.reduce((s,l) => s + (l.duration_in_traffic||l.duration).value, 0) / 60);
+        const freeFlow = Math.round(legs.reduce((s,l) => s + l.duration.value, 0) / 60);
+        trafficDelay = Math.max(0, routeMins - freeFlow);
+        showTraffic();
         // Build a dense path from every step's polyline for smooth close-up motion
         const dense = [];
         result.routes[0].legs.forEach(leg => {
@@ -580,6 +695,44 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
   setView('driving');
   setCaption('🧭', `Real route loaded — <b>${stops.length} stops</b> with live notes from your sheet. Press <b>Play</b> for close-up turn-by-turn navigation.`);
 })();
+
+// ── Traffic display ───────────────────────────────────────────────────────
+function showTraffic() {
+  if (routeMins === null) return;
+  document.getElementById('traffic-bar').style.display = 'flex';
+  document.getElementById('route-time').textContent = `~${routeMins} min`;
+  const pill = document.getElementById('traffic-pill');
+  if (trafficDelay <= 3) {
+    pill.className = 'traffic-pill light';
+    pill.textContent = '🟢 Light traffic';
+  } else if (trafficDelay <= 12) {
+    pill.className = 'traffic-pill moderate';
+    pill.textContent = `🟡 Moderate · +${trafficDelay} min`;
+  } else {
+    pill.className = 'traffic-pill heavy';
+    pill.textContent = `🔴 Heavy · +${trafficDelay} min`;
+  }
+}
+
+// ── Reroute alert (scripted demo moment) ──────────────────────────────────
+function showRerouteDemo() {
+  if (rerouteShown) return;
+  rerouteShown = true;
+  const saving = 9 + Math.floor(Math.random() * 7);
+  const el = document.getElementById('reroute-alert');
+  el.innerHTML = `<span>⚡ Traffic shifted — <b>Live route saves ~${saving} min</b></span>
+    <button class="reroute-btn" onclick="acceptReroute()">Switch</button>`;
+  el.classList.add('show');
+  setCaption('⚡', `The app re-checks traffic every 3 minutes. When conditions shift enough to matter, it offers a faster order — <b>but never reroutes on its own</b>. The driver decides.`);
+  setTimeout(() => el.classList.remove('show'), 9000);
+}
+
+window.acceptReroute = function() {
+  document.getElementById('reroute-alert').classList.remove('show');
+  document.getElementById('mm-planned').classList.remove('on');
+  document.getElementById('mm-live').classList.add('on');
+  setCaption('⚡', `Switched to <b>Live mode</b> — remaining stops reordered for current traffic. The route line turns amber to show it's traffic-optimized.`);
+};
 
 // ── Driver arrow (rotates with heading) ───────────────────────────────────
 function driverIcon(rotation) {
@@ -744,6 +897,11 @@ function confirmArrival(idx) {
   doneSet.add(idx);
   markers[idx].setIcon(pin('done'));
 
+  // Traffic reroute moment after the third stop
+  if (idx === 2) {
+    setTimeout(showRerouteDemo, 1400);
+  }
+
   // Show a report demo at the second stop
   if (idx === 1) {
     setCaption('📋', `Stop complete. If the driver spots <b>contamination or overflow</b>, those four buttons file a structured report straight to your sheet — two taps.`);
@@ -807,6 +965,11 @@ function renderCard() {
       <div class="rbtn">📦 Overflow</div>
       <div class="rbtn">⏭ Skip</div>
       <div class="rbtn">📷 Photo</div>
+    </div>
+    <div class="nav-apps">
+      <div class="nav-app">🗺 Google Maps</div>
+      <div class="nav-app">🚦 Waze</div>
+      <div class="nav-app">🍎 Apple Maps</div>
     </div>
     <div class="nav-actions">
       <div class="nav-btn">← Prev</div>
