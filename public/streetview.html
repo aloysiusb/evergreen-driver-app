@@ -266,21 +266,30 @@ function showStop(n){
   card.classList.add('hidden');
   msg.classList.remove('show');
 
-  svService.getPanorama({ location: st.pos, radius: 60, source: 'outdoor' }, (data, status) => {
-    if (status === 'OK' && data && data.location) {
-      // Face the camera toward the property
-      const heading = google.maps.geometry.spherical.computeHeading(data.location.latLng, st.pos);
-      pano.setPano(data.location.pano);
-      pano.setPov({ heading, pitch: 2 });
-      pano.setZoom(0.7);
-      pano.setVisible(true);
-    } else {
-      pano.setVisible(false);
-      msg.textContent = 'No Street View imagery within 60 m of ' + (st.address || 'this stop') + '.';
-      msg.classList.add('show');
-    }
-    setTimeout(() => renderCard(st, n), 260);
+  function place(data) {
+    const heading = google.maps.geometry.spherical.computeHeading(data.location.latLng, st.pos);
+    pano.setPano(data.location.pano);
+    pano.setPov({ heading, pitch: 2 });
+    pano.setZoom(0.7);
+    pano.setVisible(true);
+  }
+
+  // Prefer nearby outdoor imagery; widen the search before giving up, since
+  // rural and back-alley stops often sit well off the nearest captured road.
+  svService.getPanorama({ location: st.pos, radius: 80, source: 'outdoor' }, (d1, s1) => {
+    if (s1 === 'OK' && d1 && d1.location) { place(d1); return finish(); }
+    svService.getPanorama({ location: st.pos, radius: 350 }, (d2, s2) => {
+      if (s2 === 'OK' && d2 && d2.location) { place(d2); }
+      else {
+        pano.setVisible(false);
+        msg.textContent = 'No Street View imagery near ' + (st.address || 'this stop') + '. The notes below still apply.';
+        msg.classList.add('show');
+      }
+      finish();
+    });
   });
+
+  function finish(){ setTimeout(() => renderCard(st, n), 260); }
 
   updateControls();
   renderRail();
