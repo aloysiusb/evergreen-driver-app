@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aspen One Service Overview</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f6f8f6;
+  --surface:   #ffffff;
+  --surface-2: #f1f5f2;
+  --border:    #dce4de;
+  --forest:    #14432a;
+  --accent:    #2d7d4f;
+  --accent-l:  #e3f0e8;
+  --text:      #1c2a21;
+  --muted:     #64786b;
+  --amber:     #b45309;
+  --amber-l:   #fdf0dc;
+  --blue:      #1e4e79;
+  --blue-l:    #e2ecf5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #0e1611;
+    --surface:   #16211a;
+    --surface-2: #1c2a21;
+    --border:    #24352a;
+    --forest:    #a8d5bb;
+    --accent:    #5cb37f;
+    --accent-l:  #16311f;
+    --text:      #e4ede7;
+    --muted:     #7d9686;
+    --amber:     #e0a35c;
+    --amber-l:   #2e2113;
+    --blue:      #8fbadd;
+    --blue-l:    #14242f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #0e1611;
+  --surface:   #16211a;
+  --surface-2: #1c2a21;
+  --border:    #24352a;
+  --forest:    #a8d5bb;
+  --accent:    #5cb37f;
+  --accent-l:  #16311f;
+  --text:      #e4ede7;
+  --muted:     #7d9686;
+  --amber:     #e0a35c;
+  --amber-l:   #2e2113;
+  --blue:      #8fbadd;
+  --blue-l:    #14242f;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 15px;
+}
+.page { max-width: 780px; margin: 0 auto; padding: 0 22px 64px; }
+
+/* ── Masthead ── */
+.masthead {
+  border-bottom: 3px solid var(--forest);
+  padding: 36px 0 22px;
+  margin-bottom: 6px;
+}
+.prepared-for {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.doc-h1 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: clamp(30px, 5.2vw, 42px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--forest);
+  margin-bottom: 12px;
+}
+.doc-standfirst {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 56ch;
+  line-height: 1.6;
+}
+.byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.byline b { color: var(--text); font-weight: 600; }
+
+/* ── Metric strip ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  margin: 26px 0 34px;
+  overflow: hidden;
+}
+.metric {
+  padding: 18px 18px;
+  border-right: 1px solid var(--border);
+}
+.metric:last-child { border-right: none; }
+.metric-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--forest);
+  letter-spacing: -0.02em;
+}
+.metric-unit { font-size: 13px; font-weight: 500; color: var(--muted); }
+.metric-label {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 6px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* ── Sections ── */
+section { margin-bottom: 40px; }
+.sec-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.sec-h {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+  color: var(--forest);
+  letter-spacing: -0.01em;
+  margin: 4px 0 10px;
+  text-wrap: balance;
+}
+.sec-intro { color: var(--muted); margin-bottom: 18px; max-width: 62ch; }
+p { margin-bottom: 12px; max-width: 66ch; }
+p:last-child { margin-bottom: 0; }
+
+/* ── Property table ── */
+.table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 620px; }
+thead th {
+  background: var(--surface-2);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+.prop-name { font-weight: 600; }
+.prop-addr { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.num { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tfoot td {
+  padding: 13px 14px;
+  border-top: 2px solid var(--forest);
+  font-weight: 600;
+  background: var(--surface-2);
+}
+
+.note-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: var(--amber-l);
+  color: var(--amber);
+  margin-top: 4px;
+}
+
+/* ── Capability blocks ── */
+.cap {
+  border-left: 3px solid var(--accent);
+  padding: 2px 0 2px 18px;
+  margin-bottom: 22px;
+}
+.cap-h {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 5px;
+  color: var(--forest);
+}
+.cap p { font-size: 14.5px; color: var(--text); }
+.cap .why {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px dotted var(--border);
+}
+.cap .why b { color: var(--accent); font-weight: 600; }
+
+/* ── Methodology callout ── */
+.method {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.method h4 {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 9px;
+  font-weight: 600;
+}
+.method ul { margin: 8px 0 0 18px; }
+.method li { margin-bottom: 5px; }
+.method code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  background: var(--surface);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+/* ── Differentiator list ── */
+.diff-list { display: flex; flex-direction: column; gap: 14px; }
+.diff {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.diff-mark {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-l);
+  border-radius: 3px;
+  padding: 3px 8px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.diff-body { flex: 1; }
+.diff-h { font-weight: 600; margin-bottom: 3px; }
+.diff-p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+/* ── Next steps ── */
+.steps { counter-reset: s; display: flex; flex-direction: column; gap: 12px; }
+.step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+.step-n {
+  counter-increment: s;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.step-n::before { content: counter(s) "."; }
+
+/* ── Footer ── */
+.doc-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 22px;
+  margin-top: 44px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.doc-footer b { color: var(--text); font-weight: 600; }
+.pbc {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 3px 9px;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="prepared-for">Prepared for Aspen One · Sourcing &amp; Supply Chain</div>
+    <h1 class="doc-h1">Compost Collection Across Six Aspen One Properties</h1>
+    <p class="doc-standfirst">Current service, verified collection data, and a path to consolidating six informal arrangements into a single corporate agreement.</p>
+    <div class="byline">
+      <span>Prepared by <b>EverGreen ZeroWaste</b></span>
+      <span>For <b>Robert Redman</b>, Head of Sourcing</span>
+      <span>September 2026</span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-value">6</div>
+      <div class="metric-label">Properties currently serviced</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">$2,460<span class="metric-unit">/mo</span></div>
+      <div class="metric-label">Combined current service</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">~179<span class="metric-unit"> tons</span></div>
+      <div class="metric-label">Est. annual diversion</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">~104<span class="metric-unit"> MT</span></div>
+      <div class="metric-label">Est. annual CO₂e avoided</div>
+    </div>
+  </div>
+
+  <!-- 1 · Current service -->
+  <section>
+    <div class="sec-num">01</div>
+    <h2 class="sec-h">Current service by property</h2>
+    <p class="sec-intro">Each property presently operates under its own informal arrangement. Frequencies reflect peak-season service; off-season collection may reduce by up to one month at a time, and terms are currently tailored per site rather than applied uniformly.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Service</th>
+            <th>Frequency</th>
+            <th style="text-align:right;">Monthly</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="prop-name">The Little Nell</div>
+              <div class="prop-addr">675 E Durant Ave, Aspen</div>
+            </td>
+            <td>95-gal cart<br>3-yard dumpster</td>
+            <td class="num">3×/week<br>3×/week</td>
+            <td class="num" style="text-align:right;">$1,140</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="prop-name">Residences at Little Nell</div>
+              <div class="prop-addr">501 E Dean St, Aspen</div>
+            </td>
+            <td>95-gal cart</td>
+            <td class="num">3×/week</td>
+            <td class="num" style="text-align:right;">$240</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="prop-name">Limelight Hotel Aspen</div>
+              <div class="prop-addr">355 S Monarch St, Aspen</div>
+              <span class="note-badge">Existing contract — may need expansion</span>
+            </td>
+            <td>2 carts</td>
+            <td class="num">2×/week</td>
+            <td class="num" style="text-align:right;">$320</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="prop-name">Aspen Ski Co — Headquarters</div>
+              <div class="prop-addr">117 AABC, Aspen</div>
+            </td>
+            <td>95-gal cart</td>
+            <td class="num">1×/week</td>
+            <td class="num" style="text-align:right;">$80</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="prop-name">Aspen Ski Co — Riverside Plaza</div>
+              <div class="prop-addr">255 Gold Rivers Ct, Basalt</div>
+            </td>
+            <td>95-gal cart</td>
+            <td class="num">1×/week</td>
+            <td class="num" style="text-align:right;">$80</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="prop-name">Mountain Dining — Buttermilk</div>
+              <div class="prop-addr">38700 Hwy 82, Aspen</div>
+              <span class="note-badge">Service began June 1, 2026</span>
+            </td>
+            <td>3-yard dumpster</td>
+            <td class="num">2×/week</td>
+            <td class="num" style="text-align:right;">$600</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Combined monthly service</td>
+            <td class="num" style="text-align:right;">$2,460</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- 2 · Diversion -->
+  <section>
+    <div class="sec-num">02</div>
+    <h2 class="sec-h">Diversion and emissions impact</h2>
+    <p class="sec-intro">Aspen One's public sustainability reporting depends on auditable diversion figures. The estimates below are derived from contracted service volumes — we would replace them with measured weights under a formal agreement.</p>
+
+    <div class="method">
+      <h4>Methodology &amp; assumptions</h4>
+      <p style="margin-bottom:8px;">These figures are <b>volume-derived estimates</b>, not measured weights. Stated plainly so they can be audited and challenged:</p>
+      <ul>
+        <li>95-gallon cart of source-separated organics ≈ <code>200 lbs</code> at typical fill</li>
+        <li>3-yard dumpster of organics ≈ <code>900 lbs</code> at ~65% average fill</li>
+        <li>Calculated at peak-season frequency across 12 months, un-discounted for off-season reductions — <b>actual tonnage is likely lower</b></li>
+        <li>Emissions avoided uses the EPA WARM differential for food waste composted vs. landfilled, ≈ <code>0.58 MTCO₂e</code> per short ton</li>
+      </ul>
+      <p style="margin-top:12px;"><b>Recommendation:</b> installing scale data at the Little Nell and Buttermilk — the two highest-volume sites, together roughly 74% of estimated tonnage — would convert these estimates into reportable, third-party-defensible figures for Aspen One's sustainability disclosures.</p>
+    </div>
+
+    <p style="margin-top:18px;">At approximately <b>179 short tons diverted annually</b>, the avoided emissions of roughly <b>104 metric tons CO₂e</b> is comparable to taking about <b>23 passenger vehicles off the road for a year</b>. That figure belongs in Aspen One's reporting — and right now no one is capturing it.</p>
+  </section>
+
+  <!-- 3 · Verification -->
+  <section>
+    <div class="sec-num">03</div>
+    <h2 class="sec-h">Verified service delivery</h2>
+    <p class="sec-intro">Every collection is now logged by the driver in the field, in real time. This addresses the most common failure in commercial waste contracts: disputed service.</p>
+
+    <div class="cap">
+      <div class="cap-h">Timestamped, GPS-confirmed collection records</div>
+      <p>Drivers mark each stop complete on-site. The record carries the time and the confirmed location — not a route sheet reconciled at end of day.</p>
+      <div class="why"><b>Why it matters:</b> when a property manager reports a missed pickup, the answer is a record rather than a disagreement.</div>
+    </div>
+
+    <div class="cap">
+      <div class="cap-h">Contamination reporting with photo documentation</div>
+      <p>When a driver finds non-compostable material, they file a structured report on the spot — material type, severity, and a photograph — tied to that specific property and date.</p>
+      <div class="why"><b>Why it matters:</b> contamination data by site shows exactly which kitchens need staff training. That is operational intelligence Aspen One would otherwise pay a consultant to gather.</div>
+    </div>
+
+    <div class="cap">
+      <div class="cap-h">Live operational visibility</div>
+      <p>Service status across all properties is visible as it happens, rather than reconstructed from paperwork at month end.</p>
+      <div class="why"><b>Why it matters:</b> a single reporting standard across every Aspen One property — which is precisely what a centralization effort requires.</div>
+    </div>
+  </section>
+
+  <!-- 4 · Why Evergreen -->
+  <section>
+    <div class="sec-num">04</div>
+    <h2 class="sec-h">Why this partnership holds up under consolidation</h2>
+    <div class="diff-list">
+      <div class="diff">
+        <div class="diff-mark">01</div>
+        <div class="diff-body">
+          <div class="diff-h">A Colorado Public Benefit Corporation, family-owned and local</div>
+          <div class="diff-p">Evergreen's legal structure commits it to environmental benefit alongside profit. For a company whose brand rests on climate credibility, the provenance of the vendor is part of the story — and it is not something a national hauler can retrofit.</div>
+        </div>
+      </div>
+      <div class="diff">
+        <div class="diff-mark">02</div>
+        <div class="diff-body">
+          <div class="diff-h">Organics is the core business, not a bolt-on line item</div>
+          <div class="diff-p">Composting is what Evergreen does. Diversion quality, contamination coaching, and end-market integrity are the whole operation rather than a service tier added to a landfill contract.</div>
+        </div>
+      </div>
+      <div class="diff">
+        <div class="diff-mark">03</div>
+        <div class="diff-body">
+          <div class="diff-h">Already embedded across six properties</div>
+          <div class="diff-p">Access routes, bin placement, gate codes, kitchen contacts, and seasonal rhythm at each site are already known. Consolidation carries no transition risk or service interruption during a peak season.</div>
+        </div>
+      </div>
+      <div class="diff">
+        <div class="diff-mark">04</div>
+        <div class="diff-body">
+          <div class="diff-h">Zero-waste event services already in the portfolio</div>
+          <div class="diff-p">Beyond routine collection, Evergreen runs zero-waste event operations and waste diversion education across the Roaring Fork and Colorado River Valleys — directly relevant to Aspen One's event calendar.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · Next steps -->
+  <section>
+    <div class="sec-num">05</div>
+    <h2 class="sec-h">Proposed next steps</h2>
+    <p class="sec-intro">Evergreen is flexible on structure — a single consolidated agreement across all properties, or individual agreements per site, whichever fits Aspen One's procurement standards.</p>
+    <div class="steps">
+      <div class="step-item">
+        <span class="step-n"></span>
+        <div>Review the draft agreements already prepared with each property, provided as a starting point rather than a finished position.</div>
+      </div>
+      <div class="step-item">
+        <span class="step-n"></span>
+        <div>Confirm the full property list. The six sites above are those currently serviced; Aspen One operates additional locations that may belong in a consolidated agreement.</div>
+      </div>
+      <div class="step-item">
+        <span class="step-n"></span>
+        <div>Agree seasonal terms per site, since collection frequency varies materially between peak and off-season at several properties.</div>
+      </div>
+      <div class="step-item">
+        <span class="step-n"></span>
+        <div>Define the reporting standard — cadence, format, and whether measured weights are introduced at the two highest-volume sites.</div>
+      </div>
+      <div class="step-item">
+        <span class="step-n"></span>
+        <div>Execute a corporate-level agreement structured to Aspen One's preference.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <div class="pbc">Colorado Public Benefit Corporation</div>
+    <p style="margin-bottom:10px;"><b>EverGreen ZeroWaste</b> · Compost collections for homes and businesses, roll-off services, zero waste events, and waste diversion education for the Roaring Fork and Colorado River Valleys. Family-owned and operated.</p>
+    <p style="margin-bottom:0;">
+      Virginia Payson, Accounts Administration · accounts@evergreenzerowaste.com · 970-930-7601<br>
+      Alyssa Reindel, Chief Executive Officer · Main office 970-930-7900
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
