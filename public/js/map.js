@@ -69,12 +69,21 @@ async function initMap() {
 
   gMap = new google.maps.Map(document.getElementById('route-map'), {
     zoom: 15,
-    center: { lat: 29.4241, lng: -98.4936 },
-    mapTypeControl: false,
-    fullscreenControl: false,
-    streetViewControl: false,
-    zoomControl: true,
+    center: { lat: 39.4022, lng: -107.2117 },   // Carbondale, CO
     gestureHandling: 'greedy',
+    // Full Google Maps capability for drivers
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+      position: google.maps.ControlPosition.TOP_LEFT,
+      mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
+    },
+    fullscreenControl: true,
+    streetViewControl: true,   // drop pegman to scout an unfamiliar driveway
+    zoomControl: true,
+    scaleControl: true,
+    rotateControl: true,
+    clickableIcons: true,      // tap POIs — gas stations, etc.
   });
 
   new google.maps.TrafficLayer().setMap(gMap);
@@ -123,9 +132,32 @@ function makePin(color, done, isCurrent) {
   };
 }
 
+// A real stop needs a street number — filters out note rows that slipped
+// through the parser ("Testing", "GET 06/23 EOW") and would otherwise
+// geocode to random locations far off route.
+function looksLikeAddress(s) {
+  return /\d/.test(s.address || '') && (s.address || '').trim().length > 4;
+}
+
+// Discard geocode results that land absurdly far from the route's centre —
+// a wrong match in another state would wreck the route line and ETA.
+const MAX_STOP_SPREAD_KM = 80;
+function rejectOutliers(list) {
+  if (list.length < 3) return list;
+  const lats = list.map(s => s._latLng.lat()).sort((a,b) => a-b);
+  const lngs = list.map(s => s._latLng.lng()).sort((a,b) => a-b);
+  const mLat = lats[Math.floor(lats.length/2)];
+  const mLng = lngs[Math.floor(lngs.length/2)];
+  return list.filter(s => {
+    const dLat = (s._latLng.lat() - mLat) * 111;
+    const dLng = (s._latLng.lng() - mLng) * 111 * Math.cos(mLat * Math.PI/180);
+    return Math.sqrt(dLat*dLat + dLng*dLng) < MAX_STOP_SPREAD_KM;
+  });
+}
+
 async function geocodeAndPlot() {
   const loadingEl = document.getElementById('map-loading');
-  const stops = (window.allStops || []).filter(s => !s.isSectionHeader && s.address);
+  const stops = (window.allStops || []).filter(s => !s.isSectionHeader && looksLikeAddress(s));
   if (!stops.length) { loadingEl.textContent = 'No stops to show.'; loadingEl.style.display = 'block'; return; }
 
   loadingEl.textContent = `Locating ${stops.length} stops…`;
@@ -140,7 +172,7 @@ async function geocodeAndPlot() {
   plannedMins = null;
 
   await Promise.all(stops.map(stop => new Promise(resolve => {
-    const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', TX';
+    const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', CO';
     geocoder.geocode({ address: addr }, (results, status) => {
       if (status === 'OK' && results[0]) {
         stop._latLng = results[0].geometry.location;
@@ -149,6 +181,8 @@ async function geocodeAndPlot() {
       resolve();
     });
   })));
+
+  navStops = rejectOutliers(navStops);
 
   // Sort to original sheet order
   navStops.sort((a, b) => window.allStops.indexOf(a) - window.allStops.indexOf(b));
@@ -301,7 +335,7 @@ function showRerouteNudge(saving) {
 window.navOpenIn = function(app) {
   const stop = navStops[currentIdx];
   if (!stop) return;
-  const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', TX';
+  const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', CO';
   const lat = stop._latLng ? stop._latLng.lat() : null;
   const lng = stop._latLng ? stop._latLng.lng() : null;
 
@@ -352,6 +386,16 @@ function updateModeUI() {
     }
   }
 }
+
+// ── Satellite toggle ─────────────────────────────────────────────────────────
+// Hybrid (aerial + labels) helps drivers spot driveways, bin placement and
+// gates on rural properties before they pull up.
+window.toggleSatellite = function() {
+  if (!gMap) return;
+  const isSat = gMap.getMapTypeId() !== 'roadmap';
+  gMap.setMapTypeId(isSat ? 'roadmap' : 'hybrid');
+  document.getElementById('mode-sat')?.classList.toggle('active', !isSat);
+};
 
 // ── GPS tracking ─────────────────────────────────────────────────────────────
 

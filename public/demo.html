@@ -510,6 +510,7 @@ body {
   <div class="view-toggle">
     <button class="vt-btn" id="vt-overview" onclick="setView('overview')">🗺 Overview</button>
     <button class="vt-btn active" id="vt-driving" onclick="setView('driving')">🧭 Driving</button>
+    <button class="vt-btn" id="vt-sat" onclick="toggleSatellite()">🛰 Satellite</button>
   </div>
 
   <div id="turn-banner" class="show">
@@ -558,7 +559,7 @@ let speed = 1;
 const SPEEDS = [1, 2, 4];
 let doneSet = new Set();
 let viewMode = 'driving';   // 'driving' | 'overview'
-let routeMins = null, trafficDelay = null, rerouteShown = false;
+let routeMins = null, trafficDelay = null, rerouteShown = false, trafficLayer = null;
 let turnSteps = [];         // flattened maneuver steps from Directions
 let curHeading = 0;
 
@@ -604,7 +605,8 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
       const r = await fetch('/api/routes/' + encodeURIComponent(tab));
       if (!r.ok) continue;
       const d = await r.json();
-      const s = d.items.filter(x => !x.isSectionHeader && x.address);
+      // Real stops only — must have a street number (filters out note rows)
+      const s = d.items.filter(x => !x.isSectionHeader && /\d/.test(x.address || '') && (x.address||'').trim().length > 4);
       if (s.length >= 4) { items = s.slice(0, 6); break; }
     } catch {}
   }
@@ -615,11 +617,23 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
   // Geocode
   const geocoder = new google.maps.Geocoder();
   await Promise.all(items.map(st => new Promise(res => {
-    geocoder.geocode({ address: st.address + (st.city ? ', ' + st.city : '') + ', TX' }, (r, status) => {
+    geocoder.geocode({ address: st.address + (st.city ? ', ' + st.city : '') + ', CO' }, (r, status) => {
       if (status === 'OK' && r[0]) { st.pos = r[0].geometry.location; stops.push(st); }
       res();
     });
   })));
+
+  // Drop any geocode that landed far from the cluster (bad address match)
+  if (stops.length >= 3) {
+    const lats = stops.map(s => s.pos.lat()).sort((a,b)=>a-b);
+    const lngs = stops.map(s => s.pos.lng()).sort((a,b)=>a-b);
+    const mLat = lats[Math.floor(lats.length/2)], mLng = lngs[Math.floor(lngs.length/2)];
+    stops = stops.filter(s => {
+      const dLat = (s.pos.lat() - mLat) * 111;
+      const dLng = (s.pos.lng() - mLng) * 111 * Math.cos(mLat * Math.PI/180);
+      return Math.sqrt(dLat*dLat + dLng*dLng) < 80;
+    });
+  }
 
   if (stops.length < 2) { setCaption('⚠️', 'Could not locate enough stops.'); return; }
   stops.sort((a,b) => items.indexOf(a) - items.indexOf(b));
@@ -628,11 +642,26 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
   document.getElementById('demo-loading').style.display = 'none';
   document.getElementById('demo-map').style.display = 'block';
   map = new google.maps.Map(document.getElementById('demo-map'), {
-    zoom: DRIVING_ZOOM, center: stops[0].pos,
-    mapTypeControl: false, fullscreenControl: false, streetViewControl: false,
-    gestureHandling: 'greedy', tilt: 45,
+    zoom: DRIVING_ZOOM,
+    center: stops[0].pos,
+    gestureHandling: 'greedy',
+    tilt: 45,
+    // Full Google Maps controls
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.TOP_LEFT,
+      mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
+    },
+    fullscreenControl: true,
+    streetViewControl: true,
+    zoomControl: true,
+    scaleControl: true,
+    rotateControl: true,
+    clickableIcons: true,     // POIs tappable — gas, food, etc.
   });
-  new google.maps.TrafficLayer().setMap(map);
+  trafficLayer = new google.maps.TrafficLayer();
+  trafficLayer.setMap(map);
 
   markers = stops.map((st, i) => new google.maps.Marker({
     position: st.pos, map,
@@ -695,6 +724,17 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
   setView('driving');
   setCaption('🧭', `Real route loaded — <b>${stops.length} stops</b> with live notes from your sheet. Press <b>Play</b> for close-up turn-by-turn navigation.`);
 })();
+
+// ── Satellite toggle ──────────────────────────────────────────────────────
+function toggleSatellite() {
+  if (!map) return;
+  const isSat = map.getMapTypeId() !== 'roadmap';
+  map.setMapTypeId(isSat ? 'roadmap' : 'hybrid');  // hybrid = aerial + street labels
+  document.getElementById('vt-sat').classList.toggle('active', !isSat);
+  if (!isSat) {
+    setCaption('🛰', `<b>Satellite view</b> — drivers can see actual driveways, bin placement, and gate locations before they pull up. Especially useful on rural properties.`);
+  }
+}
 
 // ── Traffic display ───────────────────────────────────────────────────────
 function showTraffic() {
