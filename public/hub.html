@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evergreen Operations Hub</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f8f6; --surface:#ffffff; --surface-2:#f0f3ef; --border:#dde3d9;
+  --forest:#1b3a2a; --accent:#2d7d4f; --accent-l:#e3f0e8;
+  --text:#1c2a21; --muted:#64786b;
+  --amber:#b45309; --amber-l:#fdf0dc;
+  --blue:#1e4e79; --blue-l:#e4edf5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
+    --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
+    --text:#e4ede7; --muted:#7d9686;
+    --amber:#e0a35c; --amber-l:#2e2113; --blue:#8fbadd; --blue-l:#14242f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
+  --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
+  --text:#e4ede7; --muted:#7d9686;
+  --amber:#e0a35c; --amber-l:#2e2113; --blue:#8fbadd; --blue-l:#14242f;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.6;font-size:15px}
+.page{max-width:760px;margin:0 auto;padding:0 22px 64px}
+
+.masthead{padding:40px 0 24px;border-bottom:3px solid var(--forest);margin-bottom:8px}
+.leaf{font-size:34px;line-height:1;margin-bottom:12px}
+.doc-h1{font-family:'Source Serif 4',Georgia,serif;font-size:clamp(30px,5.4vw,40px);
+  font-weight:600;line-height:1.12;letter-spacing:-.015em;color:var(--forest);
+  text-wrap:balance;margin-bottom:10px}
+.doc-standfirst{font-size:16px;color:var(--muted);max-width:58ch}
+
+.group{margin-top:36px}
+.group-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.group-h{font-family:'Source Serif 4',Georgia,serif;font-size:21px;font-weight:600;
+  color:var(--forest);margin-bottom:5px}
+.group-sub{font-size:14px;color:var(--muted);margin-bottom:16px;max-width:62ch}
+
+.card{display:block;text-decoration:none;color:var(--text);
+  background:var(--surface);border:1.5px solid var(--border);border-radius:7px;
+  padding:16px 18px;margin-bottom:10px;transition:border-color .15s,transform .12s}
+.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.card-top{display:flex;align-items:flex-start;gap:13px}
+.card-icon{font-size:21px;line-height:1.3;flex-shrink:0}
+.card-body{flex:1;min-width:0}
+.card-h{font-weight:600;font-size:16px;margin-bottom:2px;line-height:1.3}
+.card-p{font-size:13.5px;color:var(--muted);line-height:1.5}
+.card-for{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:3px;
+  flex-shrink:0;margin-top:2px;white-space:nowrap}
+.for-team{background:var(--accent-l);color:var(--accent)}
+.for-driver{background:var(--blue-l);color:var(--blue)}
+.for-client{background:var(--amber-l);color:var(--amber)}
+
+.card.client{border-color:var(--amber)}
+
+.notice{background:var(--amber-l);border:1px solid var(--amber);border-radius:6px;
+  padding:14px 16px;font-size:13.5px;line-height:1.6;margin-top:14px}
+.notice b{color:var(--amber);font-weight:600}
+
+.footer{border-top:1px solid var(--border);padding-top:22px;margin-top:44px;
+  font-size:12.5px;color:var(--muted);line-height:1.65}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="leaf">🌿</div>
+    <h1 class="doc-h1">Evergreen Operations Hub</h1>
+    <p class="doc-standfirst">Everything in one place — the driver tools now live in the field, the route analysis, and the Aspen One materials.</p>
+  </div>
+
+  <!-- Start here -->
+  <div class="group">
+    <div class="group-label">Start here</div>
+    <div class="group-h">The five-minute version</div>
+    <div class="group-sub">If you only open one thing, make it the demo — it drives a real route from our own sheet, turn by turn.</div>
+
+    <a class="card" href="/demo.html">
+      <div class="card-top">
+        <div class="card-icon">▶</div>
+        <div class="card-body">
+          <div class="card-h">Navigation Demo</div>
+          <div class="card-p">Watch a driver run a real Carbondale route — GPS, turn-by-turn, live ETA, arrival prompts, and incident reporting. Play, pause, change speed.</div>
+        </div>
+        <span class="card-for for-team">Everyone</span>
+      </div>
+    </a>
+
+    <a class="card" href="/briefing.html">
+      <div class="card-top">
+        <div class="card-icon">📄</div>
+        <div class="card-body">
+          <div class="card-h">Internal Briefing</div>
+          <div class="card-p">What's live for drivers and dispatch, what the route sheet revealed about our Aspen One position, and the decisions needed before the call with Robert.</div>
+        </div>
+        <span class="card-for for-team">Alyssa &amp; Dave</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Live tools -->
+  <div class="group">
+    <div class="group-label">Working tools</div>
+    <div class="group-h">Live and in use today</div>
+    <div class="group-sub">Deployed and running. No install, no passwords — open a link and go.</div>
+
+    <a class="card" href="/dispatch.html">
+      <div class="card-top">
+        <div class="card-icon">📡</div>
+        <div class="card-body">
+          <div class="card-h">Dispatcher Dashboard</div>
+          <div class="card-p">Every route's progress, the stop each driver is on, and incidents filed today. Updates live — leave it open on a second screen.</div>
+        </div>
+        <span class="card-for for-team">Office</span>
+      </div>
+    </a>
+
+    <a class="card" href="/">
+      <div class="card-top">
+        <div class="card-icon">🚛</div>
+        <div class="card-body">
+          <div class="card-h">Driver App</div>
+          <div class="card-p">Tap a route to open it. Stop list, map with navigation, and two-tap incident reporting that writes straight to the sheet.</div>
+        </div>
+        <span class="card-for for-driver">Drivers</span>
+      </div>
+    </a>
+
+    <a class="card" href="/round2.html">
+      <div class="card-top">
+        <div class="card-icon">📋</div>
+        <div class="card-body">
+          <div class="card-h">Feature Walkthrough</div>
+          <div class="card-p">Every capability explained plainly, with a 30-second onboarding at the top. Good to forward to a driver who wants the detail.</div>
+        </div>
+        <span class="card-for for-driver">Drivers</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Analysis -->
+  <div class="group">
+    <div class="group-label">Analysis</div>
+    <div class="group-h">What the route sheet shows</div>
+    <div class="group-sub">Every figure is checkable against the sheet — the page includes instructions for verifying it yourself.</div>
+
+    <a class="card" href="/routing.html">
+      <div class="card-top">
+        <div class="card-icon">🗺</div>
+        <div class="card-body">
+          <div class="card-h">Route Structure Analysis</div>
+          <div class="card-p">All nine routes measured for density and geographic spread. Finds one route genuinely worth restructuring, one worth a deliberate decision, and confirms the rest are sound.</div>
+        </div>
+        <span class="card-for for-team">Alyssa &amp; Dave</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Aspen One -->
+  <div class="group">
+    <div class="group-label">Aspen One</div>
+    <div class="group-h">Materials for the Robert Redman conversation</div>
+    <div class="group-sub">Two documents, deliberately separate. One is ours; one is theirs.</div>
+
+    <a class="card client" href="/aspenone.html">
+      <div class="card-top">
+        <div class="card-icon">📨</div>
+        <div class="card-body">
+          <div class="card-h">Aspen One Service Overview</div>
+          <div class="card-p">Client-facing. Current service across all six properties, diversion estimates with published methodology, route integration, and proposed next steps. Contains no internal strategy — safe to send.</div>
+        </div>
+        <span class="card-for for-client">Send to Robert</span>
+      </div>
+    </a>
+
+    <div class="notice">
+      <b>Before sending:</b> the overview names other downtown Aspen accounts we service as evidence we already handle luxury hospitality volume. That argument is strong and none of it is confidential — but it tells Aspen One which of their neighbours are our clients. Worth a deliberate decision rather than an accidental one. The internal briefing covers this.
+    </div>
+  </div>
+
+  <div class="footer">
+    <b>EverGreen ZeroWaste</b> · A family-owned Colorado Public Benefit Corporation<br>
+    Compost collections, roll-off services, zero waste events, and waste diversion education for the Roaring Fork and Colorado River Valleys.<br><br>
+    All pages are unlisted and not indexed by search engines, but anyone with a link can open them. Share accordingly.
+  </div>
+
+</div>
+</body>
+</html>
