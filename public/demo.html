@@ -697,7 +697,7 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
           leg.steps.forEach(st => {
             turnSteps.push({
               start: st.start_location,
-              instruction: st.instructions.replace(/<[^>]+>/g, ''),
+              instruction: st.instructions.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
               distanceText: st.distance.text,
               distanceM: st.distance.value,
               maneuver: st.maneuver || 'straight',
@@ -1037,6 +1037,15 @@ function setCaption(icon, html) {
 function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// The browser pauses requestAnimationFrame in hidden tabs, so the loop dies
+// if the viewer switches apps. Restart it when they come back.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && playing) {
+    cancelAnimationFrame(rafId);
+    step();
+  }
+});
 </script>
 </body>
 </html>
