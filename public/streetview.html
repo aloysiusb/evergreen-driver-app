@@ -413,6 +413,8 @@ function esc(s){
 
 let mode = 'stops', driving = false, driveTimer = null, driveSpeed = 550;
 let visited = new Set(), hops = 0, legStartDist = 0;
+let lastDist = Infinity, stalled = 0;
+const STALL_LIMIT = 10;   // hops without real progress before giving up on the road
 
 const ARRIVE_M   = 45;   // close enough to call it arrived
 const MAX_HOPS   = 220;  // guard against loops on a long leg
@@ -445,6 +447,8 @@ function startDriving(){
   driving = true;
   visited = new Set();
   hops = 0;
+  lastDist = Infinity;
+  stalled = 0;
   document.getElementById('btn-drive').textContent = '⏸ Pause';
   document.getElementById('note-card').classList.add('hidden');
   const pos = pano.getPosition();
@@ -478,6 +482,12 @@ function driveStep(){
   // Too far to drive panorama by panorama — jump to the approach and
   // drive in from there.
   if (dist > DRIVE_WINDOW_M) { skipToApproach(target, dist); return; }
+
+  // Street View links can shuffle sideways around car parks and complex
+  // junctions. If the road isn't actually bringing us closer, stop trying.
+  if (dist < lastDist - 4) { stalled = 0; } else { stalled++; }
+  lastDist = Math.min(lastDist, dist);
+  if (stalled > STALL_LIMIT) { arriveDriving(targetIdx); return; }
 
   const bearing = google.maps.geometry.spherical.computeHeading(pos, target.pos);
   const links = pano.getLinks() || [];
@@ -556,6 +566,8 @@ function moveTo(panoId, heading, target, dist){
 
 function arriveDriving(n){
   stopDriving();
+  lastDist = Infinity;
+  stalled = 0;
   idx = n;
   const st = stops[n];
 
