@@ -418,6 +418,12 @@ const ARRIVE_M   = 45;   // close enough to call it arrived
 const MAX_HOPS   = 220;  // guard against loops on a long leg
 const MAX_TURN   = 105;  // degrees; beyond this we'd be turning around
 
+// Legs between towns run to several miles. Driving those panorama by
+// panorama would take thousands of hops and tens of megabytes for footage
+// of empty highway. Skip ahead to within this range of the stop and drive
+// the approach — which is the part that actually tells a driver anything.
+const DRIVE_WINDOW_M = 450;
+
 window.setMode = function(m){
   mode = m;
   stopDriving();
@@ -469,6 +475,10 @@ function driveStep(){
   // Arrived at the next stop
   if (dist < ARRIVE_M) { arriveDriving(targetIdx); return; }
 
+  // Too far to drive panorama by panorama — jump to the approach and
+  // drive in from there.
+  if (dist > DRIVE_WINDOW_M) { skipToApproach(target, dist); return; }
+
   const bearing = google.maps.geometry.spherical.computeHeading(pos, target.pos);
   const links = pano.getLinks() || [];
 
@@ -496,6 +506,39 @@ function driveStep(){
   }
 
   moveTo(best.pano, best.heading, target, dist);
+}
+
+// Land on a panorama roughly DRIVE_WINDOW_M short of the stop, on the
+// bearing we'd approach from, then hand back to normal driving.
+function skipToApproach(target, dist){
+  const miles = (dist / 1609).toFixed(dist > 16090 ? 0 : 1);
+  document.getElementById('hud-arrow').textContent = '⟿';
+  document.getElementById('hud-dist').textContent = miles + ' mi';
+  document.getElementById('hud-to').textContent = target.accountName || target.address || '';
+  document.getElementById('hud-eta').textContent = 'Skipping ahead to the approach…';
+
+  const from = pano.getPosition();
+  const bearingBack = google.maps.geometry.spherical.computeHeading(target.pos, from);
+  const approach = google.maps.geometry.spherical.computeOffset(
+    target.pos, DRIVE_WINDOW_M * 0.85, bearingBack
+  );
+
+  svService.getPanorama({ location: approach, radius: 400 }, (d, s) => {
+    if (!driving) return;
+    if (s === 'OK' && d && d.location) {
+      visited.add(d.location.pano);
+      pano.setPano(d.location.pano);
+      pano.setPov({
+        heading: google.maps.geometry.spherical.computeHeading(d.location.latLng, target.pos),
+        pitch: 0,
+      });
+      pano.setZoom(0.55);
+      driveTimer = setTimeout(driveStep, 900);
+    } else {
+      // No imagery on the approach — just arrive.
+      arriveDriving(idx + 1);
+    }
+  });
 }
 
 function moveTo(panoId, heading, target, dist){
