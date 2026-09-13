@@ -111,6 +111,35 @@ select{font-family:inherit;font-size:13px;font-weight:600;padding:7px 11px;
 .ri-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .ri-flag{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
 
+/* Mode toggle */
+.modebar{display:flex;gap:4px;background:var(--surface-2);border-radius:9px;padding:3px;margin-bottom:12px}
+.modebtn{flex:1;padding:9px 12px;border:none;border-radius:7px;background:transparent;
+  color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.modebtn.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.modebtn .mb-sub{display:block;font-size:10.5px;font-weight:500;opacity:.7;margin-top:1px}
+
+/* Drive HUD over the pano */
+.hud{position:absolute;top:12px;left:12px;right:12px;display:none;
+  align-items:center;gap:11px;background:rgba(20,32,24,.9);color:#fff;
+  border-radius:10px;padding:10px 13px;backdrop-filter:blur(6px);max-width:420px}
+.hud.show{display:flex}
+.hud-arrow{font-size:26px;line-height:1;flex-shrink:0;width:34px;text-align:center}
+.hud-info{flex:1;min-width:0}
+.hud-dist{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600;
+  line-height:1.05;font-variant-numeric:tabular-nums}
+.hud-to{font-size:12px;opacity:.82;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;margin-top:1px}
+.hud-eta{font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.6;margin-top:2px}
+
+/* Data notice */
+.datanote{background:var(--amber-l);border:1px solid var(--amber);border-radius:7px;
+  padding:11px 14px;font-size:13px;line-height:1.55;margin-bottom:12px;display:none}
+.datanote.show{display:block}
+.datanote b{color:var(--amber);font-weight:600}
+
+.speedsel{font-family:inherit;font-size:13px;font-weight:600;padding:9px 11px;
+  border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)}
+
 .intro{font-size:14px;color:var(--muted);margin-bottom:14px;max-width:66ch}
 .footer{border-top:1px solid var(--border);padding-top:18px;margin-top:32px;
   font-size:12.5px;color:var(--muted);line-height:1.6}
@@ -132,17 +161,46 @@ select{font-family:inherit;font-size:13px;font-weight:600;padding:7px 11px;
   <p class="intro">Walk any route as the driver sees it. Each stop opens in Street View with that property's
   actual notes and access details pulled live from the route sheet — change a note in the sheet, reload, and it appears here.</p>
 
+  <div class="modebar">
+    <button class="modebtn on" id="mode-stops" onclick="setMode('stops')">
+      📍 Jump to stops<span class="mb-sub">Lowest data</span>
+    </button>
+    <button class="modebtn" id="mode-drive" onclick="setMode('drive')">
+      🚗 Drive the route<span class="mb-sub">Follows the road</span>
+    </button>
+  </div>
+
+  <div class="datanote" id="datanote">
+    <b>Heads up on data:</b> driving mode loads new Street View imagery every few metres of road —
+    roughly <b>1–3 MB per mile</b>. Fine on wifi, expensive on a weak signal. Jump-to-stops mode
+    loads one image per stop instead.
+  </div>
+
   <div id="loading">Loading route data…</div>
 
   <div id="viewer" style="display:none;">
     <div class="pano-wrap">
       <div id="pano"></div>
       <div id="pano-msg"></div>
+      <div class="hud" id="hud">
+        <div class="hud-arrow" id="hud-arrow">↑</div>
+        <div class="hud-info">
+          <div class="hud-dist" id="hud-dist">—</div>
+          <div class="hud-to" id="hud-to"></div>
+          <div class="hud-eta" id="hud-eta"></div>
+        </div>
+      </div>
       <div class="note-card hidden" id="note-card"></div>
     </div>
 
     <div class="ctrls">
       <button class="btn" id="btn-prev" onclick="go(-1)">← Prev</button>
+      <button class="btn primary" id="btn-drive" onclick="toggleDrive()" style="display:none;">▶ Drive</button>
+      <select class="speedsel" id="speedsel" onchange="driveSpeed=+this.value" style="display:none;">
+        <option value="900">Slow</option>
+        <option value="550" selected>Normal</option>
+        <option value="280">Fast</option>
+      </select>
       <button class="btn primary" id="btn-next" onclick="go(1)">Next stop →</button>
       <div class="progress">
         <div class="ptrack"><div class="pfill" id="pfill" style="width:0%"></div></div>
@@ -204,6 +262,7 @@ window.loadRoute = async function(tab){
   document.getElementById('loading').style.display = 'block';
   document.getElementById('loading').textContent = 'Loading ' + tab + ' from the sheet…';
   document.getElementById('viewer').style.display = 'none';
+  if (typeof stopDriving === 'function') stopDriving();
   stops = []; idx = 0;
 
   let items = [];
@@ -250,12 +309,13 @@ window.loadRoute = async function(tab){
 };
 
 window.go = function(d){
+  if (typeof stopDriving === 'function') stopDriving();
   const n = idx + d;
   if (n < 0 || n >= stops.length) return;
   showStop(n);
 };
 
-window.jump = function(n){ showStop(n); };
+window.jump = function(n){ if (typeof stopDriving === 'function') stopDriving(); showStop(n); };
 
 function showStop(n){
   idx = n;
@@ -344,6 +404,178 @@ function renderRail(){
 
 function esc(s){
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Drive mode ────────────────────────────────────────────────────────────
+// Street View panoramas expose links to adjacent panoramas along the road.
+// Driving means repeatedly stepping to whichever link best matches the
+// bearing toward the next stop.
+
+let mode = 'stops', driving = false, driveTimer = null, driveSpeed = 550;
+let visited = new Set(), hops = 0, legStartDist = 0;
+
+const ARRIVE_M   = 45;   // close enough to call it arrived
+const MAX_HOPS   = 220;  // guard against loops on a long leg
+const MAX_TURN   = 105;  // degrees; beyond this we'd be turning around
+
+window.setMode = function(m){
+  mode = m;
+  stopDriving();
+  document.getElementById('mode-stops').classList.toggle('on', m === 'stops');
+  document.getElementById('mode-drive').classList.toggle('on', m === 'drive');
+  document.getElementById('datanote').classList.toggle('show', m === 'drive');
+  document.getElementById('btn-drive').style.display = m === 'drive' ? '' : 'none';
+  document.getElementById('speedsel').style.display  = m === 'drive' ? '' : 'none';
+  document.getElementById('hud').classList.toggle('show', m === 'drive');
+  if (m === 'stops') document.getElementById('note-card').classList.remove('hidden');
+};
+
+window.toggleDrive = function(){
+  driving ? stopDriving() : startDriving();
+};
+
+function startDriving(){
+  if (idx >= stops.length - 1) { showStop(0); }
+  driving = true;
+  visited = new Set();
+  hops = 0;
+  document.getElementById('btn-drive').textContent = '⏸ Pause';
+  document.getElementById('note-card').classList.add('hidden');
+  const pos = pano.getPosition();
+  const tgt = stops[Math.min(idx + 1, stops.length - 1)].pos;
+  legStartDist = pos && tgt ? google.maps.geometry.spherical.computeDistanceBetween(pos, tgt) : 0;
+  driveStep();
+}
+
+function stopDriving(){
+  driving = false;
+  if (driveTimer) { clearTimeout(driveTimer); driveTimer = null; }
+  const b = document.getElementById('btn-drive');
+  if (b) b.textContent = '▶ Drive';
+}
+
+function driveStep(){
+  if (!driving) return;
+
+  const targetIdx = idx + 1;
+  if (targetIdx >= stops.length) { stopDriving(); updateHud(null, 0); return; }
+
+  const target = stops[targetIdx];
+  const pos = pano.getPosition();
+  if (!pos) { driveTimer = setTimeout(driveStep, driveSpeed); return; }
+
+  const dist = google.maps.geometry.spherical.computeDistanceBetween(pos, target.pos);
+
+  // Arrived at the next stop
+  if (dist < ARRIVE_M) { arriveDriving(targetIdx); return; }
+
+  const bearing = google.maps.geometry.spherical.computeHeading(pos, target.pos);
+  const links = pano.getLinks() || [];
+
+  // Choose the link closest to the bearing we want, preferring unvisited
+  let best = null, bestScore = Infinity;
+  for (const l of links) {
+    if (l.pano == null) continue;
+    const diff = Math.abs(((l.heading - bearing + 540) % 360) - 180);
+    if (diff > MAX_TURN) continue;
+    const score = diff + (visited.has(l.pano) ? 70 : 0);
+    if (score < bestScore) { bestScore = score; best = l; }
+  }
+
+  // Dead end or the road turns away — hop to the nearest pano ahead instead
+  if (!best) {
+    const ahead = google.maps.geometry.spherical.computeOffset(pos, Math.min(dist, 120), bearing);
+    svService.getPanorama({ location: ahead, radius: 140 }, (d, s) => {
+      if (s === 'OK' && d && d.location && !visited.has(d.location.pano)) {
+        moveTo(d.location.pano, bearing, target, dist);
+      } else {
+        arriveDriving(targetIdx);   // can't get closer by road; treat as arrived
+      }
+    });
+    return;
+  }
+
+  moveTo(best.pano, best.heading, target, dist);
+}
+
+function moveTo(panoId, heading, target, dist){
+  visited.add(panoId);
+  hops++;
+  if (hops > MAX_HOPS) { arriveDriving(idx + 1); return; }
+
+  pano.setPano(panoId);
+  pano.setPov({ heading, pitch: 0 });
+  pano.setZoom(0.55);
+  updateHud(target, dist, heading);
+
+  driveTimer = setTimeout(driveStep, driveSpeed);
+}
+
+function arriveDriving(n){
+  stopDriving();
+  idx = n;
+  const st = stops[n];
+
+  // Turn to face the property, then show its notes
+  const pos = pano.getPosition();
+  if (pos && st.pos) {
+    pano.setPov({
+      heading: google.maps.geometry.spherical.computeHeading(pos, st.pos),
+      pitch: 2,
+    });
+  }
+  updateHud(st, 0);
+  updateControls();
+  renderRail();
+  renderCard(st, n);
+
+  // Keep going to the following stop after a beat
+  if (n < stops.length - 1) {
+    driveTimer = setTimeout(() => {
+      document.getElementById('note-card').classList.add('hidden');
+      startDriving();
+    }, 3400);
+    driving = false;
+    document.getElementById('btn-drive').textContent = '▶ Drive';
+  }
+}
+
+function updateHud(target, dist, heading){
+  const arrowEl = document.getElementById('hud-arrow');
+  const distEl  = document.getElementById('hud-dist');
+  const toEl    = document.getElementById('hud-to');
+  const etaEl   = document.getElementById('hud-eta');
+
+  if (!target) {
+    arrowEl.textContent = '🏁';
+    distEl.textContent = 'Route complete';
+    toEl.textContent = '';
+    etaEl.textContent = '';
+    return;
+  }
+  if (dist < ARRIVE_M) {
+    arrowEl.textContent = '🏁';
+    distEl.textContent = 'Arrived';
+    toEl.textContent = target.accountName || target.address || '';
+    etaEl.textContent = '';
+    return;
+  }
+
+  const pos = pano.getPosition();
+  let glyph = '↑';
+  if (pos && heading !== undefined) {
+    const want = google.maps.geometry.spherical.computeHeading(pos, target.pos);
+    const rel = ((want - heading + 540) % 360) - 180;
+    glyph = rel > 35 ? '↱' : rel < -35 ? '↰' : '↑';
+  }
+
+  const feet = Math.round(dist * 3.281);
+  arrowEl.textContent = glyph;
+  distEl.textContent = feet > 1000
+    ? (dist / 1609).toFixed(1) + ' mi'
+    : Math.max(50, Math.round(feet / 50) * 50) + ' ft';
+  toEl.textContent = target.accountName || target.address || '';
+  etaEl.textContent = 'Stop ' + (idx + 2) + ' of ' + stops.length;
 }
 </script>
 </body>
