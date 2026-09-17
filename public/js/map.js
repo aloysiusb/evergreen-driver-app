@@ -101,7 +101,7 @@ async function initMap() {
       'Slow connection detected.<br>' +
       '<span style="font-size:12px;opacity:.8">The map uses about 300 KB of data.</span><br>' +
       '<button id="map-load-anyway" style="margin-top:10px;padding:9px 18px;border:none;' +
-      'border-radius:8px;background:var(--route-color,#22c55e);color:#fff;font-weight:600;' +
+      'border-radius:var(--r-control);background:var(--route-color,#22c55e);color:#fff;font-weight:600;' +
       'font-family:inherit;font-size:14px;cursor:pointer;">Load map anyway</button>';
     document.getElementById('map-load-anyway').addEventListener('click', () => {
       window._mapForced = true;
@@ -390,8 +390,8 @@ function showRerouteNudge(saving) {
   const toast = document.getElementById('toast');
   toast.innerHTML =
     `Traffic shifted — <b>Live route saves ~${saving} min</b> ` +
-    `<button id="reroute-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:6px;background:${LIVE_COLOR};color:#fff;font-weight:700;cursor:pointer;">⚡ Switch</button>` +
-    `<button id="reroute-no" style="margin-left:4px;padding:4px 8px;border:none;border-radius:6px;background:transparent;color:inherit;opacity:0.6;cursor:pointer;">Dismiss</button>`;
+    `<button id="reroute-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:var(--r-control);background:${LIVE_COLOR};color:#fff;font-weight:700;cursor:pointer;">⚡ Switch</button>` +
+    `<button id="reroute-no" style="margin-left:4px;padding:4px 8px;border:none;border-radius:var(--r-control);background:transparent;color:inherit;opacity:0.6;cursor:pointer;">Dismiss</button>`;
   toast.classList.add('show');
 
   document.getElementById('reroute-yes').addEventListener('click', () => {
@@ -743,7 +743,7 @@ function promptArrival(stop) {
   try { navigator.vibrate?.([120, 80, 120]); } catch {}
 
   const toast = document.getElementById('toast');
-  toast.innerHTML = `Arrived at <b>${escHtml(stop.accountName || stop.address)}</b>? <button id="arrive-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:6px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">✓ Done</button>`;
+  toast.innerHTML = `Arrived at <b>${escHtml(stop.accountName || stop.address)}</b>? <button id="arrive-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:var(--r-control);background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">✓ Done</button>`;
   toast.classList.add('show');
 
   document.getElementById('arrive-yes').addEventListener('click', () => {
