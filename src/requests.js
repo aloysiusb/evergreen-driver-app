@@ -146,3 +146,47 @@ export function rateLimited(ip) {
   if (hits.size > 5000) hits.clear();        // crude, bounded
   return recent.length > MAX_PER_WINDOW;
 }
+
+// ── Settings ──────────────────────────────────────────────────────────────
+// Who gets told when a request comes in. Kept in the database rather than an
+// env var so it can be changed from the approval screen without a redeploy —
+// the same reasoning as the style settings.
+
+db.exec(`CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+)`);
+
+const SETTING_DEFAULTS = {
+  notify_email: "perryaloysius@gmail.com",
+  notify_enabled: "1",
+};
+
+export function getSetting(key) {
+  const row = db.prepare("SELECT value FROM settings WHERE key = ?").get(key);
+  return row ? row.value : (SETTING_DEFAULTS[key] ?? "");
+}
+
+export function getSettings() {
+  const out = { ...SETTING_DEFAULTS };
+  for (const r of db.prepare("SELECT key, value FROM settings").all()) {
+    if (r.key in SETTING_DEFAULTS) out[r.key] = r.value;
+  }
+  return out;
+}
+
+export function setSettings(patch) {
+  const stmt = db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
+  for (const [key, value] of Object.entries(patch || {})) {
+    if (!(key in SETTING_DEFAULTS)) continue;
+    if (key === "notify_email") {
+      const v = String(value).trim().slice(0, 160);
+      // Empty is allowed — it means "stop emailing me".
+      if (v && !/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(v)) continue;
+      stmt.run(key, v);
+    } else {
+      stmt.run(key, String(value) === "1" ? "1" : "0");
+    }
+  }
+  return getSettings();
+}

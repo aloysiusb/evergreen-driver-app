@@ -16,6 +16,7 @@ import { mountGate } from "./gate.js";
 import {
   validateRequest, createRequest, listRequests, getRequest,
   decideRequest, countByStatus, rateLimited,
+  getSettings, setSettings,
 } from "./requests.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -320,7 +321,11 @@ app.post("/api/requests", (req, res) => {
 
   const saved = createRequest(value, "website");
 
-  // Email is optional and not yet configured — see sendConfirmation().
+  // Two different emails, two different problems:
+  //   notify      → to us. Any address works, including gmail.
+  //   confirmation → to the customer. Needs a verified sending domain.
+  notifyNewRequest(saved).catch(err =>
+    console.warn("[requests] notification failed:", err.message));
   sendConfirmation(saved).catch(err =>
     console.warn("[requests] confirmation email failed:", err.message));
 
@@ -381,6 +386,48 @@ app.post("/api/requests/:id/decline", (req, res) => {
   broadcast({ type: "request-decided", id: req.params.id, status: "declined" });
   res.json(updated);
 });
+
+// Who gets notified, and whether. Behind the gate like everything else.
+app.get("/api/requests-settings", (req, res) => res.json(getSettings()));
+
+app.post("/api/requests-settings", (req, res) => {
+  res.json(setSettings(req.body));
+});
+
+// Tell us a request came in. The recipient is a setting, not an env var, so
+// it can be changed from the approval screen without a redeploy.
+async function notifyNewRequest(request) {
+  const { notify_email: to, notify_enabled: enabled } = getSettings();
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.REQUESTS_FROM_EMAIL;
+
+  if (enabled !== "1" || !to) return;
+  if (!key || !from) {
+    console.log(`[requests] ${request.id} from ${request.name} — would notify ${to} (email not configured)`);
+    return;
+  }
+
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to,
+      subject: `New Evergreen request — ${request.name}`,
+      text: [
+        `${request.name}`,
+        `${request.address}${request.city ? ", " + request.city : ""}`,
+        request.email ? `Email: ${request.email}` : "",
+        request.phone ? `Phone: ${request.phone}` : "",
+        request.notes ? `Notes: ${request.notes}` : "",
+        "",
+        `Approve or decline: https://evergreen-driver-app.onrender.com/approval.html`,
+      ].filter(Boolean).join("\n"),
+    }),
+  });
+  if (!r.ok) throw new Error("Resend responded " + r.status);
+  console.log(`[requests] ${request.id} notified ${to}`);
+}
 
 // Confirmation email. No provider is wired up yet: set RESEND_API_KEY and
 // REQUESTS_FROM_EMAIL in Render and this starts sending, with no new npm
