@@ -17,3 +17,8 @@ node_modules/
 # Editor
 .vscode/
 .idea/
+
+# Runtime SQLite database — created by the app, never committed
+data/*.db
+data/*.db-shm
+data/*.db-wal
