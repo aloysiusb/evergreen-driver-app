@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
 
+<link rel="stylesheet" href="/css/tokens.css">
 <style>
   :root {
     --bg:        #f4f7f3;
@@ -117,7 +118,7 @@
     width: 26px;
     height: 26px;
     background: rgba(255,255,255,0.15);
-    border-radius: 7px;
+    border-radius: var(--r-control);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -138,7 +139,7 @@
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    border-radius: 7px;
+    border-radius: var(--r-control);
     font-size: 13px;
     font-weight: 500;
     color: rgba(255,255,255,0.7);
@@ -178,7 +179,7 @@
     align-items: center;
     gap: 8px;
     background: rgba(255,255,255,0.12);
-    border-radius: 8px;
+    border-radius: var(--r-card);
     padding: 8px 14px;
     font-size: 13px;
     font-weight: 500;
@@ -205,7 +206,7 @@
 
   .filter-btn {
     padding: 6px 14px;
-    border-radius: 20px;
+    border-radius: var(--r-sheet);
     border: 1.5px solid var(--border);
     background: none;
     color: var(--muted);
@@ -231,7 +232,7 @@
   .request-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--r-panel);
     overflow: hidden;
     transition: box-shadow 0.15s;
   }
@@ -249,7 +250,7 @@
 
   .type-badge {
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--r-control);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -287,7 +288,7 @@
 
   .status-pill {
     padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: var(--r-sheet);
     font-size: 12px;
     font-weight: 600;
     flex-shrink: 0;
@@ -305,7 +306,7 @@
 
   .btn-approve, .btn-decline, .btn-send {
     padding: 7px 16px;
-    border-radius: 8px;
+    border-radius: var(--r-card);
     font-size: 13px;
     font-weight: 600;
     font-family: inherit;
@@ -334,7 +335,7 @@
     padding: 20px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--r-panel);
   }
 
   .demo-title {
@@ -357,7 +358,7 @@
     align-items: center;
     gap: 7px;
     padding: 9px 16px;
-    border-radius: 9px;
+    border-radius: var(--r-card);
     background: var(--bg);
     border: 1px solid var(--border);
     font-size: 13px;

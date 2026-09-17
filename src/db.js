@@ -21,7 +21,14 @@ export const DEFAULT_STYLES = {
   "--border":           "#e4e4e7",
   "--text":             "#18181b",
   "--text-muted":       "#71717a",
-  "--radius":           "12",
+  // ── Corner radius scale (see public/css/tokens.css) ─────
+  // Roles, not sizes. Every border-radius in the app resolves
+  // to one of these, so corners stay consistent site-wide.
+  "--r-chip":           "4",   // badges, swatches, tiny tags
+  "--r-control":        "6",   // inputs, small buttons
+  "--r-card":           "9",   // cards, table wrappers, callouts
+  "--r-panel":          "12",  // large containers, modals
+  "--r-sheet":          "20",  // bottom sheets
   "--font-size":        "16",
   "--font-weight":      "400",
   "--line-height":      "1.5",

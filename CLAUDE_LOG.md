@@ -4,6 +4,56 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-09-17 — Corner radii unified onto one scale
+
+The site had drifted badly: **~200 `border-radius` declarations across 25
+distinct hardcoded values**, with individual pages using seven different radii
+at once (streetview had 3/6/7/8/9/10/11px on adjacent elements). Almost none of
+it was deliberate — it was accumulated drift from pages being written
+independently.
+
+- Added `public/css/tokens.css` — five **role** tokens (`--r-chip`,
+  `--r-control`, `--r-card`, `--r-panel`, `--r-sheet`) plus `--r-pill` and
+  `--r-circle`, in three presets selected by `data-radius` on `<html>`. Roles
+  rather than sizes, so an element declares what it *is* and the scale decides
+  the number. Linked ahead of each page's own `<style>`, so a page can still
+  override any token in its own `:root`.
+- Kept the three visual languages that were actually intentional — the driver
+  app / product pages (standard), the crisp print-like analysis pages
+  (`tight`), and the rounder marketing pages (`soft`) — instead of flattening
+  everything to one number.
+- Rewrote 194 declarations across 17 files onto the scale. One literal
+  survives (`border-radius: 0` on stacked completed stop cards, deliberate).
+- Collapsed the old `--radius` var into `--r-panel` / `--r-card` — it was a
+  second knob for the same thing and had its own admin slider. Removed from
+  `db.js`, `app.css`, `portal.html` and the admin panel. `--route-card-radius`
+  was **left alone** — a genuine one-off for the home page's big route cards.
+- `needsPx()` had been copy-pasted into admin.html, index.html and driver.js
+  and had already started to drift between the three. Extracted to
+  `public/js/style-units.js`, which now also carries `shouldApplyStyleVar()` so
+  a pushed style can't clobber a `tight`/`soft` page's preset (an inline style
+  on `:root` beats any stylesheet selector).
+- Added a **Corners** section to the admin style editor — five sliders, live
+  preview, persisted to SQLite like every other style var.
+- `.gitignore` did not actually cover `data/app.db`, despite CLAUDE.md saying
+  it did — the SQLite db showed up as untracked as soon as the server ran
+  locally. Added `data/*.db*`.
+
+**Verified locally** (node 24, `PORT=3777`, no Google creds — route data fails
+to load as expected, everything else renders): all three presets resolve
+correctly in the browser, the Corners sliders drive the live preview iframe,
+and index / driver / admin / briefing / dispatch / pitch / portal / weekly all
+render without visual breakage.
+
+**Not done — same drift exists in colors and fonts.** Each page defines its own
+`:root` palette with different names for the same thing (`--muted` vs
+`--text-muted`, `--accent` vs `--green` vs `--forest`) and five near-identical
+page backgrounds (#f2f7f3, #f5faf6, #f7f8f6, #f3f7f2, #f5f7f4). Six typefaces
+are in play and each page loads its own Google Fonts request — a real
+performance cost on top of the inconsistency. `tokens.css` is the obvious place
+to fix both next.
+
+---
 ## 2026-09-17 — Access gate, so the link can be handed to drivers
 
 **Why:** Virginia wanted a link she could text to the drivers today. Nothing in

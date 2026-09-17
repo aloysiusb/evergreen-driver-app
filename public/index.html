@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/app.css">
 <link rel="manifest" href="/manifest.json">
 </head>
@@ -23,11 +24,12 @@
 <div class="route-grid" id="route-grid"></div>
 
 <div style="text-align:center;padding:16px 20px 28px;">
-  <a href="/dispatch.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--surface,#fff);border:1.5px solid var(--border,#d4e8d8);border-radius:10px;font-size:14px;font-weight:600;color:var(--text,#1a2b1d);text-decoration:none;">
+  <a href="/dispatch.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--surface,#fff);border:1.5px solid var(--border,#d4e8d8);border-radius:var(--r-card);font-size:14px;font-weight:600;color:var(--text,#1a2b1d);text-decoration:none;">
     📡 Dispatcher Dashboard
   </a>
 </div>
 
+<script src="/js/style-units.js"></script>
 <script src="/js/routes.js"></script>
 <script>
 const grid = document.getElementById('route-grid');
@@ -36,9 +38,8 @@ fetch('/api/styles').then(r => r.json()).then(styles => {
   // Apply global CSS vars
   const root = document.documentElement;
   for (const [key, val] of Object.entries(styles)) {
-    if (key.startsWith('--')) {
-      const needsPx = key === '--radius' || key === '--route-card-radius' || key.endsWith('-font-size') || key.endsWith('-padding');
-      root.style.setProperty(key, needsPx ? val + 'px' : val);
+    if (key.startsWith('--') && shouldApplyStyleVar(key)) {
+      root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
     }
   }
   // Apply editable home page content (empty string → element hidden via CSS :empty)

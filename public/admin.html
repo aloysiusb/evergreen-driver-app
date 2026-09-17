@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -83,7 +84,7 @@
 
   input[type=color] {
     width: 34px; height: 28px;
-    border: none; border-radius: 6px;
+    border: none; border-radius: var(--r-control);
     padding: 2px; background: #333; cursor: pointer;
   }
 
@@ -102,7 +103,7 @@
   .push-btn {
     width: 100%; padding: 12px;
     background: #4a9e3f; color: #fff;
-    border: none; border-radius: 8px;
+    border: none; border-radius: var(--r-card);
     font-family: inherit; font-size: 0.95em; font-weight: 700;
     cursor: pointer; transition: background 0.15s;
   }
@@ -111,7 +112,7 @@
   .reset-btn {
     width: 100%; padding: 8px;
     background: transparent; color: #888;
-    border: 1px solid #444; border-radius: 8px;
+    border: 1px solid #444; border-radius: var(--r-card);
     font-family: inherit; font-size: 0.82em;
     cursor: pointer; transition: color 0.15s, border-color 0.15s;
   }
@@ -124,7 +125,7 @@
 
   input[type=text] {
     background: #2a2a2a; color: #f0f0f0;
-    border: 1px solid #444; border-radius: 6px;
+    border: 1px solid #444; border-radius: var(--r-control);
     padding: 5px 8px; font-family: inherit; font-size: 0.82em;
     width: 150px;
   }
@@ -257,6 +258,51 @@
       </div>
     </div>
 
+    <!-- ── CORNERS ── -->
+    <div class="panel-section">
+      <h2>Corners</h2>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        One scale for every rounded corner in the app. Elements pick the role
+        that matches what they are, so nudging a slider here moves every
+        matching corner at once instead of leaving odd 7px/8px/9px drift.
+      </p>
+      <div class="control-row">
+        <label>Chip<br><small style="opacity:.6">badges, swatches, tiny tags</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--r-chip" min="0" max="16" step="1" value="4">
+          <span class="val-display" data-for="--r-chip">4px</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Control<br><small style="opacity:.6">inputs, small buttons</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--r-control" min="0" max="20" step="1" value="6">
+          <span class="val-display" data-for="--r-control">6px</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Card<br><small style="opacity:.6">cards, table wrappers, callouts</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--r-card" min="0" max="28" step="1" value="9">
+          <span class="val-display" data-for="--r-card">9px</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Panel<br><small style="opacity:.6">large containers, modals</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--r-panel" min="0" max="36" step="1" value="12">
+          <span class="val-display" data-for="--r-panel">12px</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Sheet<br><small style="opacity:.6">bottom sheets, overlays</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--r-sheet" min="0" max="48" step="1" value="20">
+          <span class="val-display" data-for="--r-sheet">20px</span>
+        </div>
+      </div>
+    </div>
+
     <!-- ── STOP CARDS ── -->
     <div class="panel-section">
       <h2>Stop Cards</h2>
@@ -267,13 +313,6 @@
       <div class="control-row">
         <label>Border / divider</label>
         <div class="inputs"><input type="color" data-var="--border" value="#e4e4e7"></div>
-      </div>
-      <div class="control-row">
-        <label>Corner radius</label>
-        <div class="inputs">
-          <input type="range" data-var="--radius" min="0" max="28" step="1" value="12">
-          <span class="val-display" data-for="--radius">12px</span>
-        </div>
       </div>
       <div class="control-row">
         <label>Completed stop bg</label>
@@ -578,18 +617,11 @@
   </div>
 </div>
 
+<script src="/js/style-units.js"></script>
 <script>
 const frame = document.getElementById('preview-frame');
 const pushStatus = document.getElementById('push-status');
 
-// Any var whose stored value is a unitless number and should render as px
-function needsPx(key) {
-  return key === '--radius' ||
-    key === '--route-card-radius' ||
-    key === '--home-header-padding' ||
-    key.endsWith('-font-size') ||
-    key.endsWith('-padding');
-}
 
 function collectStyles() {
   const styles = {};

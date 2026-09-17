@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-radius="tight">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
 <style>
 /* ── Tokens ── */
 :root {
@@ -88,7 +89,7 @@ body {
   width: 32px;
   height: 32px;
   background: var(--accent);
-  border-radius: 8px;
+  border-radius: var(--r-panel);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,7 +126,7 @@ body {
 .ws-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--r-circle);
   background: var(--ws-bad);
   transition: background 0.4s;
   flex-shrink: 0;
@@ -170,13 +171,13 @@ body {
   min-width: 120px;
   height: 6px;
   background: var(--border);
-  border-radius: 3px;
+  border-radius: var(--r-chip);
   overflow: hidden;
 }
 .fleet-progress-fill {
   height: 100%;
   background: var(--accent);
-  border-radius: 3px;
+  border-radius: var(--r-chip);
   transition: width 0.5s ease;
 }
 .fleet-divider {
@@ -199,7 +200,7 @@ body {
 .route-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--r-sheet);
   overflow: hidden;
   transition: opacity 0.2s;
 }
@@ -216,7 +217,7 @@ body {
 .route-stripe {
   width: 4px;
   align-self: stretch;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   flex-shrink: 0;
 }
 .route-info { flex: 1; min-width: 0; }
@@ -236,7 +237,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: var(--r-control);
   margin-top: 3px;
 }
 .route-day-chip.today {
@@ -278,12 +279,12 @@ body {
 .progress-bar {
   height: 8px;
   background: var(--border);
-  border-radius: 4px;
+  border-radius: var(--r-control);
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--r-control);
   transition: width 0.5s ease;
 }
 
@@ -333,7 +334,7 @@ body {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
-  border-radius: 6px;
+  border-radius: var(--r-card);
   white-space: nowrap;
   max-width: 180px;
   overflow: hidden;
@@ -371,7 +372,7 @@ body {
   height: 28px;
   border: 3px solid var(--border);
   border-top-color: var(--accent);
-  border-radius: 50%;
+  border-radius: var(--r-circle);
   animation: spin 0.7s linear infinite;
   margin: 0 auto 14px;
 }
@@ -385,7 +386,7 @@ body {
 .theme-toggle {
   background: var(--muted-bg);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--r-card);
   padding: 5px 10px;
   font-size: 12px;
   color: var(--muted);

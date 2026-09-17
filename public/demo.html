@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
 <style>
 :root {
   --bg:       #f5faf6;
@@ -72,7 +73,7 @@ body {
   background: var(--accent);
   color: #fff;
   padding: 2px 8px;
-  border-radius: 5px;
+  border-radius: var(--r-control);
 }
 .demo-controls {
   display: flex;
@@ -84,7 +85,7 @@ body {
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--r-card);
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -112,7 +113,7 @@ body {
 #demo-map {
   width: 100%;
   height: clamp(240px,45vh,340px);
-  border-radius: 14px;
+  border-radius: var(--r-panel);
   border: 1.5px solid var(--border);
   background: var(--border);
 }
@@ -127,7 +128,7 @@ body {
 .nav-card {
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-panel);
   padding: 14px 16px;
 }
 .nav-top {
@@ -143,7 +144,7 @@ body {
   font-size: 10px;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 5px;
+  border-radius: var(--r-control);
   background: var(--accent-l);
   color: var(--accent);
   letter-spacing: 0.05em;
@@ -154,7 +155,7 @@ body {
   background: var(--blue-l);
   color: var(--blue);
   padding: 3px 9px;
-  border-radius: 6px;
+  border-radius: var(--r-control);
 }
 .nav-name {
   font-family: 'Barlow Semi Condensed', sans-serif;
@@ -172,7 +173,7 @@ body {
   background: var(--blue-l);
   color: var(--blue);
   padding: 5px 11px;
-  border-radius: 8px;
+  border-radius: var(--r-card);
   margin-bottom: 8px;
 }
 .nav-note {
@@ -180,7 +181,7 @@ body {
   background: var(--accent-l);
   border-left: 3px solid var(--accent);
   padding: 8px 11px;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--r-card) var(--r-card) 0;
   margin-bottom: 10px;
   line-height: 1.5;
 }
@@ -198,7 +199,7 @@ body {
   min-width: calc(50% - 3px);
   padding: 8px 6px;
   border: 1.5px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--r-card);
   background: var(--surface);
   color: var(--text);
   font-size: 12px;
@@ -217,7 +218,7 @@ body {
   flex: 1;
   padding: 10px 8px;
   border: none;
-  border-radius: 9px;
+  border-radius: var(--r-card);
   font-size: 13px;
   font-weight: 600;
   text-align: center;
@@ -237,7 +238,7 @@ body {
   background: var(--text);
   color: var(--bg);
   padding: 13px 20px;
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
@@ -253,7 +254,7 @@ body {
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 7px;
+  border-radius: var(--r-control);
   padding: 5px 12px;
   font-weight: 700;
   font-size: 13px;
@@ -264,7 +265,7 @@ body {
 .caption {
   background: var(--surface);
   border: 1.5px solid var(--accent);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 12px 16px;
   font-size: 13px;
   line-height: 1.55;
@@ -286,7 +287,7 @@ body {
 }
 .sdot {
   width: 7px; height: 7px;
-  border-radius: 50%;
+  border-radius: var(--r-circle);
   background: var(--border);
   transition: background 0.3s;
 }
@@ -306,14 +307,14 @@ body {
   display: flex;
   gap: 4px;
   background: var(--border);
-  border-radius: 10px;
+  border-radius: var(--r-card);
   padding: 3px;
 }
 .vt-btn {
   flex: 1;
   padding: 7px 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--r-card);
   background: transparent;
   color: var(--muted);
   font-size: 13px;
@@ -331,7 +332,7 @@ body {
 #turn-banner {
   background: #1a2b1d;
   color: #fff;
-  border-radius: 14px;
+  border-radius: var(--r-panel);
   padding: 14px 16px;
   display: none;
   align-items: center;
@@ -374,7 +375,7 @@ body {
 /* Speed readout */
 .speed-pill {
   background: rgba(255,255,255,0.12);
-  border-radius: 8px;
+  border-radius: var(--r-card);
   padding: 5px 10px;
   text-align: center;
   flex-shrink: 0;
@@ -398,7 +399,7 @@ body {
   gap: 10px;
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 10px 14px;
   font-size: 13px;
   flex-wrap: wrap;
@@ -407,7 +408,7 @@ body {
   font-size: 12px;
   font-weight: 700;
   padding: 3px 10px;
-  border-radius: 7px;
+  border-radius: var(--r-control);
 }
 .traffic-pill.light    { background: var(--accent-l); color: var(--accent); }
 .traffic-pill.moderate { background: var(--amber-l);  color: var(--amber); }
@@ -423,13 +424,13 @@ body {
   display: flex;
   gap: 3px;
   background: var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-card);
   padding: 2px;
 }
 .mode-mini-btn {
   padding: 4px 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--muted);
   font-size: 11px;
@@ -449,7 +450,7 @@ body {
   flex: 1;
   padding: 8px 4px;
   border: 1.5px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--r-card);
   background: var(--surface);
   font-size: 11px;
   font-weight: 600;
@@ -466,7 +467,7 @@ body {
   background: var(--amber);
   color: #fff;
   padding: 12px 18px;
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   font-size: 13px;
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
@@ -482,7 +483,7 @@ body {
   background: #fff;
   color: #b45309;
   border: none;
-  border-radius: 7px;
+  border-radius: var(--r-control);
   padding: 5px 12px;
   font-weight: 700;
   font-size: 12px;

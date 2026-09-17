@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-radius="tight">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
 <style>
 :root{
   --bg:#f7f8f6; --surface:#ffffff; --surface-2:#f0f3ef; --border:#dde3d9;
@@ -41,7 +42,7 @@ body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color
 .masthead{padding:30px 0 18px;border-bottom:3px solid var(--forest);margin-bottom:18px}
 .tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
   letter-spacing:.14em;text-transform:uppercase;background:var(--accent-l);color:var(--accent);
-  border:1px solid var(--accent);border-radius:3px;padding:3px 9px;margin-bottom:12px}
+  border:1px solid var(--accent);border-radius:var(--r-chip);padding:3px 9px;margin-bottom:12px}
 .doc-h1{font-family:'Source Serif 4',Georgia,serif;font-size:clamp(26px,4.6vw,34px);font-weight:600;
   line-height:1.15;color:var(--forest);margin-bottom:8px;letter-spacing:-.015em}
 .doc-standfirst{font-size:15px;color:var(--muted);max-width:60ch}
@@ -49,7 +50,7 @@ body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color
 /* Day tabs */
 .daybar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
 .daybtn{flex:1;min-width:86px;padding:10px 8px;border:1.5px solid var(--border);
-  background:var(--surface);border-radius:7px;cursor:pointer;font-family:inherit;
+  background:var(--surface);border-radius:var(--r-card);cursor:pointer;font-family:inherit;
   font-size:13px;font-weight:600;color:var(--muted);transition:all .13s;text-align:center}
 .daybtn:hover{border-color:var(--accent)}
 .daybtn.on{background:var(--forest);border-color:var(--forest);color:var(--bg)}
@@ -58,7 +59,7 @@ body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color
 
 /* Summary strip */
 .summary{display:flex;gap:14px;flex-wrap:wrap;align-items:center;
-  background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-panel);
   padding:13px 16px;margin-bottom:12px}
 .sum-day{font-family:'Source Serif 4',Georgia,serif;font-size:19px;font-weight:600;color:var(--forest)}
 .sum-stat{display:flex;align-items:baseline;gap:5px}
@@ -66,25 +67,25 @@ body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color
   font-variant-numeric:tabular-nums;color:var(--forest)}
 .sum-l{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .sum-flag{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.05em;
-  text-transform:uppercase;padding:3px 9px;border-radius:4px;white-space:nowrap}
+  text-transform:uppercase;padding:3px 9px;border-radius:var(--r-control);white-space:nowrap}
 .flag-good{background:var(--accent-l);color:var(--accent)}
 .flag-watch{background:var(--amber-l);color:var(--amber)}
 .flag-review{background:var(--red-l);color:var(--red)}
 
 /* Map */
-#wmap{width:100%;height:clamp(260px,52vh,420px);border-radius:10px;border:1.5px solid var(--border);background:var(--surface-2)}
+#wmap{width:100%;height:clamp(260px,52vh,420px);border-radius:var(--r-sheet);border:1.5px solid var(--border);background:var(--surface-2)}
 #wloading{padding:50px 20px;text-align:center;color:var(--muted);font-size:14px}
 
 /* Legend */
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;padding:11px 14px;
-  background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:12.5px}
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-card);font-size:12.5px}
 .lg{display:flex;align-items:center;gap:7px}
-.lg-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
+.lg-dot{width:12px;height:12px;border-radius:var(--r-circle);border:2px solid #fff;flex-shrink:0}
 .lg-name{font-weight:600}
 .lg-n{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px}
 
 /* Note */
-.daynote{background:var(--surface);border-left:3px solid var(--accent);border-radius:0 7px 7px 0;
+.daynote{background:var(--surface);border-left:3px solid var(--accent);border-radius: 0 var(--r-card) var(--r-card) 0;
   padding:13px 16px;margin-top:12px;font-size:14px;line-height:1.55}
 .daynote.warn{border-left-color:var(--amber)}
 .daynote.alert{border-left-color:var(--red)}
@@ -93,10 +94,10 @@ body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color
 
 /* Proposed toggle */
 .fixbar{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;
-  background:var(--amber-l);border:1px solid var(--amber);border-radius:7px;padding:11px 14px}
+  background:var(--amber-l);border:1px solid var(--amber);border-radius:var(--r-card);padding:11px 14px}
 .fixbar-txt{flex:1;min-width:200px;font-size:13.5px;line-height:1.5}
 .fixbar-txt b{color:var(--amber);font-weight:600}
-.fixbtn{padding:8px 16px;border:none;border-radius:6px;background:var(--amber);color:#fff;
+.fixbtn{padding:8px 16px;border:none;border-radius:var(--r-card);background:var(--amber);color:#fff;
   font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 
 .footer{border-top:1px solid var(--border);padding-top:20px;margin-top:36px;

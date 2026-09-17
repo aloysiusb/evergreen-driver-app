@@ -15,8 +15,8 @@
   // Load and apply server-side style settings (includes per-route color)
   function applyStyles(styles) {
     for (const [key, val] of Object.entries(styles)) {
-      if (key.startsWith('--')) {
-        root.style.setProperty(key, (key === '--radius' || key === '--route-card-radius' || key.endsWith('-font-size') || key.endsWith('-padding')) ? val + 'px' : val);
+      if (key.startsWith('--') && shouldApplyStyleVar(key)) {
+        root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
       }
     }
     // Use stored route color if available, else fall back to routes.js value

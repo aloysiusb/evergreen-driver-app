@@ -1,0 +1,48 @@
+/* ============================================================
+   tokens.css — the one place corner radii are defined.
+   Linked by every page, before that page's own <style> block,
+   so a page can still override any token in its own :root.
+
+   Roles, not sizes. Pick the role that matches what the element
+   IS, and the scale keeps the whole site consistent:
+
+     --r-chip     inline labels, badges, swatches, tiny tags
+     --r-control  inputs, selects, small buttons
+     --r-card     cards, table wrappers, callouts
+     --r-panel    large containers, modals, sections
+     --r-sheet    bottom sheets / full-width overlays
+     --r-pill     fully rounded (buttons, counters)
+     --r-circle   avatars, dots, icon buttons
+
+   Three presets. Set on <html>:
+     (none)                  standard — driver app + product pages
+     data-radius="tight"     analysis/report pages (crisper, print-like)
+     data-radius="soft"      marketing/deck pages (rounder)
+   ============================================================ */
+
+:root {
+  --r-chip:    4px;
+  --r-control: 6px;
+  --r-card:    9px;
+  --r-panel:   12px;
+  --r-sheet:   20px;
+
+  --r-pill:    999px;
+  --r-circle:  50%;
+}
+
+:root[data-radius="tight"] {
+  --r-chip:    3px;
+  --r-control: 4px;
+  --r-card:    6px;
+  --r-panel:   8px;
+  --r-sheet:   12px;
+}
+
+:root[data-radius="soft"] {
+  --r-chip:    6px;
+  --r-control: 10px;
+  --r-card:    14px;
+  --r-panel:   18px;
+  --r-sheet:   28px;
+}

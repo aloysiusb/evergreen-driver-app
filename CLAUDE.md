@@ -34,6 +34,17 @@ data/
 - **Column whitelist** — `config.js` is a strict allowlist. Billing/financial columns are never exposed to the driver API even if new columns are added to the sheet.
 - **WebSocket broadcast** — all connected clients get real-time updates for stop toggles, note edits, and style changes.
 - **Style system** — `src/db.js` stores CSS custom property values in SQLite. `/api/styles` GET/POST/reset. Admin page at `/admin.html` pushes changes to all drivers via WebSocket `style-updated` message.
+- **Corners** — every `border-radius` in the app resolves to one of five role
+  tokens defined in `public/css/tokens.css`: `--r-chip`, `--r-control`,
+  `--r-card`, `--r-panel`, `--r-sheet` (plus `--r-pill` / `--r-circle`).
+  **Don't write a px radius literal** — pick the role that matches what the
+  element *is*. Three presets, set with `data-radius` on `<html>`:
+  standard (default, driver app + product pages), `tight` (analysis/report
+  pages — aspenone, briefing, routing, hub, dispatch, weekly), `soft`
+  (marketing/deck pages — pitch, portal, round2, pay, notes). The scale is
+  editable in the admin panel's **Corners** section and persists to SQLite.
+  `public/iphone.html` is deliberately exempt: its 44/50px radii are physical
+  device-frame dimensions, not design tokens.
 - **Section headers** — detected in `routeParser.js` by absence of street number + no city; they use the actual row highlight color from the sheet.
 - **Row colors** — `sheets.js` has `readRangeWithColors()` which fetches both values and cell background colors in one API call to avoid row index misalignment.
 
