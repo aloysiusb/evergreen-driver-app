@@ -609,7 +609,10 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
       // Real stops only — must have a street number (filters out note rows)
       const s = d.items.filter(x => !x.isSectionHeader && /^\d+\s+\S/.test((x.address || '').trim()));
       if (s.length >= 4) { items = s.slice(0, 6); break; }
-    } catch {}
+    } catch {
+      // Deliberate: we are probing tabs in turn and a miss is expected.
+      // The loop moves on; only running out of tabs is a real failure.
+    }
   }
   if (!items) { setCaption('⚠️', 'No route data available.'); return; }
 
@@ -708,6 +711,10 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
           });
         });
         path = dense.length ? dense : result.routes[0].overview_path;
+      } else {
+        // Without this the demo just sits there with no route and no reason.
+        console.warn('[demo] directions:', status);
+        setCaption('⚠️', 'Could not load the route just now — ' + status + '.');
       }
       res();
     });

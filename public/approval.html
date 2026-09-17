@@ -622,7 +622,13 @@
         if (msg.type === 'request-created' || msg.type === 'request-decided') load();
       };
       ws.onclose = () => setTimeout(live, 5000);
-    } catch {}
+      ws.onerror = () => console.warn('[approval] live updates dropped; will retry');
+    } catch (err) {
+      // Without this the queue silently stops updating itself and the only
+      // symptom is requests appearing late, which looks like the portal is
+      // broken rather than the socket.
+      console.warn('[approval] live updates unavailable:', err.message);
+    }
   })();
 
   load();

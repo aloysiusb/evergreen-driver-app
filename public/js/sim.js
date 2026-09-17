@@ -62,8 +62,7 @@
   };
 
   function logWrite(outcome, url, opts) {
-    let body = '';
-    try { body = opts && opts.body ? opts.body : ''; } catch {}
+    const body = (opts && opts.body) || '';
     const i = url.indexOf(API_WRITE_PATH);
     writeLog.unshift({
       t: new Date().toLocaleTimeString(),

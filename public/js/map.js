@@ -18,6 +18,7 @@ let plannedOrder = [];      // original sheet order (never mutated)
 let currentIdx = 0;
 let routeMode = 'planned';  // 'planned' | 'live'
 let plannedMins = null;
+let plannedFailed = false;   // distinguishes "could not work it out" from "still working it out"
 let liveMins = null;
 let directionsRenderer = null;
 let directionsService = null;
@@ -368,8 +369,16 @@ function fetchPlannedTime() {
       plannedMins = Math.round(legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60);
       const freeFlow = Math.round(legs.reduce((s, l) => s + l.duration.value, 0) / 60);
       trafficDelayMins = Math.max(0, plannedMins - freeFlow);
-      updateModeUI();
+      plannedFailed = false;
+    } else {
+      // This used to fall through, leaving plannedMins null and the status bar
+      // blank — which looks exactly like "still loading". That is how the
+      // waypoint bug stayed hidden: the estimate had been failing on every
+      // real route and nothing on screen ever said so.
+      console.warn('[map] planned time:', status);
+      plannedFailed = true;
     }
+    updateModeUI();
   });
 }
 
@@ -474,7 +483,9 @@ function updateModeUI() {
   if (routeMode === 'planned') {
     statusEl.textContent = plannedMins
       ? `~${plannedMins} min${tl ? ' · ' + tl : ''}`
-      : (tl || '');
+      : plannedFailed
+        ? `drive time unavailable${tl ? ' · ' + tl : ''}`
+        : (tl || 'Calculating…');
   } else if (routeMode === 'live') {
     if (liveMins !== null && plannedMins !== null) {
       const saved = plannedMins - liveMins;
@@ -484,7 +495,7 @@ function updateModeUI() {
     } else if (liveMins !== null) {
       statusEl.textContent = `~${liveMins} min${tl ? ' · ' + tl : ''}`;
     } else {
-      statusEl.textContent = 'Calculating…';
+      statusEl.textContent = plannedFailed ? 'drive time unavailable' : 'Calculating…';
     }
   }
 }
@@ -629,7 +640,8 @@ function applyFollow(latLng, heading, snapZoom) {
   // mapId from the Google Cloud console). On a raster map this is a no-op,
   // which is why the view stays north-up today.
   if (typeof heading === 'number' && !Number.isNaN(heading) && gMap.setHeading) {
-    try { gMap.setHeading(heading); } catch {}
+    // Raster maps throw rather than ignore it; nothing to do and nothing to say.
+    try { gMap.setHeading(heading); } catch { /* raster map, heading unsupported */ }
   }
   setTimeout(() => { suppressFollowOff = false; }, 0);
 }
@@ -808,7 +820,7 @@ function promptArrival(stop) {
   // A driver watching the road will not see a toast. A short buzz is the part
   // that actually lands, and it is safer than expecting eyes on the screen.
   // Ignored on iOS Safari, which does not implement vibrate — harmless there.
-  try { navigator.vibrate?.([120, 80, 120]); } catch {}
+  try { navigator.vibrate?.([120, 80, 120]); } catch { /* iOS has no vibrate */ }
 
   const side = lastGpsPos
     ? sideOfApproach(lastGpsPos.lat, lastGpsPos.lng, stop._latLng)
