@@ -564,6 +564,54 @@ body {
 }
 .progress-text { font-size: 12px; opacity: 0.9; }
 
+/* ── Turn-by-turn banner ── */
+/* Ported from the design already proven in demo.html. Dark plate on purpose:
+   at a glance, at speed, in daylight, this has to read before anything else
+   on the screen. */
+#turn-banner {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  margin: 0 12px 8px;
+  padding: 14px 16px;
+  background: #16231a;
+  color: #ffffff;
+  border-radius: var(--r-panel);
+}
+#turn-banner.show { display: flex; }
+
+.turn-arrow {
+  font-size: 34px;
+  line-height: 1;
+  width: 46px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.turn-info { flex: 1; min-width: 0; }
+.turn-dist {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;   /* stops the number jittering as it counts down */
+}
+.turn-text {
+  font-size: 13.5px;
+  opacity: 0.88;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.turn-next {
+  font-size: 11.5px;
+  opacity: 0.6;
+  margin-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#turn-banner.arriving { background: #14532d; }
+
 /* ── Simulator panel (?sim=1 only) ── */
 /* Deliberately loud. Nobody should ever mistake a test drive for the real
    app, least of all while looking over someone's shoulder in a meeting. */

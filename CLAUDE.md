@@ -50,6 +50,14 @@ data/
   except where a parked write exists: `applyPendingToStops()` re-applies them
   after every load, and a `stop-updated` broadcast is ignored for any row with
   a parked write, so an echo of older state can't undo the driver on screen.
+- **Turn-by-turn** — `map.js` keeps the next manoeuvre on our own screen
+  (`#turn-banner`) instead of handing the driver off to Google Maps or Waze and
+  losing the stop notes, access codes and Done button with them. Directions are
+  fetched from the driver's live position to the current stop, throttled
+  (`TURN_MIN_REFETCH_MS`) because it is a billed API call; steps advance only
+  forwards so GPS jitter cannot send the driver back a turn. Distances use the
+  existing `haversineM()`, not `google.maps.geometry` — map.js loads only the
+  `places` library. Design was ported from `demo.html`, where it already existed.
 - **Sim mode** — `/driver/<route>?sim=1` test-drives the real driver page from
   a desk. It does **not** reimplement anything: it swaps `navigator.geolocation`
   for synthetic positions walking the route's geocoded stops, and wraps

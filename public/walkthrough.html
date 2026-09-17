@@ -114,6 +114,26 @@
   .controls .spacer { flex: 1; }
   .hint { font-size: 12.5px; opacity: 0.5; margin-top: 16px; line-height: 1.5; }
 
+  /* A stand-in for the Google map. The walkthrough has to run with no API key
+     and no network, so the map is drawn rather than loaded — everything
+     layered on top of it (turn banner, nav card) is the app's real markup. */
+  .wt-map { background: #e8ece7; height: 168px; overflow: hidden; }
+  .wt-map svg { display: block; width: 100%; height: 100%; }
+  #wt-driver, #wt-route { transition: all 0.9s ease; }
+
+  .wt-modebar {
+    display: flex; gap: 6px; padding: 8px 12px; flex-wrap: wrap;
+    background: var(--bg);
+  }
+  .wt-mode {
+    font-size: 11.5px; font-weight: 600; padding: 5px 10px;
+    border-radius: var(--r-card); background: var(--surface);
+    color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .wt-mode.on { background: #22c55e; color: #fff; border-color: #22c55e; }
+
+  .wt-navcard { padding: 10px 12px 14px; background: var(--surface); }
+
   @media (prefers-reduced-motion: reduce) {
     .screen * { transition: none !important; animation: none !important; }
   }
@@ -149,8 +169,59 @@
 
       <div id="pending-status" style="display:none;"></div>
 
-      <div class="content">
+      <div class="content" id="view-stops">
         <div id="stops-list"></div>
+      </div>
+
+      <div class="content" id="view-map" style="display:none; padding:0;">
+        <div class="wt-modebar">
+          <span class="wt-mode">📋 Planned</span>
+          <span class="wt-mode on">🧭 Follow</span>
+          <span class="wt-mode">🛰 Satellite</span>
+        </div>
+
+        <div id="turn-banner" class="show">
+          <div class="turn-arrow" id="turn-arrow">↑</div>
+          <div class="turn-info">
+            <div class="turn-dist" id="turn-dist">—</div>
+            <div class="turn-text" id="turn-text">—</div>
+            <div class="turn-next" id="turn-next"></div>
+          </div>
+        </div>
+
+        <div class="wt-map">
+          <svg viewBox="0 0 320 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <rect width="320" height="300" fill="#e8ece7"/>
+            <g stroke="#ffffff" stroke-width="13" stroke-linecap="round">
+              <path d="M-10 84 H330"/><path d="M-10 196 H330"/>
+              <path d="M74 -10 V310"/><path d="M226 -10 V310"/>
+            </g>
+            <g stroke="#f3f5f2" stroke-width="7">
+              <path d="M-10 140 H330"/><path d="M150 -10 V310"/>
+            </g>
+            <path id="wt-route" d="M74 280 V196 H226 V84"
+                  fill="none" stroke="#22c55e" stroke-width="7"
+                  stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+            <circle id="wt-target" cx="226" cy="84" r="9" fill="#ef4444" stroke="#fff" stroke-width="3"/>
+            <circle id="wt-driver" cx="74" cy="250" r="8" fill="#2563eb" stroke="#fff" stroke-width="3"/>
+          </svg>
+        </div>
+
+        <div class="wt-navcard">
+          <div class="nav-progress-row">
+            <span class="nav-stop-count" id="wt-nav-count">3 of 5</span>
+            <span class="nav-done-count" id="wt-nav-eta">🚗 4 min away</span>
+          </div>
+          <div class="nav-stop-name" id="wt-nav-name">Silt River House</div>
+          <div class="nav-stop-addr" id="wt-nav-addr">1190 County Rd 233, Silt</div>
+          <div class="nav-note urgent" id="wt-nav-note">Dog — call on arrival</div>
+          <div class="nav-actions">
+            <button class="nav-btn nav-btn-prev">← Prev</button>
+            <button class="nav-btn nav-btn-maps">↗ Navigate</button>
+            <button class="nav-btn nav-btn-done">✓ Done</button>
+            <button class="nav-btn nav-btn-next">Next →</button>
+          </div>
+        </div>
       </div>
 
       <div id="toast"></div>
@@ -213,6 +284,9 @@ let pending = 0;
 let toastHtml = '';
 let addingNoteRow = null;
 let noteDraft = '';
+let view = 'stops';                       // 'stops' | 'map'
+let turn = null;                          // {arrow, dist, text, next}
+let driverAt = { x: 74, y: 250 };         // position on the stand-in map
 
 const SCENES = [
   {
@@ -236,6 +310,38 @@ const SCENES = [
     apply() {
       done = new Set([4]);
       toastHtml = 'Arrived at <b>Kestrel Bakery</b>? <button class="fake-done">✓ Done</button>';
+    },
+  },
+  {
+    title: 'Navigation, on their own screen',
+    view: 'map',
+    body: 'The map rides with the driver at street level, and <b>the next turn sits right on top</b> — distance, the manoeuvre, and what comes after it. They don’t have to leave the app to know where they’re going.',
+    apply() {
+      done = new Set([4, 5]);
+      toastHtml = ''; addingNoteRow = null;
+      turn = { arrow: '↱', dist: '450 ft', text: 'Turn right onto County Road 233', next: 'Then: arrive at Silt River House' };
+      driverAt = { x: 74, y: 240 };
+    },
+  },
+  {
+    title: 'The stop is always in view',
+    view: 'map',
+    body: 'Under the map: which stop this is, how far out, and <b>the note the office left</b> — red, so a dog or a locked gate is known before they open the door. Done is right there; no hunting for the row.',
+    apply() {
+      done = new Set([4, 5]);
+      turn = { arrow: '↑', dist: '0.2 mi', text: 'Continue on County Road 233', next: 'Then: arrive at Silt River House' };
+      driverAt = { x: 160, y: 196 };
+    },
+  },
+  {
+    title: 'Arriving',
+    view: 'map',
+    body: 'Within <b>80 metres</b> the phone buzzes and asks — one tap marks it done and moves to the next stop. The driver never has to look away from the road to find the right row.',
+    apply() {
+      done = new Set([4, 5]);
+      turn = { arrow: '🏁', dist: 'Arriving', text: 'Silt River House', next: '' };
+      driverAt = { x: 226, y: 100 };
+      toastHtml = 'Arrived at <b>Silt River House</b>? <button class="fake-done">✓ Done</button>';
     },
   },
   {
@@ -323,6 +429,21 @@ function cardHtml(s) {
 }
 
 function renderScreen() {
+  document.getElementById('view-stops').style.display = view === 'stops' ? 'block' : 'none';
+  document.getElementById('view-map').style.display   = view === 'map'   ? 'block' : 'none';
+  document.getElementById('tab-stops').classList.toggle('active', view === 'stops');
+  document.getElementById('tab-map').classList.toggle('active', view === 'map');
+
+  if (turn) {
+    document.getElementById('turn-arrow').textContent = turn.arrow;
+    document.getElementById('turn-dist').textContent = turn.dist;
+    document.getElementById('turn-text').textContent = turn.text;
+    document.getElementById('turn-next').textContent = turn.next;
+    document.getElementById('turn-banner').classList.toggle('arriving', turn.arrow === '🏁');
+  }
+  const drv = document.getElementById('wt-driver');
+  if (drv) { drv.setAttribute('cx', driverAt.x); drv.setAttribute('cy', driverAt.y); }
+
   document.getElementById('stops-list').innerHTML = STOPS.map(cardHtml).join('');
 
   const pct = Math.round((done.size / STOPS.length) * 100);
@@ -359,6 +480,13 @@ function renderNarration() {
 
 function show(i) {
   idx = (i + SCENES.length) % SCENES.length;
+  // Clear everything first: a scene declares the state it wants, and anything
+  // it leaves unset must not leak in from the scene before it.
+  view = SCENES[idx].view || 'stops';
+  turn = null;
+  toastHtml = '';
+  addingNoteRow = null;
+  pending = 0;
   SCENES[idx].apply();
   renderScreen();
   renderNarration();

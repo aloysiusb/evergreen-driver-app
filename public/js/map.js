@@ -31,6 +31,35 @@ let lastGpsHeading = null;
 let nextEtaMins = null;
 let etaService = null;
 const ARRIVAL_RADIUS_M = 80; // metres from stop to auto-prompt arrival
+
+// ── Turn-by-turn ──────────────────────────────────────────────────────────
+// The app used to hand navigation off to Google Maps or Waze entirely, which
+// meant the driver left our screen — and the stop notes, access codes and the
+// Done button with it. This keeps the next manoeuvre on our own screen.
+//
+// Distances use the existing haversineM() rather than google.maps.geometry,
+// because map.js loads only the "places" library and pulling in another one
+// for a distance calculation we already have would be silly.
+const MANEUVER_ICONS = {
+  'turn-right': '↱', 'turn-left': '↰',
+  'turn-slight-right': '↗', 'turn-slight-left': '↖',
+  'turn-sharp-right': '⤳', 'turn-sharp-left': '⤪',
+  'uturn-right': '⤵', 'uturn-left': '⤴',
+  'merge': '⤸', 'fork-right': '↗', 'fork-left': '↖',
+  'ramp-right': '↗', 'ramp-left': '↖',
+  'roundabout-right': '⟳', 'roundabout-left': '⟲',
+  'straight': '↑',
+};
+
+let turnSteps = [];            // manoeuvres from here to the current stop
+let curStepIdx = 0;
+let turnTargetRow = null;      // which stop these steps lead to
+let turnFetchedAt = 0;
+let turnFetching = false;
+
+const STEP_ADVANCE_M = 30;     // within this of a manoeuvre point, move to the next
+const OFF_ROUTE_M = 150;       // further than this from the next manoeuvre: re-route
+const TURN_MIN_REFETCH_MS = 20000;  // never hammer the Directions API
 // Re-arm the arrival prompt only once the driver has genuinely left. The gap
 // between the two radii is hysteresis, so GPS jitter at the boundary can't
 // re-trigger the prompt while they're parked at the stop.
@@ -433,6 +462,131 @@ function updateModeUI() {
   }
 }
 
+// ── Turn-by-turn ─────────────────────────────────────────────────────────────
+
+function currentNavStop() {
+  const s = navStops[currentIdx];
+  return s && !s.done && s._latLng ? s : null;
+}
+
+// Directions from where the driver actually is to the stop they're heading
+// for. Deliberately throttled — this is a billed API call, not a free one.
+function fetchTurnSteps(fromLatLng) {
+  const stop = currentNavStop();
+  if (!stop || turnFetching || !directionsService) return;
+
+  turnFetching = true;
+  turnFetchedAt = Date.now();
+
+  directionsService.route({
+    origin: fromLatLng,
+    destination: stop._latLng,
+    travelMode: google.maps.TravelMode.DRIVING,
+  }, (result, status) => {
+    turnFetching = false;
+    if (status !== 'OK' || !result.routes.length) return;
+
+    const steps = [];
+    result.routes[0].legs.forEach(leg => {
+      leg.steps.forEach(st => {
+        steps.push({
+          lat: st.end_location.lat(),
+          lng: st.end_location.lng(),
+          // instructions come back as HTML from Google; strip to plain text
+          instruction: (st.instructions || '').replace(/<[^>]+>/g, ' ')
+                          .replace(/\s+/g, ' ').trim(),
+          maneuver: st.maneuver || 'straight',
+        });
+      });
+    });
+
+    // The stop may have changed while the request was in flight — if so, drop
+    // this result rather than pointing the driver at a stop they've passed.
+    const now = currentNavStop();
+    if (!now || now.rowNumber !== stop.rowNumber) return;
+
+    turnSteps = steps;
+    curStepIdx = 0;
+    turnTargetRow = stop.rowNumber;
+  });
+}
+
+function fmtDistance(m) {
+  const feet = m * 3.281;
+  if (feet > 1000) return (m / 1609).toFixed(1) + ' mi';
+  return Math.max(50, Math.round(feet / 50) * 50) + ' ft';
+}
+
+function updateTurnBanner(lat, lng) {
+  const banner = document.getElementById('turn-banner');
+  if (!banner) return;
+
+  const stop = currentNavStop();
+  if (!stop) { banner.classList.remove('show'); return; }
+
+  // Steps are stale if they lead somewhere else — the driver advanced, or
+  // reordered into Live mode. Clear the throttle too: arriving at a new stop
+  // is exactly when directions are needed NOW, not up to 20 s later, and the
+  // driver would otherwise sit looking at "Getting directions…" while moving.
+  if (turnTargetRow !== stop.rowNumber) {
+    turnSteps = [];
+    turnTargetRow = stop.rowNumber;   // claim it so we only reset once
+    turnFetchedAt = 0;
+  }
+
+  if (!turnSteps.length) {
+    banner.classList.add('show');
+    banner.classList.remove('arriving');
+    document.getElementById('turn-arrow').textContent = '↑';
+    document.getElementById('turn-dist').textContent = '—';
+    document.getElementById('turn-text').textContent = 'Getting directions…';
+    document.getElementById('turn-next').textContent = '';
+    if (Date.now() - turnFetchedAt > TURN_MIN_REFETCH_MS) {
+      fetchTurnSteps(new google.maps.LatLng(lat, lng));
+    }
+    return;
+  }
+
+  // Walk past manoeuvres we've reached. Only ever forwards — GPS jitter
+  // shouldn't send the driver back a turn.
+  while (curStepIdx < turnSteps.length) {
+    const s = turnSteps[curStepIdx];
+    if (haversineM(lat, lng, s.lat, s.lng) < STEP_ADVANCE_M) curStepIdx++;
+    else break;
+  }
+
+  banner.classList.add('show');
+
+  if (curStepIdx >= turnSteps.length) {
+    banner.classList.add('arriving');
+    document.getElementById('turn-arrow').textContent = '🏁';
+    document.getElementById('turn-dist').textContent = 'Arriving';
+    document.getElementById('turn-text').textContent =
+      stop.accountName || stop.address || 'Destination';
+    document.getElementById('turn-next').textContent = '';
+    return;
+  }
+
+  const step = turnSteps[curStepIdx];
+  const next = turnSteps[curStepIdx + 1];
+  const dist = haversineM(lat, lng, step.lat, step.lng);
+
+  // Well off the expected line — ask for a fresh route rather than confidently
+  // pointing at a turn the driver has already left behind.
+  if (dist > OFF_ROUTE_M && Date.now() - turnFetchedAt > TURN_MIN_REFETCH_MS) {
+    fetchTurnSteps(new google.maps.LatLng(lat, lng));
+  }
+
+  banner.classList.remove('arriving');
+  document.getElementById('turn-arrow').textContent =
+    MANEUVER_ICONS[step.maneuver] || '↑';
+  document.getElementById('turn-dist').textContent = fmtDistance(dist);
+  document.getElementById('turn-text').textContent = step.instruction;
+  document.getElementById('turn-next').textContent = next
+    ? 'Then: ' + next.instruction
+    : 'Then: arrive at ' + (stop.accountName || 'the stop');
+}
+
 // ── Follow mode ──────────────────────────────────────────────────────────────
 
 function applyFollow(latLng, heading, snapZoom) {
@@ -543,6 +697,9 @@ function onGpsUpdate(pos) {
 
   // Ride along with the driver
   applyFollow(latLng, lastGpsHeading);
+
+  // Next manoeuvre on our own screen
+  updateTurnBanner(lat, lng);
 
   // ETA to next undone stop
   fetchNextEta(latLng);
