@@ -164,7 +164,7 @@
      and no network, so the map is drawn rather than loaded — everything
      layered on top of it (turn banner, nav card) is the app's real markup. */
   /* Map left, details right — the in-car layout. */
-  .wt-stage { display: flex; flex: 1; min-height: 0; }
+  .wt-stage { display: flex; flex: 1 1 auto; min-height: 0; height: 100%; }
   .wt-mapwrap { position: relative; flex: 1; min-width: 0; }
   .wt-rail {
     width: 300px; flex-shrink: 0;
@@ -337,6 +337,8 @@
           <span class="wt-mode" id="wt-sv" onclick="setWtView('street')" role="button" tabindex="0">👁 Street View</span>
         </div>
 
+        <div class="wt-stage">
+        <div class="wt-mapwrap">
         <div id="turn-banner" class="show">
           <div class="turn-arrow" id="turn-arrow">↑</div>
           <div class="turn-info">
@@ -346,8 +348,6 @@
           </div>
         </div>
 
-        <div class="wt-stage">
-        <div class="wt-mapwrap">
         <div class="wt-map" id="wt-streetview" style="display:none"></div>
         <div class="wt-map" id="wt-realmap" style="display:none"></div>
         <div class="wt-map" id="wt-drawnmap">
