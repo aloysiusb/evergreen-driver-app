@@ -12,6 +12,8 @@ services:
         sync: false   # set manually in Render dashboard
       - key: GOOGLE_SERVICE_ACCOUNT_KEY
         sync: false   # paste full service account JSON — set in Render dashboard only
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false   # browser-facing Maps key - restrict by HTTP referrer, NOT the service account key
       - key: DATA_DIR
         value: /data
     disk:

@@ -4,6 +4,7 @@ import cors from "cors";
 import compression from "compression";
 import http from "http";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
 import { readRange, readRangeWithColors, writeRange, duplicateSheet } from "./sheets.js";
@@ -293,11 +294,47 @@ const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 // Serve driver.html for all /driver/* routes (client-side routing)
 app.get("/driver/:routeId", (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'driver.html'));
+  sendStampedHtml(res, path.join(PUBLIC_DIR, 'driver.html'));
 });
 
 // Pages revalidate so edits go live immediately; css/js/icons cache for a day
 // since drivers often reopen the app repeatedly on cell service.
+// Asset version — changes on every deploy. Render exposes the commit SHA;
+// locally we fall back to process start time, so a restart is enough.
+//
+// Why this exists: pages are no-cache but js/css cache for a day, which meant a
+// deploy handed drivers FRESH HTML pointing at STALE JavaScript for up to 24
+// hours — new markup wired to old code, failing silently. Stamping the version
+// onto asset URLs means new HTML requests a URL the browser has never seen, so
+// it fetches immediately, while old URLs stay cached and harmless.
+const ASSET_V = (process.env.RENDER_GIT_COMMIT || String(Date.now())).slice(0, 12);
+
+// Add ?v=<ASSET_V> to local js/css URLs. Only paths starting with a single "/"
+// are touched, so Google Fonts and other external URLs are left alone.
+function stampAssets(html) {
+  return html.replace(
+    /(<(?:script|link)\b[^>]*?\s(?:src|href)=")(\/[^"?#>]+\.(?:js|css))(")/g,
+    (_m, pre, url, post) => pre + url + '?v=' + ASSET_V + post
+  );
+}
+
+function sendStampedHtml(res, file, next) {
+  fs.readFile(file, 'utf8', (err, html) => {
+    if (err) return next ? next() : res.sendStatus(404);
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(stampAssets(html));
+  });
+}
+
+// HTML goes through the stamper, and stays no-cache, so every page load picks
+// up the current asset version the moment a deploy lands.
+app.get(/\.html$|^\/$/, (req, res, next) => {
+  const rel = req.path === '/' ? 'index.html' : decodeURIComponent(req.path).replace(/^\/+/, '');
+  const file = path.join(PUBLIC_DIR, rel);
+  if (!file.startsWith(PUBLIC_DIR)) return res.sendStatus(403);  // path traversal guard
+  sendStampedHtml(res, file, next);
+});
+
 app.use(express.static(PUBLIC_DIR, {
   etag: true,
   setHeaders(res, filePath) {

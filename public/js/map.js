@@ -27,9 +27,19 @@ let gpsWatchId = null;
 let gpsMarker = null;
 let gpsCircle = null;
 let lastGpsPos = null;
+let lastGpsHeading = null;
 let nextEtaMins = null;
 let etaService = null;
 const ARRIVAL_RADIUS_M = 80; // metres from stop to auto-prompt arrival
+
+// ── Follow mode (navigation-style view) ───────────────────────────────────
+// On by default: the driver opens the Map tab and it behaves like a nav
+// system — the map rides with them at street level instead of sitting parked
+// on the destination. Panning the map by hand drops out of follow (otherwise
+// it fights you); the 🧭 button puts it back.
+let followMode = true;
+let followZoom = 17;          // street level; the old default of 15 is too far out to read side streets
+let suppressFollowOff = false; // set while WE move the map, so our own pans don't count as manual
 
 // ── Traffic + auto-reroute state ──────────────────────────────────────────
 let trafficDelayMins = null;   // minutes lost to traffic vs free-flow
@@ -111,6 +121,9 @@ async function initMap() {
   });
 
   new google.maps.TrafficLayer().setMap(gMap);
+
+  watchForManualPan();
+  setFollow(true);
 
   directionsService = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer({
@@ -245,6 +258,9 @@ function placeMarkers() {
 }
 
 function centerOnCurrent() {
+  // While following the driver, the driver is the subject — don't yank the
+  // view over to the stop only for the next GPS tick to drag it back.
+  if (followMode && lastGpsPos) return;
   const stop = navStops[currentIdx];
   if (stop?._latLng) gMap.panTo(stop._latLng);
 }
@@ -413,6 +429,45 @@ function updateModeUI() {
   }
 }
 
+// ── Follow mode ──────────────────────────────────────────────────────────────
+
+function applyFollow(latLng, heading, snapZoom) {
+  if (!followMode || !gMap) return;
+  suppressFollowOff = true;
+  gMap.panTo(latLng);
+  // Only on engage — re-asserting zoom every tick would fight a driver who
+  // deliberately zoomed out to see the rest of the route.
+  if (snapZoom && gMap.getZoom() < followZoom) gMap.setZoom(followZoom);
+  // Heading-up rotation only takes effect on a vector map (needs a vector
+  // mapId from the Google Cloud console). On a raster map this is a no-op,
+  // which is why the view stays north-up today.
+  if (typeof heading === 'number' && !Number.isNaN(heading) && gMap.setHeading) {
+    try { gMap.setHeading(heading); } catch {}
+  }
+  setTimeout(() => { suppressFollowOff = false; }, 0);
+}
+
+function setFollow(on) {
+  followMode = on;
+  const btn = document.getElementById('mode-follow');
+  if (btn) {
+    btn.classList.toggle('active', on);
+    btn.title = on ? 'Following you — tap to stop' : 'Re-centre on your location';
+  }
+  if (on && lastGpsPos) {
+    applyFollow(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng), lastGpsHeading, true);
+  }
+}
+
+window.toggleFollow = function() { setFollow(!followMode); };
+
+// Dragging the map by hand means the driver wants to look somewhere else —
+// stop chasing them until they ask for it back.
+function watchForManualPan() {
+  if (!gMap) return;
+  gMap.addListener('dragstart', () => { if (!suppressFollowOff) setFollow(false); });
+}
+
 // ── Satellite toggle ─────────────────────────────────────────────────────────
 // Hybrid (aerial + labels) helps drivers spot driveways, bin placement and
 // gates on rural properties before they pull up.
@@ -441,6 +496,12 @@ function onGpsUpdate(pos) {
   const lng = pos.coords.longitude;
   const accuracy = pos.coords.accuracy;
   lastGpsPos = { lat, lng };
+  // heading is null when stationary — keep the last good one so the view
+  // doesn't snap back to north at every red light
+  if (typeof pos.coords.heading === 'number' && !Number.isNaN(pos.coords.heading)
+      && pos.coords.speed > 0.5) {
+    lastGpsHeading = pos.coords.heading;
+  }
 
   const latLng = new google.maps.LatLng(lat, lng);
 
@@ -475,6 +536,9 @@ function onGpsUpdate(pos) {
     gpsCircle.setCenter(latLng);
     gpsCircle.setRadius(accuracy);
   }
+
+  // Ride along with the driver
+  applyFollow(latLng, lastGpsHeading);
 
   // ETA to next undone stop
   fetchNextEta(latLng);
