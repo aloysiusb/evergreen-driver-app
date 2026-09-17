@@ -86,6 +86,26 @@ let rerouteDismissed = false;  // driver said "no thanks" this session
 const REROUTE_CHECK_MS = 3 * 60 * 1000;  // re-check every 3 minutes
 const REROUTE_MIN_SAVING = 8;            // only nudge if it saves 8+ minutes
 
+// Google's Directions API accepts at most 25 waypoints besides the origin and
+// destination. Every call in this file used to pass EVERY remaining stop — 208
+// of them on Valley Residential — so the request was rejected outright and,
+// because each callback only acted on status === 'OK', it failed silently.
+// The route line never drew and the time estimate never appeared on any real
+// route. Nobody saw an error because there was nothing to see.
+//
+// A driver cares about the stretch in front of them, not a 215-stop polyline,
+// so we ask about the next 25 and say so.
+const MAX_WAYPOINTS = 23;
+const ROUTE_CHUNK = MAX_WAYPOINTS + 2;    // origin + waypoints + destination
+
+function routeChunk(stops) {
+  return stops.slice(0, ROUTE_CHUNK);
+}
+
+function chunkNote(stops) {
+  return stops.length > ROUTE_CHUNK ? ` · next ${ROUTE_CHUNK} stops` : '';
+}
+
 const PLANNED_COLOR = '#22c55e';
 const LIVE_COLOR    = '#f59e0b';
 
@@ -317,8 +337,9 @@ function drawRouteLine() {
     polylineOptions: { strokeColor: lineColor, strokeWeight: 5, strokeOpacity: 0.8 },
   });
 
-  const remaining = navStops.filter(s => !s.done && s._latLng);
-  if (remaining.length < 2) { directionsRenderer.setDirections({ routes: [] }); return; }
+  const all = navStops.filter(s => !s.done && s._latLng);
+  if (all.length < 2) { directionsRenderer.setDirections({ routes: [] }); return; }
+  const remaining = routeChunk(all);
 
   directionsService.route({
     origin: remaining[0]._latLng,
@@ -328,11 +349,12 @@ function drawRouteLine() {
     drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
   }, (result, status) => {
     if (status === 'OK') directionsRenderer.setDirections(result);
+    else console.warn('[map] route line:', status);
   });
 }
 
 function fetchPlannedTime() {
-  const remaining = plannedOrder.filter(s => !s.done && s._latLng);
+  const remaining = routeChunk(plannedOrder.filter(s => !s.done && s._latLng));
   if (remaining.length < 2) return;
   directionsService.route({
     origin: remaining[0]._latLng,
@@ -370,7 +392,7 @@ function startRerouteWatcher() {
 function checkForBetterRoute() {
   if (routeMode !== 'planned') return;
   if (rerouteDismissed) return;
-  const remaining = plannedOrder.filter(s => !s.done && s._latLng);
+  const remaining = routeChunk(plannedOrder.filter(s => !s.done && s._latLng));
   if (remaining.length < 3) return;
 
   directionsService.route({
@@ -848,7 +870,7 @@ window.setRouteMode = function(mode) {
     centerOnCurrent();
   } else {
     // Live: optimize remaining stops
-    const remaining = plannedOrder.filter(s => !s.done && s._latLng);
+    const remaining = routeChunk(plannedOrder.filter(s => !s.done && s._latLng));
     if (remaining.length < 2) {
       routeMode = 'planned';
       updateModeUI();
