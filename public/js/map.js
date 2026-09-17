@@ -59,7 +59,12 @@ let turnFetching = false;
 
 const STEP_ADVANCE_M = 30;     // within this of a manoeuvre point, move to the next
 const OFF_ROUTE_M = 150;       // further than this from the next manoeuvre: re-route
-const TURN_MIN_REFETCH_MS = 20000;  // never hammer the Directions API
+const TURN_MIN_REFETCH_MS = 20000;      // never hammer the Directions API
+// Off-route is different: the driver is being shown a manoeuvre that is no
+// longer ahead of them, and the distance to it visibly grows. Twenty seconds
+// of that at 40 mph is a third of a mile of wrong instruction, so re-route
+// sooner. Still throttled — Directions is billed per call.
+const TURN_OFFROUTE_REFETCH_MS = 6000;
 // Re-arm the arrival prompt only once the driver has genuinely left. The gap
 // between the two radii is hysteresis, so GPS jitter at the boundary can't
 // re-trigger the prompt while they're parked at the stop.
@@ -573,7 +578,7 @@ function updateTurnBanner(lat, lng) {
 
   // Well off the expected line — ask for a fresh route rather than confidently
   // pointing at a turn the driver has already left behind.
-  if (dist > OFF_ROUTE_M && Date.now() - turnFetchedAt > TURN_MIN_REFETCH_MS) {
+  if (dist > OFF_ROUTE_M && Date.now() - turnFetchedAt > TURN_OFFROUTE_REFETCH_MS) {
     fetchTurnSteps(new google.maps.LatLng(lat, lng));
   }
 
