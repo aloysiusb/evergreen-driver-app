@@ -143,9 +143,14 @@ export function mountGate(app) {
 
     // Writing styles is an admin act. Reading them is not: every driver page
     // fetches /api/styles to paint itself.
+    // The error log is an ops page, not a driver page. Drivers POST to it —
+    // that is the whole point — but reading it back or clearing it is admin.
+    const readsErrors = req.path === "/errors.html" ||
+      (req.path.startsWith("/api/client-errors") && req.method !== "POST");
+
     const touchesStyles = req.path === "/admin.html" || req.path.startsWith("/api/styles");
     const isStyleRead = req.method === "GET" && req.path.startsWith("/api/styles");
-    const needsAdmin = touchesStyles && !isStyleRead && Boolean(ADMIN_CODE);
+    const needsAdmin = (readsErrors || (touchesStyles && !isStyleRead)) && Boolean(ADMIN_CODE);
 
     const expected = needsAdmin ? ADMIN_CODE : ACCESS_CODE;
     const jar = needsAdmin ? ADMIN_JAR : DRIVER_JAR;

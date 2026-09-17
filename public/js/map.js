@@ -350,7 +350,10 @@ function drawRouteLine() {
     drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
   }, (result, status) => {
     if (status === 'OK') directionsRenderer.setDirections(result);
-    else console.warn('[map] route line:', status);
+    else {
+      console.warn('[map] route line:', status);
+      window.reportIssue?.('route line: ' + status, 'map.js');
+    }
   });
 }
 
@@ -376,6 +379,7 @@ function fetchPlannedTime() {
       // waypoint bug stayed hidden: the estimate had been failing on every
       // real route and nothing on screen ever said so.
       console.warn('[map] planned time:', status);
+      window.reportIssue?.('planned time: ' + status, 'map.js');
       plannedFailed = true;
     }
     updateModeUI();

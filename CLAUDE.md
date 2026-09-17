@@ -19,6 +19,7 @@ src/
   db.js           — SQLite (node:sqlite, requires Node 22+) for persisted style settings
   gate.js         — Shared access code, mounted in front of every route (see below)
   requests.js     — Staging queue for website form submissions (site automation)
+  errors.js       — Client error log, deduped by fingerprint (see /errors.html)
 public/
   index.html      — Route grid (tap a route to open it)
   driver.html     — Driver view: stop list, done toggles, notes
@@ -69,6 +70,16 @@ data/
   writes reject exactly like a dead zone, which is how you exercise the
   offline queue. Not to be confused with `demo.html`, which is a narrated
   sales demo with its own separate simulation.
+- **Client error reporting** — `public/js/report-errors.js` loads first on the
+  driver pages and posts what breaks to `POST /api/client-errors`, which is
+  open to anyone holding the driver code. Reading the log (`/errors.html`,
+  `GET /api/client-errors`) needs ADMIN_CODE. Failures are **deduped by
+  fingerprint** — one bug firing per GPS tick is one row with a count, not
+  thousands of rows — and the table is pruned past 500 fingerprints so it
+  cannot fill the disk. The reporter wraps `fetch` to catch failed API
+  responses, which is the class of failure that hid the waypoint bug: no
+  exception, no rejection, just a status nobody checked. `window.reportIssue()`
+  is there for failures the app handles deliberately but still wants counted.
 - **Asset versioning** — `ASSET_V` in `server.js` (Render's commit SHA, or
   process start time locally) is stamped onto local js/css URLs as `?v=`.
   Pages are `no-cache`, assets cache for a day. Without this, a deploy served

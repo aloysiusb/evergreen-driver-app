@@ -13,6 +13,7 @@ import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./confi
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
 import { mountGate } from "./gate.js";
+import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
   validateRequest, createRequest, listRequests, getRequest,
   decideRequest, countByStatus, rateLimited,
@@ -291,6 +292,27 @@ app.get("/api/backup/:tabName", async (req, res) => {
     console.error(`[backup/${req.params.tabName}] ${err.message}`);
     res.status(err.status || 500).json({ error: err.message });
   }
+});
+
+// --- Client error reporting ----------------------------------------------
+//
+// The driver app posts its own failures here. Identical failures are deduped
+// into one row with a count, so a bug firing on every GPS tick is one line
+// that says 4,812 rather than 4,812 lines.
+
+app.post("/api/client-errors", (req, res) => {
+  const list = Array.isArray(req.body?.errors) ? req.body.errors.slice(0, 20) : [];
+  let stored = 0;
+  for (const e of list) if (recordError(e)) stored++;
+  res.json({ ok: true, stored });
+});
+
+app.get("/api/client-errors", (req, res) => {
+  res.json({ summary: errorSummary(), items: listErrors(req.query.limit) });
+});
+
+app.post("/api/client-errors/clear", (req, res) => {
+  res.json(clearErrors());
 });
 
 // --- New-customer requests (website form -> staging -> approval) ---------

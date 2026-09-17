@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-radius="tight" data-palette="report">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Broke — Evergreen</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.5; padding: 28px 20px 60px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 27px; font-weight: 600; margin-bottom: 4px;
+  }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+
+  .tiles { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card); padding: 12px 16px; min-width: 120px;
+  }
+  .tile .n { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .k { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 7px 13px; border-radius: var(--r-control);
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  button:hover { background: var(--surface-2); }
+  button.danger { border-color: var(--red); color: var(--red); }
+
+  .row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card); padding: 13px 15px; margin-bottom: 9px;
+  }
+  .row-top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .count {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+    background: var(--red-l); color: var(--red);
+    padding: 2px 8px; border-radius: var(--r-chip); font-size: 12px;
+    font-variant-numeric: tabular-nums; flex-shrink: 0;
+  }
+  .count.low { background: var(--amber-l); color: var(--amber); }
+  .kind {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); border: 1px solid var(--border);
+    padding: 2px 7px; border-radius: var(--r-chip); flex-shrink: 0;
+  }
+  .msg { font-family: 'IBM Plex Mono', monospace; font-size: 13px; flex: 1; min-width: 200px; word-break: break-word; }
+  .meta { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+  pre {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    background: var(--surface-2); border-radius: var(--r-chip);
+    padding: 9px 11px; margin-top: 8px; overflow-x: auto; white-space: pre-wrap;
+    color: var(--muted);
+  }
+  .empty {
+    text-align: center; padding: 50px 20px; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card);
+  }
+  .empty strong { display: block; font-size: 16px; color: var(--text); margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>What broke</h1>
+  <p class="sub">
+    Failures the app reported about itself. Identical ones are counted rather
+    than repeated — a bug firing on every GPS tick is one line here, not four
+    thousand.
+  </p>
+
+  <div class="tiles">
+    <div class="tile"><div class="n" id="t-distinct">—</div><div class="k">distinct</div></div>
+    <div class="tile"><div class="n" id="t-total">—</div><div class="k">occurrences</div></div>
+    <div class="tile"><div class="n" id="t-24h">—</div><div class="k">last 24h</div></div>
+  </div>
+
+  <div class="bar">
+    <button onclick="load()">↻ Refresh</button>
+    <button class="danger" onclick="clearAll()">Clear all</button>
+    <span class="sub" style="margin:0" id="updated"></span>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+function esc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function when(iso) {
+  if (!iso) return '';
+  const d = new Date(iso), now = Date.now();
+  const mins = Math.round((now - d) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + ' min ago';
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/client-errors');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    document.getElementById('t-distinct').textContent = data.summary.distinct;
+    document.getElementById('t-total').textContent = data.summary.total;
+    document.getElementById('t-24h').textContent = data.summary.last24h;
+    document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+
+    const list = document.getElementById('list');
+    if (!data.items.length) {
+      list.innerHTML = '<div class="empty"><strong>Nothing has broken.</strong>' +
+        'Either everything is working, or nobody has opened the app since this was cleared.</div>';
+      return;
+    }
+
+    list.innerHTML = data.items.map(function (e) {
+      return '<div class="row">' +
+        '<div class="row-top">' +
+          '<span class="count' + (e.count < 5 ? ' low' : '') + '">' + e.count + '×</span>' +
+          '<span class="kind">' + esc(e.kind) + '</span>' +
+          '<span class="msg">' + esc(e.message) + '</span>' +
+        '</div>' +
+        '<div class="meta">' +
+          (e.source ? esc(e.source) + (e.line ? ':' + e.line : '') + ' · ' : '') +
+          (e.page ? esc(e.page) + ' · ' : '') +
+          'last ' + when(e.last_seen) + ' · first ' + when(e.first_seen) +
+        '</div>' +
+        (e.stack ? '<pre>' + esc(e.stack) + '</pre>' : '') +
+      '</div>';
+    }).join('');
+  } catch (err) {
+    document.getElementById('list').innerHTML =
+      '<div class="empty"><strong>Could not load.</strong>' + esc(err.message) + '</div>';
+  }
+}
+
+async function clearAll() {
+  if (!confirm('Clear every recorded error?')) return;
+  await fetch('/api/client-errors/clear', { method: 'POST' });
+  load();
+}
+
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
