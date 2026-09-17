@@ -563,12 +563,14 @@ function updateTurnBanner(lat, lng) {
   banner.classList.add('show');
 
   if (curStepIdx >= turnSteps.length) {
+    const side = sideOfApproach(lat, lng, stop._latLng);
     banner.classList.add('arriving');
-    document.getElementById('turn-arrow').textContent = '🏁';
+    document.getElementById('turn-arrow').textContent =
+      side === 'left' ? '⬅' : side === 'right' ? '➡' : '🏁';
     document.getElementById('turn-dist').textContent = 'Arriving';
     document.getElementById('turn-text').textContent =
       stop.accountName || stop.address || 'Destination';
-    document.getElementById('turn-next').textContent = '';
+    document.getElementById('turn-next').textContent = sideLabel(side);
     return;
   }
 
@@ -721,6 +723,45 @@ function onGpsUpdate(pos) {
   }
 }
 
+// Which side of the truck the stop is on, so the driver knows which window to
+// look out of instead of hunting both sides of the road.
+//
+// Only meaningful when we know which way they are actually pointing: GPS
+// heading is nonsense below walking pace, so lastGpsHeading is left null when
+// stationary and this returns nothing rather than guessing. Saying "on your
+// right" when it is on the left is worse than saying nothing.
+const SIDE_MAX_M = 160;        // far enough out to be useful, close enough to be right
+const SIDE_AHEAD_DEG = 22;     // within this of dead ahead, it isn't a side
+
+function bearingDeg(lat1, lng1, lat2, lng2) {
+  const toRad = d => d * Math.PI / 180;
+  const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+            Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+/** "left" | "right" | "ahead" | null (null = we cannot say honestly). */
+function sideOfApproach(lat, lng, stopLatLng) {
+  if (typeof lastGpsHeading !== "number" || Number.isNaN(lastGpsHeading)) return null;
+  if (!stopLatLng) return null;
+
+  const dist = haversineM(lat, lng, stopLatLng.lat(), stopLatLng.lng());
+  if (dist > SIDE_MAX_M) return null;
+
+  const toStop = bearingDeg(lat, lng, stopLatLng.lat(), stopLatLng.lng());
+  let rel = ((toStop - lastGpsHeading + 540) % 360) - 180;   // -180..180
+  if (Math.abs(rel) <= SIDE_AHEAD_DEG) return "ahead";
+  return rel > 0 ? "right" : "left";
+}
+
+function sideLabel(side) {
+  if (side === "left") return "⬅ on your left";
+  if (side === "right") return "on your right ➡";
+  if (side === "ahead") return "straight ahead";
+  return "";
+}
+
 function haversineM(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -747,8 +788,13 @@ function promptArrival(stop) {
   // Ignored on iOS Safari, which does not implement vibrate — harmless there.
   try { navigator.vibrate?.([120, 80, 120]); } catch {}
 
+  const side = lastGpsPos
+    ? sideOfApproach(lastGpsPos.lat, lastGpsPos.lng, stop._latLng)
+    : null;
+  const sideBit = side && side !== 'ahead' ? ` · ${sideLabel(side)}` : '';
+
   const toast = document.getElementById('toast');
-  toast.innerHTML = `Arrived at <b>${escHtml(stop.accountName || stop.address)}</b>? <button id="arrive-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:var(--r-control);background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">✓ Done</button>`;
+  toast.innerHTML = `Arrived at <b>${escHtml(stop.accountName || stop.address)}</b>?${sideBit} <button id="arrive-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:var(--r-control);background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">✓ Done</button>`;
   toast.classList.add('show');
 
   document.getElementById('arrive-yes').addEventListener('click', () => {

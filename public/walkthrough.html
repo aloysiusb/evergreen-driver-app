@@ -551,6 +551,7 @@ const LEGS = [
     addr: '88 Main St, Carbondale',
     note: 'Extra bin Weds', noteKind: '',
     pts: [[74,290],[74,196],[226,196],[226,84]],
+    building: [248, 84],        // east of a northbound approach → on the right
     turns: ['Turn right onto County Road 233', 'Turn left onto Main Street'],
     icons: ['↱','↰'],
   },
@@ -559,10 +560,30 @@ const LEGS = [
     addr: '1190 County Rd 233, Silt',
     note: 'Dog — call on arrival', noteKind: 'urgent',
     pts: [[226,84],[150,84],[150,140],[74,140]],
+    building: [74, 162],        // south of a westbound approach → on the left
     turns: ['Continue on Main Street', 'Turn left onto Sopris Avenue', 'Turn right onto River Road'],
     icons: ['↑','↰','↱'],
   },
 ];
+
+/* Which side the building is on, from the direction of travel.
+   A 2D cross product is enough here — no bearings needed on a flat grid.
+   SVG's y axis points DOWN, which flips the usual orientation: a positive
+   cross product means the building is to the RIGHT. Verified against the
+   same cases as the real app's version in map.js. */
+function sideOf(heading, toBuilding) {
+  const z = heading[0] * toBuilding[1] - heading[1] * toBuilding[0];
+  const mag = Math.hypot(...heading) * Math.hypot(...toBuilding);
+  if (!mag) return 'ahead';
+  if (Math.abs(z / mag) < 0.37) return 'ahead';      // ~22°, same as map.js
+  return z > 0 ? 'right' : 'left';
+}
+
+function sideLabel(side) {
+  if (side === 'left') return '⬅ on your left';
+  if (side === 'right') return 'on your right ➡';
+  return 'straight ahead';
+}
 
 let driveOn = false;
 let raf = null;
@@ -651,11 +672,14 @@ function driveFrame() {
 
   const banner = document.getElementById('turn-banner');
   if (toEnd < ARRIVE_UNITS) {
+    const bl = leg.building || leg.pts[leg.pts.length - 1];
+    const side = sideOf([b[0] - a[0], b[1] - a[1]], [bl[0] - x, bl[1] - y]);
     banner.classList.add('arriving');
-    document.getElementById('turn-arrow').textContent = '🏁';
+    document.getElementById('turn-arrow').textContent =
+      side === 'left' ? '⬅' : side === 'right' ? '➡' : '🏁';
     document.getElementById('turn-dist').textContent = fmtFt(toEnd);
     document.getElementById('turn-text').textContent = leg.stop;
-    document.getElementById('turn-next').textContent = '';
+    document.getElementById('turn-next').textContent = sideLabel(side);
   } else {
     banner.classList.remove('arriving');
     document.getElementById('turn-arrow').textContent = leg.icons[segI] || '↑';
@@ -674,13 +698,22 @@ function driveFrame() {
   noteEl.textContent = leg.note;
   noteEl.className = 'nav-note' + (leg.noteKind ? ' ' + leg.noteKind : '');
 
-  document.getElementById('wt-target').setAttribute('cx', leg.pts[leg.pts.length-1][0]);
-  document.getElementById('wt-target').setAttribute('cy', leg.pts[leg.pts.length-1][1]);
+  const bldg = leg.building || leg.pts[leg.pts.length - 1];
+  document.getElementById('wt-target').setAttribute('cx', bldg[0]);
+  document.getElementById('wt-target').setAttribute('cy', bldg[1]);
 }
 
 function arrive(leg) {
   buzz();
-  toastHtml = 'Arrived at <b>' + leg.stop + '</b>? <button class="fake-done">✓ Done</button>';
+  const pts = leg.pts;
+  const last = [pts[pts.length-1][0] - pts[pts.length-2][0],
+                pts[pts.length-1][1] - pts[pts.length-2][1]];
+  const bl = leg.building || pts[pts.length - 1];
+  const side = sideOf(last, [bl[0] - pts[pts.length-1][0], bl[1] - pts[pts.length-1][1]]);
+  const sideBit = side !== 'ahead' ? ' · ' + sideLabel(side) : '';
+
+  toastHtml = 'Arrived at <b>' + leg.stop + '</b>?' + sideBit +
+              ' <button class="fake-done">✓ Done</button>';
   const toast = document.getElementById('toast');
   toast.innerHTML = toastHtml;
   toast.classList.add('show');
@@ -689,7 +722,8 @@ function arrive(leg) {
   document.getElementById('turn-text').textContent = leg.stop;
   document.getElementById('turn-next').textContent = '';
   document.getElementById('turn-banner').classList.add('arriving');
-  setReadout('<b>' + leg.stop + '</b> — the phone buzzed and asked. One tap marks it done and the route moves on. No hunting for the right row while parked in the road.');
+  setReadout('<b>' + leg.stop + '</b>' + (sideBit ? ',' + sideBit.replace(' — ', ' ') : '') +
+    '. The phone buzzed and asked, and it says which side to look — no hunting both kerbs for a bin. One tap marks it done and the route moves on.');
   holding = 2800;
 }
 
