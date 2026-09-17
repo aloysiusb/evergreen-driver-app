@@ -4,6 +4,45 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-09-17 — Access gate, so the link can be handed to drivers
+
+**Why:** Virginia wanted a link she could text to the drivers today. Nothing in
+the app was authenticated, and `/api/routes/:tabName` returns customer names and
+addresses — so the only thing protecting Alyssa's customer list was nobody
+guessing the hostname. A URL in a group text travels.
+
+**What was done:**
+- Added `src/gate.js` — a shared access code, mounted in `server.js` right
+  after `express.json()` so it sits in front of every route and static file.
+  Driver taps `?c=CODE` once; it is stored in a year-long cookie and stripped
+  from the address bar via a 302. Accepts `?c=`, `?code=`, an `x-access-code`
+  header, or the cookie, compared with `timingSafeEqual`. `/health` and
+  `/qbo/*` are exempt. No-ops entirely if `ACCESS_CODE` is unset, so local dev
+  and the existing deploy keep working until the variable is set.
+- Separate `ADMIN_CODE` for `/admin.html` and style writes. `GET /api/styles`
+  still only needs the driver code, because every driver page fetches it to
+  paint itself — that distinction is the fiddly part of the middleware.
+- **Removed the QBO refresh token from the logs.** `/qbo/callback` was doing
+  `console.log("QBO_REFRESH_TOKEN =", tokens.refreshToken)`. That is a live
+  credential for Alyssa's accounting sitting in Render's persistent logs,
+  readable by anyone with dashboard access. It now renders once in the browser
+  response and is never logged.
+- **Removed `/qbo/auth-debug`**, a debug endpoint live in production.
+
+**Tested locally on port 8123** with `ACCESS_CODE`/`ADMIN_CODE` set: no code
+gives 401 on pages and API; wrong code 401; right code 302 then 200; header
+auth works; cookie persists across visits; driver code is rejected on
+`POST /api/styles` and `/admin.html` but accepted on `GET /api/styles`;
+`/health` open throughout. Route grid renders in-browser with no console errors.
+
+**Virginia must do, in Render, before the link works:**
+1. Set `ACCESS_CODE` and `ADMIN_CODE` env vars — until then the gate is off.
+2. **Rotate the QBO refresh token in Intuit**, since the old one was logged.
+
+**Left to do:** restrict `cors()` to the app's own origin — it is currently
+mounted with no options. Per-driver identity (who marked which stop) is a
+separate job, not attempted here.
+
 ## 2026-07-11 — Persistent disk added for the style DB
 
 Closes the "consider adding a Render persistent disk" note from the

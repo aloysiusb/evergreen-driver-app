@@ -11,6 +11,7 @@ import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
+import { mountGate } from "./gate.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,6 +19,10 @@ const app = express();
 app.use(compression());
 app.use(cors());
 app.use(express.json());
+
+// Shared access code. Must be mounted before any route or static file, so
+// nothing is reachable without it. No-ops if ACCESS_CODE is unset.
+mountGate(app);
 
 const PORT = process.env.PORT || 3000;
 const SPREADSHEET_ID = process.env.ROUTE_SHEET_ID;
@@ -201,25 +206,23 @@ app.get("/qbo/auth", (req, res) => {
   res.redirect(url);
 });
 
-// Debug: show the exact auth URL without redirecting
-app.get("/qbo/auth-debug", (req, res) => {
-  const url = getAuthUrl();
-  res.send(`<p>Auth URL:</p><pre style="word-break:break-all">${url}</pre>`);
-});
 
 // Step 2: Intuit redirects here after Alyssa approves.
 // Tokens are printed to logs — copy them into Render env vars.
 app.get("/qbo/callback", async (req, res) => {
   try {
     const tokens = await exchangeCodeForTokens(req.url);
-    console.log("=== QBO TOKENS — add these to Render env vars ===");
-    console.log("QBO_REFRESH_TOKEN =", tokens.refreshToken);
-    console.log("QBO_REALM_ID      =", tokens.realmId);
-    console.log("=================================================");
+    // The refresh token is a live credential for Alyssa's accounting, so it is
+    // shown once here in the browser and never written to the Render logs —
+    // logs persist and are readable by anyone with dashboard access.
+    console.log("[qbo/callback] OAuth complete. Token shown in browser only.");
     res.send(`
-      <h2>QuickBooks connected!</h2>
-      <p>Check Render logs for QBO_REFRESH_TOKEN and QBO_REALM_ID, then add them to your Render environment variables.</p>
-      <p>After that, customers can use the self-service payment page.</p>
+      <h2>QuickBooks connected</h2>
+      <p>Copy these into Render's environment variables now. They are not
+         written to the logs, so this page is the only place they appear.</p>
+      <pre style="background:#f4f6f4;padding:1rem;border-radius:6px;word-break:break-all;white-space:pre-wrap">QBO_REFRESH_TOKEN = ${tokens.refreshToken}
+QBO_REALM_ID      = ${tokens.realmId}</pre>
+      <p><strong>Then close this tab.</strong> Reloading will not show them again.</p>
     `);
   } catch (err) {
     console.error("[qbo/callback]", err.message);
