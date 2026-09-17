@@ -387,6 +387,14 @@ app.post("/api/requests/:id/decline", (req, res) => {
   res.json(updated);
 });
 
+// Resend's shared sandbox sender. Works with an API key alone — no domain, no
+// DNS records, nothing to verify. The trade-off is that it will generally only
+// deliver to the address the Resend account was registered with, which is fine
+// for notifying us and NOT fine for emailing customers. Set
+// REQUESTS_FROM_EMAIL to an address on a verified domain when customer
+// confirmations are wanted.
+const SANDBOX_FROM = "onboarding@resend.dev";
+
 // Who gets notified, and whether. Behind the gate like everything else.
 app.get("/api/requests-settings", (req, res) => res.json(getSettings()));
 
@@ -399,10 +407,10 @@ app.post("/api/requests-settings", (req, res) => {
 async function notifyNewRequest(request) {
   const { notify_email: to, notify_enabled: enabled } = getSettings();
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.REQUESTS_FROM_EMAIL;
+  const from = process.env.REQUESTS_FROM_EMAIL || SANDBOX_FROM;
 
   if (enabled !== "1" || !to) return;
-  if (!key || !from) {
+  if (!key) {
     console.log(`[requests] ${request.id} from ${request.name} — would notify ${to} (email not configured)`);
     return;
   }
@@ -434,6 +442,9 @@ async function notifyNewRequest(request) {
 // dependency. Until then it logs and returns, so the queue works regardless.
 async function sendConfirmation(request) {
   const key = process.env.RESEND_API_KEY;
+  // Deliberately NOT falling back to the sandbox sender: this one goes to a
+  // member of the public, and the sandbox will not deliver to them. Silently
+  // "sending" mail customers never receive is worse than not sending.
   const from = process.env.REQUESTS_FROM_EMAIL;
   if (!key || !from || !request.email) {
     console.log(`[requests] ${request.id} stored; confirmation email not sent (not configured)`);
