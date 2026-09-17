@@ -31,6 +31,10 @@ let lastGpsHeading = null;
 let nextEtaMins = null;
 let etaService = null;
 const ARRIVAL_RADIUS_M = 80; // metres from stop to auto-prompt arrival
+// Re-arm the arrival prompt only once the driver has genuinely left. The gap
+// between the two radii is hysteresis, so GPS jitter at the boundary can't
+// re-trigger the prompt while they're parked at the stop.
+const ARRIVAL_CLEAR_RADIUS_M = ARRIVAL_RADIUS_M * 1.5;
 
 // ── Follow mode (navigation-style view) ───────────────────────────────────
 // On by default: the driver opens the Map tab and it behaves like a nav
@@ -549,6 +553,8 @@ function onGpsUpdate(pos) {
     const dist = haversineM(lat, lng, cur._latLng.lat(), cur._latLng.lng());
     if (dist < ARRIVAL_RADIUS_M) {
       promptArrival(cur);
+    } else if (dist > ARRIVAL_CLEAR_RADIUS_M && arrivalHandledRow === cur.rowNumber) {
+      arrivalHandledRow = null;   // properly left — a later return may prompt again
     }
   }
 }
@@ -562,9 +568,16 @@ function haversineM(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-let arrivalPromptRow = null; // prevent duplicate prompts for same stop
+let arrivalPromptRow = null;   // the toast currently on screen
+let arrivalHandledRow = null;  // already prompted for this visit — see below
+
 function promptArrival(stop) {
-  if (arrivalPromptRow === stop.rowNumber) return;
+  // The auto-dismiss below used to clear this, so a driver parked at a stop
+  // got re-prompted every ~12 s for as long as they were servicing it. Now
+  // that the prompt also buzzes the phone, that would be a repeating jab in
+  // the pocket. One prompt per arrival; leaving the radius re-arms it.
+  if (arrivalHandledRow === stop.rowNumber) return;
+  arrivalHandledRow = stop.rowNumber;
   arrivalPromptRow = stop.rowNumber;
 
   // A driver watching the road will not see a toast. A short buzz is the part
@@ -579,10 +592,12 @@ function promptArrival(stop) {
   document.getElementById('arrive-yes').addEventListener('click', () => {
     toast.classList.remove('show');
     arrivalPromptRow = null;
+    arrivalHandledRow = null;   // stop is done and we advance — safe to re-arm
     window.navDone();
   });
 
-  // Auto-dismiss after 12 s if ignored
+  // Auto-dismiss after 12 s if ignored. Deliberately does NOT clear
+  // arrivalHandledRow — hiding the toast must not re-arm the prompt.
   setTimeout(() => {
     if (arrivalPromptRow === stop.rowNumber) {
       toast.classList.remove('show');
