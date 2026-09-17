@@ -179,6 +179,125 @@
 
   }
 
+  // ── Offline write queue ──────────────────────────────────────────────────
+  //
+  // Drivers work in dead zones. A write that fails used to REVERT the local
+  // state — turning "not synced yet" into "never happened", with only a 3
+  // second toast to notice it by. Now the driver's action stands, the write
+  // is parked here, and it goes out when signal returns.
+  //
+  // Entries are keyed so repeated edits to the same field collapse: we replay
+  // the driver's final intent, not every toggle along the way. Retries are
+  // safe because every queued write is an idempotent PATCH of absolute state
+  // ({done:true}, {notes:"..."}) rather than a delta.
+
+  const QUEUE_KEY = 'pending_writes_' + route.id;
+  let pendingWrites = readQueue();
+  let flushing = false;
+
+  function readQueue() {
+    try { return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; }
+    catch { return []; }   // private mode, cleared storage, corrupt JSON
+  }
+
+  function persistQueue() {
+    try { localStorage.setItem(QUEUE_KEY, JSON.stringify(pendingWrites)); }
+    catch {}               // storage full or blocked — queue still works in memory
+    renderPendingBadge();
+  }
+
+  function queueWrite(key, url, body) {
+    const entry = { key, url, body, ts: Date.now() };
+    const i = pendingWrites.findIndex(w => w.key === key);
+    if (i >= 0) pendingWrites[i] = entry; else pendingWrites.push(entry);
+    persistQueue();
+  }
+
+  function dropQueued(key) {
+    const i = pendingWrites.findIndex(w => w.key === key);
+    if (i >= 0) { pendingWrites.splice(i, 1); persistQueue(); }
+  }
+
+  // Single place every stop write goes through: try it now, park it if the
+  // network says no. Never rewinds what the driver did.
+  async function sendOrQueue(key, url, body) {
+    try {
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      dropQueued(key);     // a later successful write supersedes a parked one
+      return true;
+    } catch {
+      queueWrite(key, url, body);
+      return false;
+    }
+  }
+
+  // Server data is authoritative EXCEPT where the driver has work that hasn't
+  // reached it yet. Without this, a reload inside a dead zone would repaint
+  // every parked stop as not-done and the driver would watch their morning
+  // disappear — the exact fear the queue exists to remove.
+  function applyPendingToStops() {
+    for (const w of pendingWrites) {
+      const m = w.key.match(/^(done|notes):(\d+)$/);
+      if (!m) continue;
+      const stop = allStops.find(st => st.rowNumber === Number(m[2]));
+      if (!stop) continue;
+      if (m[1] === 'done') {
+        stop.done = w.body.done;
+      } else {
+        stop.notes = w.body.notes;
+        stop.noteUrgency = classifyNote(w.body.notes);
+      }
+    }
+  }
+
+  async function flushQueue() {
+    if (flushing || !pendingWrites.length) return;
+    if (navigator.onLine === false) return;
+    flushing = true;
+    try {
+      // Oldest first, and stop at the first failure — if we're still down
+      // there's no point burning the rest, and order is preserved.
+      while (pendingWrites.length) {
+        const w = pendingWrites[0];
+        try {
+          const res = await fetch(w.url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(w.body),
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+        } catch {
+          break;
+        }
+        pendingWrites.shift();
+        persistQueue();
+      }
+      if (!pendingWrites.length) showToast('All changes saved');
+    } finally {
+      flushing = false;
+    }
+  }
+
+  // Standing indicator, not a toast — a driver who glanced away still sees
+  // exactly where they stand.
+  function renderPendingBadge() {
+    const el = document.getElementById('pending-status');
+    if (!el) return;
+    const n = pendingWrites.length;
+    el.style.display = n ? 'block' : 'none';
+    if (n) el.textContent = n === 1
+      ? '1 change waiting for signal — it will save automatically'
+      : n + ' changes waiting for signal — they will save automatically';
+  }
+
+  window.addEventListener('online', flushQueue);
+  setInterval(flushQueue, 30000);
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
   async function markDone(rowNumber) {
@@ -186,18 +305,11 @@
     if (!stop) return;
     stop.done = true;
     render();
-    try {
-      const res = await fetch(
-        `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}`,
-        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ done: true }) }
-      );
-      if (!res.ok) throw new Error();
-    } catch {
-      stop.done = false;
-      render();
-      showToast('Could not save — check connection');
-    }
+    await sendOrQueue(
+      'done:' + rowNumber,
+      `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}`,
+      { done: true }
+    );
   }
 
   async function markUndone(rowNumber) {
@@ -205,17 +317,14 @@
     if (!stop) return;
     stop.done = false;
     render();
-    try {
-      await fetch(
-        `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}`,
-        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ done: false }) }
-      );
-    } catch {
-      stop.done = true;
-      render();
-      showToast('Could not save — check connection');
-    }
+    // Shares the 'done:' key with markDone so a done/undone flip collapses to
+    // whichever the driver landed on. This used to ignore res.ok entirely, so
+    // a server 500 counted as success and the sheet kept saying done.
+    await sendOrQueue(
+      'done:' + rowNumber,
+      `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}`,
+      { done: false }
+    );
   }
 
   function editNote(rowNumber, el) {
@@ -235,15 +344,11 @@
       stop.notes = val;
       stop.noteUrgency = classifyNote(val);
       render();
-      try {
-        await fetch(
-          `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}/notes`,
-          { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ notes: val }) }
-        );
-      } catch {
-        showToast('Note not saved — check connection');
-      }
+      await sendOrQueue(
+        'notes:' + rowNumber,
+        `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}/notes`,
+        { notes: val }
+      );
     }
 
     ta.addEventListener('blur', save);
@@ -271,6 +376,7 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       allStops = data.items;
+      applyPendingToStops();              // keep unsynced work visible
       window.allStops = allStops;         // expose for map.js
       window._routeTabName = route.tabName; // expose for report.js
       routeDate = data.routeDate || '';
@@ -294,6 +400,7 @@
     ws.onopen = () => {
       document.getElementById('ws-status').style.display = 'none';
       if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+      flushQueue();   // socket is proof we have signal again
     };
 
     ws.onclose = () => {
@@ -306,6 +413,9 @@
       if (msg.tabName && msg.tabName !== route.tabName) return;
 
       if (msg.type === 'stop-updated') {
+        // If we have an unsent change for this stop, ours is the newer intent —
+        // don't let an echo of older server state undo it on screen.
+        if (pendingWrites.some(w => w.key === 'done:' + msg.rowNumber)) return;
         const s = allStops.find(s => s.rowNumber === msg.rowNumber);
         if (s) { s.done = msg.done; render(); if (window.notifyStopsUpdated) window.notifyStopsUpdated(); }
       }
@@ -412,6 +522,29 @@
     document.getElementById('original-overlay').style.display = 'none';
   });
 
+  // ── Keep the screen awake ────────────────────────────────────────────────
+  // A driver working a route shouldn't have to keep waking the phone with wet
+  // or gloved hands. The lock drops automatically when the tab is hidden, so
+  // it costs nothing once they put the phone down, and it must be re-taken on
+  // every return to visibility — the browser does not restore it.
+
+  let wakeLock = null;
+
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;   // iOS < 16.4, Firefox
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch {}   // denied, low battery, or not permitted — not worth surfacing
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      requestWakeLock();
+      flushQueue();   // coming back to the app is a good moment to retry
+    }
+  });
+
   // ── Utilities ────────────────────────────────────────────────────────────
 
   function showToast(msg) {
@@ -434,5 +567,8 @@
   connectWS();
   initStartDayBtn();
   initViewOriginalBtn();
+  requestWakeLock();
+  renderPendingBadge();   // writes parked in a previous session still count
+  flushQueue();
 
 })();

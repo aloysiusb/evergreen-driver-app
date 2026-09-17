@@ -33,6 +33,22 @@ data/
 - **Google credentials** — service account key is ONLY in Render's environment variables as `GOOGLE_SERVICE_ACCOUNT_KEY` (full JSON). Never committed to git. `sheets.js` reads it from `process.env`.
 - **Column whitelist** — `config.js` is a strict allowlist. Billing/financial columns are never exposed to the driver API even if new columns are added to the sheet.
 - **WebSocket broadcast** — all connected clients get real-time updates for stop toggles, note edits, and style changes.
+- **Offline write queue** — drivers work in dead zones, so a failed write is
+  *never* rolled back on screen. `driver.js` parks it in `localStorage`
+  (`pending_writes_<routeId>`) and retries on WebSocket reconnect, the
+  `online` event, tab re-focus, and a 30 s timer. Entries are keyed
+  (`done:<row>`, `notes:<row>`) so repeated edits collapse to the driver's
+  final intent, and every queued write is an **idempotent PATCH of absolute
+  state** — never a delta — which is what makes blind retries safe. A flush
+  stops at the first failure to preserve order. Server data is authoritative
+  except where a parked write exists: `applyPendingToStops()` re-applies them
+  after every load, and a `stop-updated` broadcast is ignored for any row with
+  a parked write, so an echo of older state can't undo the driver on screen.
+- **Asset versioning** — `ASSET_V` in `server.js` (Render's commit SHA, or
+  process start time locally) is stamped onto local js/css URLs as `?v=`.
+  Pages are `no-cache`, assets cache for a day. Without this, a deploy served
+  fresh HTML against day-old JavaScript. **Don't remove it** and don't add
+  hashed filenames on top — this is the cache-busting mechanism.
 - **Style system** — `src/db.js` stores CSS custom property values in SQLite. `/api/styles` GET/POST/reset. Admin page at `/admin.html` pushes changes to all drivers via WebSocket `style-updated` message.
 - **Corners** — every `border-radius` in the app resolves to one of five role
   tokens defined in `public/css/tokens.css`: `--r-chip`, `--r-control`,

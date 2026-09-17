@@ -564,6 +564,19 @@ body {
 }
 .progress-text { font-size: 12px; opacity: 0.9; }
 
+/* ── Pending-writes banner ── */
+/* Calmer than #ws-status on purpose: nothing is wrong, the work is just
+   waiting for signal. Red here would teach drivers to ignore real warnings. */
+#pending-status {
+  display: none;
+  background: var(--hold-bg);
+  color: var(--hold-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 14px;
+}
+
 /* ── Offline banner ── */
 #ws-status {
   display: none;

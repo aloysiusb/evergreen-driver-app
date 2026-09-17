@@ -4,6 +4,77 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-09-17 (session 2) — Driver reliability: offline queue, follow mode, cache busting
+
+Three rounds of work, each uncovering the next.
+
+### Follow mode on the driver map
+
+The map never recentred on the driver — `centerOnCurrent()` pans to the
+*stop*, so once moving the GPS dot slid off the edge while the map sat parked
+on the destination. Now:
+
+- Rides with the driver at street zoom (17); 🧭 Follow button, on by default
+- Hand-panning drops out of follow so it doesn't fight the driver; tap resumes
+- Zoom is asserted only on engage, not per GPS tick, so zooming out to see the
+  route isn't undone
+- Heading kept only above walking pace so the view doesn't spin at red lights.
+  `setHeading` is a **no-op on raster maps** — heading-up needs a vector Map
+  ID from the Cloud console. Pan-follow works regardless.
+
+Roadmap stays the default rather than satellite: nav apps use roadmap while
+moving because aerial is harder to read at speed. Satellite is still a toggle
+for scouting driveways. Arrival alerts (80 m) already existed.
+
+### Asset versioning — deploys weren't reaching drivers
+
+Found while testing the above: the Follow button rendered but did nothing,
+because the browser was running a cached `map.js` from before the change.
+Pages were `no-cache` but js/css were `max-age=86400` on unversioned
+filenames, so **a deploy handed drivers fresh HTML pointing at up-to-24-hour-old
+JavaScript** — new markup wired to old code, failing silently.
+
+HTML now goes through a stamper that appends `?v=<ASSET_V>`. External font
+URLs are untouched and `express.static` ignores the query, so the long cache
+that helps drivers on cell service is preserved.
+
+### The offline write queue (the important one)
+
+`markDone` optimistically checked the stop, then **reverted it** if the write
+failed, with a 3-second toast. In a dead zone that converted "not synced yet"
+into "never happened": phone in pocket, toast unseen, stop unchecked locally
+*and* absent from the sheet, with no trace anywhere. Two related bugs sat
+alongside it — `markUndone` and the note save both `await`ed fetch without
+checking `res.ok`, so a server 500 counted as success. The two operations
+failed in opposite directions on the same network.
+
+All three now route through `sendOrQueue()`. The driver's action stands, the
+write parks in `localStorage`, and it goes out on reconnect. See CLAUDE.md for
+the design; the load-overlay and the `stop-updated` guard are the subtle parts
+— without them a reload or a broadcast would repaint parked work as undone.
+
+Also: screen wake lock while the tab is visible (re-taken on `visibilitychange`
+— browsers don't restore it), and a short `navigator.vibrate` on the arrival
+alert, since a driver watching the road won't see a toast. Both degrade
+silently where unsupported (iOS Safari has no vibrate).
+
+**Verified in-browser**: queue survives reload; a failed flush keeps every
+entry; a successful flush drains in order and clears the badge; a mid-queue
+failure removes only what succeeded and does **not** skip ahead of the failure.
+Follow mode couldn't be verified against a live map — no `GOOGLE_MAPS_API_KEY`
+locally.
+
+### Housekeeping
+
+- `GOOGLE_MAPS_API_KEY` documented in `render.yaml` (`sync: false`). It's
+  the browser-facing key — restrict by HTTP referrer, never reuse the service
+  account key.
+- Needs enabling: Maps JavaScript, Geocoding, Directions, Distance Matrix.
+- A `report` palette exists in `tokens.css` but **no page opts into it yet**
+  — inert, and the colour/font consolidation is still the open next step.
+
+---
+
 ## 2026-09-17 — Corner radii unified onto one scale
 
 The site had drifted badly: **~200 `border-radius` declarations across 25

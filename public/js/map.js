@@ -567,6 +567,11 @@ function promptArrival(stop) {
   if (arrivalPromptRow === stop.rowNumber) return;
   arrivalPromptRow = stop.rowNumber;
 
+  // A driver watching the road will not see a toast. A short buzz is the part
+  // that actually lands, and it is safer than expecting eyes on the screen.
+  // Ignored on iOS Safari, which does not implement vibrate — harmless there.
+  try { navigator.vibrate?.([120, 80, 120]); } catch {}
+
   const toast = document.getElementById('toast');
   toast.innerHTML = `Arrived at <b>${escHtml(stop.accountName || stop.address)}</b>? <button id="arrive-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:6px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;">✓ Done</button>`;
   toast.classList.add('show');
