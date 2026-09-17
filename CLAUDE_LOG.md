@@ -4,6 +4,62 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-09-17 (session 3) — Sim mode, and a rebase onto the access gate
+
+### Rebased onto two upstream commits
+
+Another session had pushed `55f7b38` (shared access-code gate, `src/gate.js`)
+and `b6b83cc` (untrack `data/app.db`) while this work was in progress, so the
+four local commits were rebased on top. Conflicts in `.gitignore` (same rules,
+different comment — kept upstream's) and `CLAUDE_LOG.md` (kept both entries).
+
+`src/server.js` auto-merged, which is exactly where a silent mistake could
+hide, so it was checked rather than trusted: `mountGate(app)` sits at line 26
+and all the asset-versioning at 296+, so the gate is still in front of
+everything — **including the new HTML stamper route**, which was the one that
+could plausibly have bypassed it. Verified with `ACCESS_CODE` set: `/`,
+`/driver.html`, `/admin.html`, `/js/map.js` and `/api/styles` all 401
+without the code, and 302 with it. Unset, the gate no-ops and local dev works.
+
+### Sim mode — `/driver/<route>?sim=1`
+
+Follow mode shipped unverified because testing it needs real GPS at real
+speed. Sim mode closes that gap without a truck.
+
+The design choice that matters: it does **not** mock the driver app. It swaps
+the two boundaries the app talks to the world through — `navigator.geolocation`
+and `window.fetch` — and lets the real map.js/driver.js run on top. Nothing in
+them knows it's simulated, so sim.js cannot quietly diverge from the code it's
+supposed to be testing.
+
+- Synthetic GPS interpolates between the route's geocoded stops with real
+  bearings, at a believable pace (~13 m/s x a speed slider) rather than a
+  fixed fraction per leg, which would crawl on long legs and teleport on short
+  ones
+- **Signal on/off** switch: off makes writes reject like a dead zone, which is
+  how you watch the offline queue fill and drain. Switching back on fires the
+  `online` event the driver app already listens for
+- **Writes never reach the sheet.** Every non-GET to `/api/routes/*` is
+  intercepted and logged on screen. Alyssa's live route data cannot be marked
+  done by a test drive
+- Loud purple panel pinned to the bottom, so nobody mistakes a test drive for
+  the real app in a meeting
+
+**Verified**: without `?sim=1` the file is completely inert — no panel and
+`window.fetch` is still native. With it, geolocation and fetch are both
+swapped, a write returns a synthetic 200 where the real server (no Sheets
+creds locally) would have returned 500 — proving interception — and with
+Signal off the same write rejects with `sim: no signal`. Both appear in the
+log, colour-coded.
+
+**Not verified**: the drive loop itself. Route data won't load locally without
+Google Sheets credentials, so `navStops` stays empty and the simulator sits at
+"waiting for the route to load". The plumbing is proven; the actual walking of
+a route has only been exercised against an empty route. First real use should
+be against the deployed app.
+
+---
+
 ## 2026-09-17 (session 2) — Driver reliability: offline queue, follow mode, cache busting
 
 Three rounds of work, each uncovering the next.

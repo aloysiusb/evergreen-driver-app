@@ -564,6 +564,73 @@ body {
 }
 .progress-text { font-size: 12px; opacity: 0.9; }
 
+/* ── Simulator panel (?sim=1 only) ── */
+/* Deliberately loud. Nobody should ever mistake a test drive for the real
+   app, least of all while looking over someone's shoulder in a meeting. */
+#sim-panel {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: #1e1b4b;
+  color: #e0e7ff;
+  font-size: 12px;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+}
+#sim-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+}
+#sim-bar strong {
+  background: #f59e0b;
+  color: #1e1b4b;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+#sim-status { flex: 1; min-width: 140px; opacity: 0.9; }
+#sim-bar button {
+  background: #312e81;
+  color: #e0e7ff;
+  border: 1px solid #4338ca;
+  border-radius: var(--r-control);
+  padding: 5px 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+#sim-bar button:hover { background: #3730a3; }
+#sim-bar button.off { background: #7f1d1d; border-color: #b91c1c; color: #fecaca; }
+#sim-bar label { display: flex; align-items: center; gap: 6px; opacity: 0.9; }
+#sim-bar input[type="range"] { width: 90px; }
+
+#sim-log {
+  max-height: 34vh;
+  overflow-y: auto;
+  border-top: 1px solid #4338ca;
+  padding: 6px 12px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+.sim-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sim-t { opacity: 0.55; flex-shrink: 0; }
+.sim-outcome { flex-shrink: 0; font-weight: 700; }
+.sim-outcome.ok  { color: #86efac; }
+.sim-outcome.bad { color: #fca5a5; }
+.sim-body { opacity: 0.75; word-break: break-all; }
+
+/* Keep the bottom action bar clear of the panel */
+body.sim-on { padding-bottom: 60px; }
+
 /* ── Pending-writes banner ── */
 /* Calmer than #ws-status on purpose: nothing is wrong, the work is just
    waiting for signal. Red here would teach drivers to ignore real warnings. */

@@ -44,6 +44,16 @@ data/
   except where a parked write exists: `applyPendingToStops()` re-applies them
   after every load, and a `stop-updated` broadcast is ignored for any row with
   a parked write, so an echo of older state can't undo the driver on screen.
+- **Sim mode** — `/driver/<route>?sim=1` test-drives the real driver page from
+  a desk. It does **not** reimplement anything: it swaps `navigator.geolocation`
+  for synthetic positions walking the route's geocoded stops, and wraps
+  `window.fetch` as a fake network with an on/off switch. So map.js and
+  driver.js run untouched and sim.js can't drift out of sync with them.
+  **Writes never reach the Google Sheet** — every non-GET to `/api/routes/*`
+  is intercepted and shown in an on-screen log. Switching "Signal" off makes
+  writes reject exactly like a dead zone, which is how you exercise the
+  offline queue. Not to be confused with `demo.html`, which is a narrated
+  sales demo with its own separate simulation.
 - **Asset versioning** — `ASSET_V` in `server.js` (Render's commit SHA, or
   process start time locally) is stamped onto local js/css URLs as `?v=`.
   Pages are `no-cache`, assets cache for a day. Without this, a deploy served
