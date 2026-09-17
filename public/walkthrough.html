@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Day on the Route — Evergreen</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
+
+<!-- The phone screen uses the REAL driver stylesheets, so this walkthrough
+     cannot drift away from how the app actually looks. Only the data and the
+     sequence are scripted. -->
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/app.css">
+
+<style>
+  /* ── Stage ──────────────────────────────────────────────────────────── */
+  body {
+    margin: 0;
+    background: #0f1a12;
+    color: #e6efe8;
+    font-family: 'Google Sans Flex', -apple-system, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .stage {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 28px 20px 40px;
+    display: grid;
+    grid-template-columns: minmax(397px, 397px) 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 940px) {
+    .stage { grid-template-columns: 1fr; gap: 24px; justify-items: center; }
+    .narration { max-width: 520px; }
+  }
+
+  .intro { grid-column: 1 / -1; text-align: center; margin-bottom: 4px; }
+  .intro h1 { font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .intro p { margin: 0; opacity: 0.65; font-size: 14px; }
+
+  /* ── Phone ──────────────────────────────────────────────────────────── */
+  /* 375px of screen is a real iPhone's CSS viewport. At the 298px this used to
+     be, every address wrapped and a single stop card came out 213px tall —
+     nothing like what a driver actually sees. */
+  .phone {
+    width: 397px;
+    background: #10100f;
+    border-radius: 44px;          /* physical device curve, not a design token */
+    padding: 11px;
+    box-shadow: 0 22px 60px rgba(0,0,0,0.5), 0 0 0 2px #2a2a28;
+    position: relative;
+    justify-self: center;
+  }
+  .notch {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    width: 96px; height: 24px; background: #10100f; border-radius: 999px; z-index: 5;
+  }
+  .screen {
+    position: relative;
+    border-radius: 34px;
+    overflow: hidden;
+    background: var(--bg);
+    height: 720px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* The app's own chrome is fixed-position in the real page; inside the phone
+     it has to sit in normal flow, so a few positions are re-anchored here. */
+  .screen .route-header { flex-shrink: 0; }
+  .screen .content { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+  .screen #toast {
+    position: absolute; bottom: 74px;
+  }
+  .screen .action-bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+  }
+
+  /* ── Narration ──────────────────────────────────────────────────────── */
+  .narration { padding-top: 10px; }
+  .scene-no {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    opacity: 0.5; font-weight: 600;
+  }
+  .scene-title {
+    font-size: 22px; font-weight: 700; margin: 6px 0 10px; line-height: 1.25;
+  }
+  .scene-body { font-size: 15px; line-height: 1.65; opacity: 0.82; margin: 0; }
+  .scene-body b { color: #7fd6a0; font-weight: 600; }
+
+  .dots { display: flex; gap: 6px; margin: 22px 0 18px; flex-wrap: wrap; }
+  .dot {
+    width: 26px; height: 4px; border-radius: 999px;
+    background: rgba(255,255,255,0.18); border: 0; padding: 0; cursor: pointer;
+  }
+  .dot.seen { background: rgba(127,214,160,0.45); }
+  .dot.active { background: #7fd6a0; }
+
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    color: #e6efe8;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: var(--r-control);
+    padding: 9px 16px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.14); }
+  .controls button.primary { background: #22c55e; border-color: #22c55e; color: #08240f; }
+  .controls .spacer { flex: 1; }
+  .hint { font-size: 12.5px; opacity: 0.5; margin-top: 16px; line-height: 1.5; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .screen * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="intro">
+    <h1>A day on the route</h1>
+    <p>What a driver sees, start to finish. Plays on its own — no truck required.</p>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen" id="screen">
+      <header class="route-header">
+        <div class="route-header-top">
+          <a href="#" class="home-btn" title="All Routes">⌂</a>
+          <div>
+            <div class="route-title" id="route-name">Valley Residential</div>
+            <div class="route-day" id="route-day">Wednesday</div>
+          </div>
+          <div class="route-date" id="route-date">Sep 17</div>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+        <div class="progress-text" id="progress-text">0 of 5 done</div>
+        <div class="view-tabs">
+          <button class="view-tab active" id="tab-stops">Stops</button>
+          <button class="view-tab" id="tab-map">🗺 Map</button>
+        </div>
+      </header>
+
+      <div id="pending-status" style="display:none;"></div>
+
+      <div class="content">
+        <div id="stops-list"></div>
+      </div>
+
+      <div id="toast"></div>
+
+      <div class="action-bar">
+        <a href="#" class="btn-secondary">← Routes</a>
+        <button class="btn-primary" id="day-btn">Start My Day</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="narration">
+    <div class="scene-no" id="scene-no">Scene 1 of 8</div>
+    <h2 class="scene-title" id="scene-title">Opening the route</h2>
+    <p class="scene-body" id="scene-body">…</p>
+
+    <div class="dots" id="dots"></div>
+
+    <div class="controls">
+      <button id="play" class="primary" type="button">⏸ Pause</button>
+      <button id="prev" type="button">← Back</button>
+      <button id="next" type="button">Next →</button>
+      <span class="spacer"></span>
+      <button id="replay" type="button">↺ Replay</button>
+    </div>
+
+    <p class="hint">
+      Scripted walkthrough with sample stops — it never touches the live sheet.
+      To drive a real route on a phone, use sim mode instead:
+      <code>/driver/&lt;route&gt;?sim=1</code>
+    </p>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   A scripted walkthrough of the driver's screen.
+
+   Deliberately self-contained: no Google Maps key, no Google Sheet, no
+   network, no access code. It has to play on a bad hotel wifi in front of a
+   customer, years from now, without anything upstream being alive.
+
+   It links the app's real stylesheets and reuses its real class names, so the
+   LOOK cannot drift. The data and the sequence are scripted — that is the
+   trade-off, and the reason the hint above points at sim mode for testing
+   real behaviour.
+   ───────────────────────────────────────────────────────────────────────── */
+
+const STOPS = [
+  { row: 4,  name: 'Marcy Ostrander',  addr: '412 Sopris Ave, Carbondale',  note: '',                        urgency: '',       access: 'Bin behind the blue gate' },
+  { row: 5,  name: 'Kestrel Bakery',   addr: '88 Main St, Carbondale',      note: 'Extra bin Weds',          urgency: 'info',   access: '' },
+  { row: 6,  name: 'Silt River House', addr: '1190 County Rd 233, Silt',    note: 'Dog — call on arrival',   urgency: 'urgent', access: '' },
+  { row: 7,  name: 'Aspen Glen HOA',   addr: '35 Diamond A Ranch Rd',       note: '',                        urgency: '',       access: 'Gate code 4412' },
+  { row: 8,  name: 'Roaring Fork Co-op', addr: '7 Industry Pl, Glenwood',   note: 'On hold until Oct',       urgency: 'hold',   access: '' },
+];
+
+// state the scenes manipulate
+let done = new Set();
+let pending = 0;
+let toastHtml = '';
+let addingNoteRow = null;
+let noteDraft = '';
+
+const SCENES = [
+  {
+    title: 'Opening the route',
+    body: 'The driver taps their route and sees the whole day — <b>every stop in sheet order</b>, with the notes the office already wrote. No paper, no scrolling a spreadsheet on a phone.',
+    apply() { done = new Set(); pending = 0; toastHtml = ''; addingNoteRow = null; },
+  },
+  {
+    title: 'Notes are colour-coded',
+    body: 'Notes carry weight. <b>Red</b> means something the driver needs before they get out of the truck — a dog, a locked gate. <b>Amber</b> is a hold. Access details ride along on the card itself.',
+    apply() {},
+  },
+  {
+    title: 'One tap marks a stop done',
+    body: 'A single big target — easy with gloves on, no menus. The bar at the top fills as the day goes, so the driver always knows where they stand.',
+    apply() { done = new Set([4]); toastHtml = ''; },
+  },
+  {
+    title: 'The app knows when they arrive',
+    body: 'Within <b>80 metres</b> of the next stop, the phone buzzes and asks. One tap confirms and moves on — no hunting for the right row while parked in the road.',
+    apply() {
+      done = new Set([4]);
+      toastHtml = 'Arrived at <b>Kestrel Bakery</b>? <button class="fake-done">✓ Done</button>';
+    },
+  },
+  {
+    title: 'Adding a note from the truck',
+    body: 'Anything the driver notices goes straight back to the office — a gate code, a bin that was blocked, a customer request. It lands in <b>the same sheet the office already uses</b>.',
+    apply() {
+      done = new Set([4, 5]);
+      toastHtml = '';
+      addingNoteRow = 7;
+      noteDraft = 'New gate code — 4412, keypad on left post';
+    },
+  },
+  {
+    title: 'Signal drops. Nothing is lost.',
+    body: 'Half this territory has no bars. When a save can’t get through, <b>the work stays marked done</b> and waits. The driver is told plainly how much is queued — no silent failures, nothing to remember.',
+    apply() {
+      done = new Set([4, 5, 6]);
+      addingNoteRow = null;
+      pending = 2;
+      toastHtml = '';
+    },
+  },
+  {
+    title: 'Back in range, it catches up',
+    body: 'The moment there’s signal again, everything queued goes out on its own and the banner clears. The driver never has to think about it or redo a stop.',
+    apply() {
+      done = new Set([4, 5, 6]);
+      pending = 0;
+      toastHtml = 'All changes saved';
+    },
+  },
+  {
+    title: 'End of the day',
+    body: 'Every stop logged, every note in the sheet, and the office watched it happen in real time — <b>without a single phone call</b>.',
+    apply() {
+      done = new Set([4, 5, 6, 7, 8]);
+      pending = 0;
+      toastHtml = '';
+    },
+  },
+];
+
+const SCENE_MS = 5200;
+let idx = 0;
+let playing = true;
+let timer = null;
+
+// ── Rendering: mirrors driver.js's stopCardHtml, same classes ─────────────
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function noteClass(u) {
+  return u === 'urgent' ? 'note-urgent' : u === 'hold' ? 'note-hold' : 'note-info';
+}
+
+function cardHtml(s) {
+  const isDone = done.has(s.row);
+  const noteBlock = addingNoteRow === s.row
+    ? '<textarea class="note-edit" rows="2">' + esc(noteDraft) + '</textarea>'
+    : s.note
+      ? '<div class="stop-note ' + noteClass(s.urgency) + '">' + esc(s.note) + '</div>'
+      : (isDone ? '' : '<div class="stop-note-add">+ Add note</div>');
+
+  const action = isDone
+    ? '<button class="undo-btn">Undo</button>'
+    : '<button class="done-btn" aria-label="Mark done">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" ' +
+        'stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+      '</button>';
+
+  return '<div class="stop-card' + (isDone ? ' completed' : '') + '">' +
+      '<div class="stop-main">' +
+        '<div class="stop-info">' +
+          '<div class="stop-account">' + esc(s.name) + '</div>' +
+          '<div class="stop-address">' + esc(s.addr) + '</div>' +
+          '<div class="stop-action-row"><span class="stop-action-btn">📍 Map</span></div>' +
+          (s.access ? '<div class="stop-access-chip">🔑 ' + esc(s.access) + '</div>' : '') +
+          noteBlock +
+        '</div>' +
+        action +
+      '</div>' +
+    '</div>';
+}
+
+function renderScreen() {
+  document.getElementById('stops-list').innerHTML = STOPS.map(cardHtml).join('');
+
+  const pct = Math.round((done.size / STOPS.length) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent =
+    done.size + ' of ' + STOPS.length + ' done';
+
+  const pend = document.getElementById('pending-status');
+  pend.style.display = pending ? 'block' : 'none';
+  pend.textContent = pending === 1
+    ? '1 change waiting for signal — it will save automatically'
+    : pending + ' changes waiting for signal — they will save automatically';
+
+  const toast = document.getElementById('toast');
+  toast.innerHTML = toastHtml;
+  toast.classList.toggle('show', !!toastHtml);
+
+  document.getElementById('day-btn').textContent =
+    done.size === STOPS.length ? '✓ Day Complete' : 'Start My Day';
+}
+
+function renderNarration() {
+  const s = SCENES[idx];
+  document.getElementById('scene-no').textContent =
+    'Scene ' + (idx + 1) + ' of ' + SCENES.length;
+  document.getElementById('scene-title').textContent = s.title;
+  document.getElementById('scene-body').innerHTML = s.body;
+
+  document.getElementById('dots').innerHTML = SCENES.map((_, i) =>
+    '<button class="dot' + (i === idx ? ' active' : i < idx ? ' seen' : '') +
+    '" data-i="' + i + '" aria-label="Scene ' + (i + 1) + '"></button>'
+  ).join('');
+}
+
+function show(i) {
+  idx = (i + SCENES.length) % SCENES.length;
+  SCENES[idx].apply();
+  renderScreen();
+  renderNarration();
+}
+
+function tick() { show(idx + 1); }
+
+function setPlaying(on) {
+  playing = on;
+  clearInterval(timer);
+  timer = on ? setInterval(tick, SCENE_MS) : null;
+  document.getElementById('play').textContent = on ? '⏸ Pause' : '▶ Play';
+}
+
+document.getElementById('play').onclick = () => setPlaying(!playing);
+document.getElementById('next').onclick = () => { setPlaying(false); show(idx + 1); };
+document.getElementById('prev').onclick = () => { setPlaying(false); show(idx - 1); };
+document.getElementById('replay').onclick = () => { show(0); setPlaying(true); };
+document.getElementById('dots').onclick = (e) => {
+  const d = e.target.closest('.dot');
+  if (d) { setPlaying(false); show(Number(d.dataset.i)); }
+};
+
+show(0);
+setPlaying(true);
+</script>
+
+</body>
+</html>

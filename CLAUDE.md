@@ -22,6 +22,7 @@ public/
   index.html      — Route grid (tap a route to open it)
   driver.html     — Driver view: stop list, done toggles, notes
   admin.html      — Style editor: color pickers, sliders, Push button to broadcast styles live
+  walkthrough.html — Scripted movie of the driver screen. Self-contained; no key, sheet or network.
   css/tokens.css  — Corner radius scale + palettes. Linked FIRST by every page.
   css/app.css     — Shared styles
   js/routes.js    — Route definitions
