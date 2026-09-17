@@ -133,6 +133,7 @@
     color: var(--text-muted); border: 1px solid var(--border);
   }
   .wt-mode.on { background: #22c55e; color: #fff; border-color: #22c55e; }
+  #wt-sat { cursor: pointer; user-select: none; }
 
   .wt-navcard { padding: 10px 12px 14px; background: var(--surface); }
 
@@ -223,7 +224,7 @@
         <div class="wt-modebar">
           <span class="wt-mode">📋 Planned</span>
           <span class="wt-mode on">🧭 Follow</span>
-          <span class="wt-mode">🛰 Satellite</span>
+          <span class="wt-mode" id="wt-sat" onclick="toggleWtSat()" role="button" tabindex="0">🛰 Satellite</span>
         </div>
 
         <div id="turn-banner" class="show">
@@ -237,13 +238,64 @@
 
         <div class="wt-map">
           <svg viewBox="0 0 320 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <rect width="320" height="300" fill="#e8ece7"/>
-            <g stroke="#ffffff" stroke-width="13" stroke-linecap="round">
-              <path d="M-10 84 H330"/><path d="M-10 196 H330"/>
-              <path d="M74 -10 V310"/><path d="M226 -10 V310"/>
+            <!-- Map view: the plain schematic -->
+            <g id="wt-roads">
+              <rect width="320" height="300" fill="#e8ece7"/>
+              <g stroke="#ffffff" stroke-width="13" stroke-linecap="round">
+                <path d="M-10 84 H330"/><path d="M-10 196 H330"/>
+                <path d="M74 -10 V310"/><path d="M226 -10 V310"/>
+              </g>
+              <g stroke="#f3f5f2" stroke-width="7">
+                <path d="M-10 140 H330"/><path d="M150 -10 V310"/>
+              </g>
             </g>
-            <g stroke="#f3f5f2" stroke-width="7">
-              <path d="M-10 140 H330"/><path d="M150 -10 V310"/>
+
+            <!-- Satellite view. Drawn, not photographed: the walkthrough has
+                 to run with no API key and no network. The point it makes is
+                 the real one — from the air a driver can see the driveway,
+                 the outbuildings and where the bin actually sits, which a
+                 street map cannot show. -->
+            <g id="wt-aerial" style="display:none">
+              <rect width="320" height="300" fill="#6b7d5a"/>
+              <g fill="#7d8f68" opacity="0.7">
+                <rect x="0" y="0" width="320" height="70"/>
+                <rect x="240" y="100" width="80" height="200"/>
+                <rect x="0" y="215" width="150" height="85"/>
+              </g>
+              <!-- asphalt -->
+              <g stroke="#4a4a46" stroke-width="15" stroke-linecap="square">
+                <path d="M-10 84 H330"/><path d="M-10 196 H330"/>
+                <path d="M74 -10 V310"/><path d="M226 -10 V310"/>
+              </g>
+              <g stroke="#55554f" stroke-width="9">
+                <path d="M-10 140 H330"/><path d="M150 -10 V310"/>
+              </g>
+              <!-- driveways -->
+              <g stroke="#9a9384" stroke-width="5" stroke-linecap="round">
+                <path d="M236 84 H250"/><path d="M84 140 H98"/>
+                <path d="M150 168 V182"/><path d="M60 196 V210"/>
+              </g>
+              <!-- buildings, with a little shadow so they read as 3D -->
+              <g>
+                <rect x="243" y="70" width="30" height="26" fill="#2f3033" opacity="0.35"/>
+                <rect x="240" y="67" width="30" height="26" fill="#c9c3b4"/>
+                <rect x="92" y="150" width="26" height="22" fill="#2f3033" opacity="0.35"/>
+                <rect x="89" y="147" width="26" height="22" fill="#bfb9ab"/>
+                <rect x="139" y="182" width="24" height="20" fill="#2f3033" opacity="0.35"/>
+                <rect x="136" y="179" width="24" height="20" fill="#c5bfb0"/>
+                <rect x="40" y="206" width="22" height="18" fill="#2f3033" opacity="0.35"/>
+                <rect x="37" y="203" width="22" height="18" fill="#bdb7a9"/>
+                <rect x="252" y="210" width="34" height="26" fill="#2f3033" opacity="0.35"/>
+                <rect x="249" y="207" width="34" height="26" fill="#c9c3b4"/>
+              </g>
+              <!-- trees -->
+              <g fill="#3f5236">
+                <circle cx="118" cy="66" r="7"/><circle cx="132" cy="74" r="5"/>
+                <circle cx="196" cy="110" r="6"/><circle cx="206" cy="120" r="8"/>
+                <circle cx="40" cy="120" r="7"/><circle cx="28" cy="132" r="5"/>
+                <circle cx="280" cy="160" r="6"/><circle cx="292" cy="172" r="8"/>
+                <circle cx="170" cy="240" r="7"/><circle cx="186" cy="250" r="5"/>
+              </g>
             </g>
             <path id="wt-route" d="M74 280 V196 H226 V84"
                   fill="none" stroke="#22c55e" stroke-width="7"
@@ -726,6 +778,23 @@ function arrive(leg) {
     '. The phone buzzed and asked, and it says which side to look — no hunting both kerbs for a bin. One tap marks it done and the route moves on.');
   holding = 2800;
 }
+
+/* Swaps the drawn ground beneath the route. Everything above it — the route
+   line, the truck, the target — stays put, so the view changes without the
+   drive loop knowing anything happened. */
+let wtSat = false;
+window.toggleWtSat = function () {
+  wtSat = !wtSat;
+  document.getElementById('wt-roads').style.display  = wtSat ? 'none' : '';
+  document.getElementById('wt-aerial').style.display = wtSat ? '' : 'none';
+  document.getElementById('wt-sat').classList.toggle('on', wtSat);
+  // The green route line disappears against grass; brighten it on the aerial.
+  const route = document.getElementById('wt-route');
+  if (route) {
+    route.setAttribute('stroke', wtSat ? '#7dd3fc' : '#22c55e');
+    route.setAttribute('opacity', wtSat ? '1' : '0.9');
+  }
+};
 
 function setReadout(html) {
   const el = document.getElementById('drive-readout');
