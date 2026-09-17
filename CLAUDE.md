@@ -18,6 +18,7 @@ src/
   config.js       — Whitelist of allowed tabs/columns (security: nothing flows through by default)
   db.js           — SQLite (node:sqlite, requires Node 22+) for persisted style settings
   gate.js         — Shared access code, mounted in front of every route (see below)
+  requests.js     — Staging queue for website form submissions (site automation)
 public/
   index.html      — Route grid (tap a route to open it)
   driver.html     — Driver view: stop list, done toggles, notes

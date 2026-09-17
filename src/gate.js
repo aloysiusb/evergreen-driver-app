@@ -98,6 +98,13 @@ export function mountGate(app) {
     // stay reachable without a code.
     if (req.path === "/health" || req.path.startsWith("/qbo/")) return next();
 
+    // The website's "request service" form posts here from a page that has no
+    // access code and never will. ONLY the POST is open: reading the queue
+    // back, or deciding on a request, still needs a code. The endpoint itself
+    // validates and rate-limits, and nothing it accepts reaches the route
+    // sheet until someone approves it.
+    if (req.path === "/api/requests" && req.method === "POST") return next();
+
     // Writing styles is an admin act. Reading them is not: every driver page
     // fetches /api/styles to paint itself.
     const touchesStyles = req.path === "/admin.html" || req.path.startsWith("/api/styles");

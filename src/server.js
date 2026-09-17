@@ -7,12 +7,16 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
-import { readRange, readRangeWithColors, writeRange, duplicateSheet } from "./sheets.js";
+import { readRange, readRangeWithColors, writeRange, appendRows, duplicateSheet } from "./sheets.js";
 import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
 import { mountGate } from "./gate.js";
+import {
+  validateRequest, createRequest, listRequests, getRequest,
+  decideRequest, countByStatus, rateLimited,
+} from "./requests.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -287,6 +291,121 @@ app.get("/api/backup/:tabName", async (req, res) => {
     res.status(err.status || 500).json({ error: err.message });
   }
 });
+
+// --- New-customer requests (website form -> staging -> approval) ---------
+//
+// Flow: the website form POSTs here, the request lands in SQLite as "pending",
+// and nothing touches the route sheet. Alyssa reviews the queue on
+// /approval.html and approving appends the customer to a route tab.
+//
+// The POST is deliberately the only part reachable without an access code
+// (see gate.js) because a public form cannot carry one.
+
+app.post("/api/requests", (req, res) => {
+  const ip = (req.get("x-forwarded-for") || "").split(",")[0].trim()
+           || req.socket.remoteAddress || "unknown";
+
+  if (rateLimited(ip)) {
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
+
+  // Honeypot: a field no human sees and every naive bot fills in. Answer 200
+  // so the bot believes it succeeded and does not retry with another shape.
+  if (req.body && String(req.body.company || "").trim() !== "") {
+    return res.json({ ok: true, id: null });
+  }
+
+  const { ok, errors, value } = validateRequest(req.body);
+  if (!ok) return res.status(400).json({ error: errors.join("; "), errors });
+
+  const saved = createRequest(value, "website");
+
+  // Email is optional and not yet configured — see sendConfirmation().
+  sendConfirmation(saved).catch(err =>
+    console.warn("[requests] confirmation email failed:", err.message));
+
+  broadcast({ type: "request-created", id: saved.id });
+  res.status(201).json({ ok: true, id: saved.id });
+});
+
+app.get("/api/requests", (req, res) => {
+  const status = req.query.status;
+  res.json({ counts: countByStatus(), items: listRequests({ status }) });
+});
+
+app.get("/api/requests/:id", (req, res) => {
+  const row = getRequest(req.params.id);
+  if (!row) return res.status(404).json({ error: "Not found" });
+  res.json(row);
+});
+
+app.post("/api/requests/:id/approve", async (req, res) => {
+  const tabName = String(req.body?.tabName || "").trim();
+  if (!ROUTE_DAY_TABS.includes(tabName)) {
+    return res.status(400).json({ error: "Unknown route tab.", allowed: ROUTE_DAY_TABS });
+  }
+  const row = getRequest(req.params.id);
+  if (!row) return res.status(404).json({ error: "Not found" });
+  if (row.status !== "pending") {
+    return res.status(409).json({ error: `Already ${row.status}.` });
+  }
+
+  // Append FIRST, and only mark approved if the sheet write actually landed —
+  // otherwise a failed write would leave a customer marked approved and
+  // silently missing from the route, which is the same class of bug as the
+  // driver's vanishing checkmark.
+  try {
+    const cols = ROUTE_COLUMNS;
+    const rowValues = [];
+    const put = (col, val) => { rowValues[col.charCodeAt(0) - 65] = val; };
+    put(cols.addressCol, row.address);
+    put(cols.notesCol, row.notes || "");
+    put(cols.accountNameCol, row.name);
+    put(cols.cityCol, row.city || "");
+    for (let i = 0; i < rowValues.length; i++) if (rowValues[i] == null) rowValues[i] = "";
+
+    await appendRows(SPREADSHEET_ID, `'${tabName}'!A:Z`, [rowValues]);
+  } catch (err) {
+    console.error("[requests] approve -> sheet append failed:", err.message);
+    return res.status(502).json({ error: "Could not add them to the route sheet. Nothing was changed." });
+  }
+
+  const updated = decideRequest(req.params.id, "approved", tabName);
+  broadcast({ type: "request-decided", id: req.params.id, status: "approved" });
+  res.json(updated);
+});
+
+app.post("/api/requests/:id/decline", (req, res) => {
+  const updated = decideRequest(req.params.id, "declined");
+  if (!updated) return res.status(409).json({ error: "Not found, or already decided." });
+  broadcast({ type: "request-decided", id: req.params.id, status: "declined" });
+  res.json(updated);
+});
+
+// Confirmation email. No provider is wired up yet: set RESEND_API_KEY and
+// REQUESTS_FROM_EMAIL in Render and this starts sending, with no new npm
+// dependency. Until then it logs and returns, so the queue works regardless.
+async function sendConfirmation(request) {
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.REQUESTS_FROM_EMAIL;
+  if (!key || !from || !request.email) {
+    console.log(`[requests] ${request.id} stored; confirmation email not sent (not configured)`);
+    return;
+  }
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: request.email,
+      subject: "We got your Evergreen compost request",
+      text: `Hi ${request.name},\n\nThanks — we have your request for ${request.address}. `
+          + `Someone will confirm your collection day shortly.\n\nEverGreen ZeroWaste`,
+    }),
+  });
+  if (!r.ok) throw new Error("Resend responded " + r.status);
+  console.log(`[requests] ${request.id} confirmation email sent`);
+}
 
 // --- Static file server --------------------------------------------------
 
