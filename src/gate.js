@@ -25,6 +25,21 @@ import { timingSafeEqual } from "node:crypto";
 const ACCESS_CODE = process.env.ACCESS_CODE || "";
 const ADMIN_CODE = process.env.ADMIN_CODE || "";
 
+// The customer-facing surface. These are meant to be reachable by members of
+// the public who will never have a code — the whole point of the portal is
+// that a customer can request a hold without ringing the office. Gating them
+// would leave the intake endpoint open but the page that posts to it locked,
+// which is the same as having no portal at all.
+//
+// Nothing here exposes the route sheet: the portal is a form, and the pages
+// pull their data from endpoints that ARE gated.
+const PUBLIC_PAGES = new Set(["/portal.html", "/pay.html"]);
+
+// Stylesheets, client scripts and the manifest. No secrets live in these — the
+// sensitive thing is the route API, not the CSS — and leaving them gated would
+// render the public pages unstyled and inert.
+const PUBLIC_PREFIXES = ["/css/", "/js/", "/fonts/"];
+
 const DRIVER_JAR = "ev_access";
 const ADMIN_JAR = "ev_admin";
 const YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -104,6 +119,17 @@ export function mountGate(app) {
     // validates and rate-limits, and nothing it accepts reaches the route
     // sheet until someone approves it.
     if (req.path === "/api/requests" && req.method === "POST") return next();
+
+    // Customer-facing pages and the assets they need to render.
+    if (PUBLIC_PAGES.has(req.path)) return next();
+    if (PUBLIC_PREFIXES.some(prefix => req.path.startsWith(prefix))) return next();
+    if (req.path === "/manifest.json") return next();
+
+    // The portal's "get my invoice link" button. Customer-facing by design and
+    // reachable before the gate existed, so gating it now would take away a
+    // feature customers already use. Worth knowing it will confirm whether an
+    // email address belongs to a customer.
+    if (req.path === "/api/payment-link" && req.method === "POST") return next();
 
     // Writing styles is an admin act. Reading them is not: every driver page
     // fetches /api/styles to paint itself.
