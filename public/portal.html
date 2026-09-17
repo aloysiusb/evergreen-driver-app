@@ -407,6 +407,17 @@
     .field-row { grid-template-columns: 1fr; }
     .topbar-tag { display: none; }
   }
+  .form-error {
+    display: none;
+    margin-top: 10px;
+    padding: 9px 12px;
+    border-radius: var(--r-control);
+    background: var(--err-bg);
+    border: 1px solid var(--err-br);
+    color: #7f1d1d;
+    font-size: 13px;
+  }
+  .form-error.show { display: block; }
 </style>
 
 <!-- TOP BAR -->
@@ -458,22 +469,34 @@
 
       <div class="field-row">
         <div class="field">
+          <label>Your name</label>
+          <input type="text" id="hold-name" placeholder="First and last name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="hold-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
           <label>Hold start date</label>
-          <input type="text" placeholder="e.g. Sep 1, 2026">
+          <input type="text" id="hold-start" placeholder="e.g. Sep 1, 2026">
         </div>
         <div class="field">
           <label>Resume date</label>
-          <input type="text" placeholder="e.g. Oct 1, 2026">
+          <input type="text" id="hold-end" placeholder="e.g. Oct 1, 2026">
           <div class="date-hint">Minimum one month from start date.</div>
         </div>
       </div>
 
       <div class="field">
         <label>Reason <span style="font-weight:300;opacity:0.7">(optional)</span></label>
-        <textarea placeholder="Vacation, renovation, moving…"></textarea>
+        <textarea id="hold-reason" placeholder="Vacation, renovation, moving…"></textarea>
       </div>
 
-      <button class="btn-submit" onclick="showSuccess('hold')">Submit hold request</button>
+      <button class="btn-submit" id="hold-btn" onclick="submitHold()">Submit hold request</button>
+      <div class="form-error" id="hold-error"></div>
       <p class="form-footer">You'll receive a confirmation email. Alyssa's team reviews all requests the same day.</p>
     </div>
     <div class="success" id="success-hold">
@@ -520,10 +543,22 @@
 
       <div class="field">
         <label>Any additional details?</label>
-        <textarea placeholder="Bin location, access notes, what you saw…"></textarea>
+        <textarea id="missed-details" placeholder="Bin location, access notes, what you saw…"></textarea>
       </div>
 
-      <button class="btn-submit" onclick="showSuccess('missed')">Submit report</button>
+      <div class="field-row">
+        <div class="field">
+          <label>Your name</label>
+          <input type="text" id="missed-name" placeholder="First and last name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="missed-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <button class="btn-submit" id="missed-btn" onclick="submitMissed()">Submit report</button>
+      <div class="form-error" id="missed-error"></div>
       <p class="form-footer">We'll review and reach out within one business day.</p>
     </div>
     <div class="success" id="success-missed">
@@ -573,7 +608,7 @@
 
       <div class="field">
         <label>What needs updating?</label>
-        <select>
+        <select id="update-what">
           <option>Service address</option>
           <option>Phone number</option>
           <option>Email address</option>
@@ -586,11 +621,11 @@
       <div class="field-row">
         <div class="field">
           <label>Current value</label>
-          <input type="text" placeholder="What it says now">
+          <input type="text" id="update-from" placeholder="What it says now">
         </div>
         <div class="field">
           <label>New value</label>
-          <input type="text" placeholder="What it should be">
+          <input type="text" id="update-to" placeholder="What it should be">
         </div>
       </div>
 
@@ -601,10 +636,22 @@
 
       <div class="field">
         <label>Anything else we should know?</label>
-        <textarea placeholder="Additional notes…"></textarea>
+        <textarea id="update-notes" placeholder="Additional notes…"></textarea>
       </div>
 
-      <button class="btn-submit" onclick="showSuccess('update')">Submit change request</button>
+      <div class="field-row">
+        <div class="field">
+          <label>Your name</label>
+          <input type="text" id="update-name" placeholder="First and last name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="update-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <button class="btn-submit" id="update-btn" onclick="submitUpdate()">Submit change request</button>
+      <div class="form-error" id="update-error"></div>
       <p class="form-footer">Changes are reviewed by Alyssa's team and confirmed by email within one business day.</p>
     </div>
     <div class="success" id="success-update">
@@ -673,6 +720,77 @@
       result.textContent = 'Connection error — please try again in a moment.';
     }
   }
+
+  /* These three forms used to call showSuccess() and nothing else — the
+     customer saw a tick and the request went nowhere. They now post to
+     /api/requests, which stages them for the approval screen. */
+
+  const val = (id) => (document.getElementById(id)?.value || '').trim();
+
+  function showError(form, msg) {
+    const el = document.getElementById(form + '-error');
+    if (!el) return alert(msg);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  async function postRequest(form, payload) {
+    const btn = document.getElementById(form + '-btn');
+    const err = document.getElementById(form + '-error');
+    err?.classList.remove('show');
+
+    if (!payload.name) return showError(form, 'Please add your name so we know who to contact.');
+    if (!payload.email) return showError(form, 'Please add an email address so we can confirm.');
+
+    const original = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    try {
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+      showSuccess(form);
+    } catch (e) {
+      showError(form, e.message);
+      if (btn) { btn.disabled = false; btn.textContent = original; }
+    }
+  }
+
+  window.submitHold = function () {
+    const from = val('hold-start'), to = val('hold-end');
+    postRequest('hold', {
+      kind: 'hold',
+      name: val('hold-name'),
+      email: val('hold-email'),
+      detail: 'Hold ' + (from || '?') + ' → ' + (to || '?') +
+              (val('hold-reason') ? ' · ' + val('hold-reason') : ''),
+      notes: val('hold-reason'),
+    });
+  };
+
+  window.submitMissed = function () {
+    const binOut = document.querySelector('input[name="bin-out"]:checked');
+    postRequest('missed', {
+      kind: 'missed',
+      name: val('missed-name'),
+      email: val('missed-email'),
+      detail: 'Missed pickup · bin out: ' + (binOut && binOut.value === 'yes' ? 'yes' : 'no'),
+      notes: val('missed-details'),
+    });
+  };
+
+  window.submitUpdate = function () {
+    postRequest('update', {
+      kind: 'update',
+      name: val('update-name'),
+      email: val('update-email'),
+      detail: val('update-what') + ': ' + (val('update-from') || '—') + ' → ' + (val('update-to') || '—'),
+      notes: val('update-notes'),
+    });
+  };
 
   function showSuccess(id) {
     const panel = document.getElementById('tab-' + id);

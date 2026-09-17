@@ -377,6 +377,11 @@
     .page-header { padding: 16px 14px 20px; }
     .topnav { padding: 0 14px; }
   }
+  .tab-pick {
+    font: inherit; font-size: 13px; padding: 7px 10px; margin-right: 8px;
+    border: 1px solid var(--border); border-radius: var(--r-control);
+    background: var(--surface); color: var(--text);
+  }
 </style>
 
 <!-- TOP NAV -->
@@ -421,7 +426,7 @@
   <button class="filter-btn" onclick="setFilter('hold', this)">Holds</button>
   <button class="filter-btn" onclick="setFilter('missed', this)">Missed Pickups</button>
   <button class="filter-btn" onclick="setFilter('update', this)">Account Updates</button>
-  <button class="filter-btn" onclick="setFilter('payment', this)">Payment</button>
+  <button class="filter-btn" onclick="setFilter('new_customer', this)">New customers</button>
 </div>
 
 <!-- REQUEST LIST -->
@@ -440,125 +445,187 @@
 </div>
 
 <script>
-  const REQUESTS = [
-    {
-      id: 1, type: 'hold', status: 'pending',
-      customer: 'Jane Whitmore', email: 'jane.whitmore@gmail.com',
-      detail: 'Hold Oct 1 → Nov 1 · Reason: Vacation',
-      time: 'Today 9:14 am',
-    },
-    {
-      id: 2, type: 'missed', status: 'pending',
-      customer: 'Bob Callahan', email: 'bob@callahanlaw.com',
-      detail: 'Sep 2 — Bin was out at curb. No driver showed.',
-      time: 'Today 10:02 am',
-    },
-    {
-      id: 3, type: 'payment', status: 'pending',
-      customer: 'City Market Glenwood', email: 'mgr@citymarket.com',
-      detail: 'Requested invoice link · Balance: $340.00',
-      time: 'Today 10:48 am',
-    },
-    {
-      id: 4, type: 'update', status: 'pending',
-      customer: 'Mary Torres', email: 'mary.torres@outlook.com',
-      detail: 'Phone: (970) 555-0182 → (970) 555-9341',
-      time: 'Today 11:30 am',
-    },
-    {
-      id: 5, type: 'hold', status: 'approved',
-      customer: 'Aspen Glen HOA', email: 'admin@aspenglen.org',
-      detail: 'Hold Sep 15 → Oct 15 · Property renovations',
-      time: 'Yesterday 3:22 pm',
-    },
-    {
-      id: 6, type: 'missed', status: 'approved',
-      customer: 'Coryell Ranch', email: 'office@coryellranch.com',
-      detail: 'Aug 31 — Gate was locked, driver couldn\'t access.',
-      time: 'Yesterday 4:05 pm',
-    },
-  ];
+  /* Live data. This page used to hold 22 hardcoded rows and flip a local
+     variable when you pressed Approve — nothing was stored and nothing
+     reached the office. It now reads the real queue and the buttons really
+     decide. */
 
+  let REQUESTS = [];
+  let ROUTE_TABS = [];
   let currentFilter = 'all';
-  let statuses = {};
-  REQUESTS.forEach(r => statuses[r.id] = r.status);
+  let busy = new Set();
 
-  function typeLabel(t) {
-    return { hold:'Hold', missed:'Missed Pickup', update:'Account Update', payment:'Payment' }[t] || t;
-  }
+  const KIND_BADGE = {
+    new_customer: 'badge-update', hold: 'badge-hold',
+    missed: 'badge-missed', update: 'badge-update',
+  };
+  const KIND_LABEL = {
+    new_customer: 'New customer', hold: 'Service hold',
+    missed: 'Missed pickup', update: 'Account update',
+  };
 
-  function badgeClass(t) {
-    return { hold:'badge-hold', missed:'badge-missed', update:'badge-update', payment:'badge-payment' }[t] || '';
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function pillClass(s) {
     return { pending:'pill-pending', approved:'pill-approved', declined:'pill-declined' }[s] || '';
   }
-
   function pillLabel(s) {
     return { pending:'Pending', approved:'Approved', declined:'Declined' }[s] || s;
   }
 
+  function whenText(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const today = new Date().toDateString() === d.toDateString();
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return (today ? 'Today ' : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ') + time;
+  }
+
+  /* What the card says under the name. Requests carry a free-text detail from
+     the portal; a new customer has an address instead. */
+  function detailText(r) {
+    if (r.detail) return r.detail;
+    const addr = [r.address, r.city].filter(Boolean).join(', ');
+    return addr || r.notes || '';
+  }
+
+  async function load() {
+    try {
+      const [reqRes, tabRes] = await Promise.all([
+        fetch('/api/requests'),
+        fetch('/api/tabs').catch(() => null),
+      ]);
+      if (!reqRes.ok) throw new Error('HTTP ' + reqRes.status);
+      const data = await reqRes.json();
+      REQUESTS = data.items || [];
+      if (tabRes && tabRes.ok) ROUTE_TABS = (await tabRes.json()).tabs || [];
+      render();
+    } catch (err) {
+      document.getElementById('request-list').innerHTML =
+        '<div class="empty">Could not load requests.<br><small>' + esc(err.message) + '</small></div>';
+    }
+  }
+
   function actionsHtml(r) {
-    const s = statuses[r.id];
-    if (s !== 'pending') return '';
-    const sendBtn = r.type === 'payment'
-      ? `<button class="btn-send" onclick="doSend(${r.id})">Send Invoice Link</button>`
-      : `<button class="btn-approve" onclick="doApprove(${r.id})">Approve</button>`;
-    return `<div class="card-actions">${sendBtn}<button class="btn-decline" onclick="doDecline(${r.id})">Decline</button></div>`;
+    if (r.status !== 'pending') return '';
+    if (busy.has(r.id)) return '<div class="card-actions"><em>Saving…</em></div>';
+
+    // Only a new customer needs somewhere to go. Everything else is just
+    // "handled" — approving a hold should not add anyone to a route.
+    const picker = r.kind === 'new_customer'
+      ? '<select id="tab-' + esc(r.id) + '" class="tab-pick">' +
+          '<option value="">Which route?</option>' +
+          ROUTE_TABS.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('') +
+        '</select>'
+      : '';
+
+    return '<div class="card-actions">' + picker +
+      '<button class="btn-approve" onclick="doApprove(\'' + esc(r.id) + '\')">Approve</button>' +
+      '<button class="btn-decline" onclick="doDecline(\'' + esc(r.id) + '\')">Decline</button>' +
+      '</div>';
   }
 
   function render() {
     const list = document.getElementById('request-list');
     const filtered = REQUESTS.filter(r => {
       if (currentFilter === 'all') return true;
-      if (currentFilter === 'pending') return statuses[r.id] === 'pending';
-      return r.type === currentFilter;
+      if (currentFilter === 'pending') return r.status === 'pending';
+      return r.kind === currentFilter;
     });
 
     if (!filtered.length) {
       list.innerHTML = '<div class="empty">No requests to show.</div>';
+      updateCounts();
       return;
     }
 
     list.innerHTML = filtered.map(r => {
-      const s = statuses[r.id];
-      return `<div class="request-card ${s !== 'pending' ? 'resolved' : ''}" id="card-${r.id}">
-        <div class="card-top">
-          <span class="type-badge ${badgeClass(r.type)}">${typeLabel(r.type)}</span>
-          <div class="card-info">
-            <div class="card-customer">${r.customer}</div>
-            <div class="card-detail">${r.detail}</div>
-            <div class="card-meta">${r.email} · ${r.time}</div>
-          </div>
-          <span class="status-pill ${pillClass(s)}">${pillLabel(s)}</span>
-        </div>
-        ${actionsHtml(r)}
-      </div>`;
+      const contact = [r.email, r.phone].filter(Boolean).join(' · ');
+      return '<div class="request-card ' + (r.status !== 'pending' ? 'resolved' : '') + '" id="card-' + esc(r.id) + '">' +
+        '<div class="card-top">' +
+          '<span class="type-badge ' + (KIND_BADGE[r.kind] || '') + '">' + esc(KIND_LABEL[r.kind] || r.kind) + '</span>' +
+          '<div class="card-info">' +
+            '<div class="card-customer">' + esc(r.name) + '</div>' +
+            '<div class="card-detail">' + esc(detailText(r)) + '</div>' +
+            '<div class="card-meta">' + esc(contact) + (contact ? ' · ' : '') + esc(whenText(r.created_at)) +
+              (r.decided_tab ? ' · added to ' + esc(r.decided_tab) : '') + '</div>' +
+          '</div>' +
+          '<span class="status-pill ' + pillClass(r.status) + '">' + pillLabel(r.status) + '</span>' +
+        '</div>' +
+        actionsHtml(r) +
+      '</div>';
     }).join('');
 
     updateCounts();
   }
 
   function updateCounts() {
-    const pending  = REQUESTS.filter(r => statuses[r.id] === 'pending').length;
-    const approved = REQUESTS.filter(r => statuses[r.id] === 'approved').length;
-    document.getElementById('count-pending').textContent  = pending;
-    document.getElementById('count-approved').textContent = approved;
+    const pending  = REQUESTS.filter(r => r.status === 'pending').length;
+    const approved = REQUESTS.filter(r => r.status === 'approved').length;
+    const pEl = document.getElementById('count-pending');
+    const aEl = document.getElementById('count-approved');
+    if (pEl) pEl.textContent = pending;
+    if (aEl) aEl.textContent = approved;
   }
 
-  function doApprove(id) { statuses[id] = 'approved'; render(); }
-  function doDecline(id) { statuses[id] = 'declined'; render(); }
-  function doSend(id)    { statuses[id] = 'approved'; render(); }
+  async function decide(id, action, body) {
+    busy.add(id); render();
+    try {
+      const res = await fetch('/api/requests/' + encodeURIComponent(id) + '/' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      const i = REQUESTS.findIndex(r => r.id === id);
+      if (i >= 0 && data.id) REQUESTS[i] = data;
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      busy.delete(id); render();
+    }
+  }
 
-  function setFilter(f, btn) {
+  window.doApprove = function (id) {
+    const r = REQUESTS.find(x => x.id === id);
+    let tabName = '';
+    if (r && r.kind === 'new_customer') {
+      const sel = document.getElementById('tab-' + id);
+      tabName = sel ? sel.value : '';
+      if (!tabName) { alert('Pick which route they go on first.'); return; }
+    }
+    decide(id, 'approve', tabName ? { tabName } : {});
+  };
+
+  window.doDecline = function (id) { decide(id, 'decline'); };
+
+  window.setFilter = function (f, btn) {
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     render();
-  }
+  };
 
-  render();
+  // The server already broadcasts these, so a request submitted from the
+  // portal shows up here without a refresh.
+  (function live() {
+    try {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(proto + '//' + location.host + '/ws');
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'request-created' || msg.type === 'request-decided') load();
+      };
+      ws.onclose = () => setTimeout(live, 5000);
+    } catch {}
+  })();
+
+  load();
 </script>
 
 </body></html>

@@ -33,14 +33,34 @@ db.exec(`CREATE TABLE IF NOT EXISTS requests (
   service     TEXT,
   notes       TEXT,
   source      TEXT,
+  kind        TEXT NOT NULL DEFAULT 'new_customer',
+  detail      TEXT,
   decided_at  TEXT,
   decided_tab TEXT
 )`);
+
+// Added after the first release, so bring existing databases forward rather
+// than requiring the disk to be wiped.
+for (const [col, decl] of [["kind", "TEXT NOT NULL DEFAULT 'new_customer'"], ["detail", "TEXT"]]) {
+  const present = db.prepare("PRAGMA table_info(requests)").all().some(c => c.name === col);
+  if (!present) db.exec(`ALTER TABLE requests ADD COLUMN ${col} ${decl}`);
+}
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_requests_status
          ON requests (status, created_at)`);
 
 export const REQUEST_STATUSES = ["pending", "approved", "declined"];
+
+// What the customer portal can raise. Only new_customer ends up appended to a
+// route tab; the rest are things the office acts on, so approving them just
+// marks them handled.
+export const REQUEST_KINDS = ["new_customer", "hold", "missed", "update"];
+export const KIND_LABELS = {
+  new_customer: "New customer",
+  hold: "Service hold",
+  missed: "Missed pickup",
+  update: "Account update",
+};
 
 // ── Validation ────────────────────────────────────────────────────────────
 // This endpoint is public by necessity — a website form has no access code —
@@ -49,7 +69,7 @@ export const REQUEST_STATUSES = ["pending", "approved", "declined"];
 
 const LIMITS = {
   name: 120, email: 160, phone: 40, address: 200,
-  city: 80, service: 60, notes: 1000, source: 40,
+  city: 80, service: 60, notes: 1000, source: 40, detail: 300,
 };
 
 function clean(value, max) {
@@ -69,8 +89,15 @@ export function validateRequest(body) {
     value[field] = clean(body?.[field], max);
   }
 
+  value.kind = REQUEST_KINDS.includes(body?.kind) ? body.kind : "new_customer";
+  value.detail = clean(body?.detail, 300);
+
   if (!value.name) errors.push("name is required");
-  if (!value.address) errors.push("address is required");
+  // Only a new customer has to give an address — someone asking for a hold on
+  // an account we already have does not need to retype where they live.
+  if (value.kind === "new_customer" && !value.address) {
+    errors.push("address is required");
+  }
   if (!value.email && !value.phone) {
     errors.push("an email address or a phone number is required");
   }
@@ -86,10 +113,11 @@ export function validateRequest(body) {
 export function createRequest(value, source = "website") {
   const id = "REQ-" + randomUUID().slice(0, 8).toUpperCase();
   db.prepare(`INSERT INTO requests
-    (id, created_at, status, name, email, phone, address, city, service, notes, source)
-    VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`)
+    (id, created_at, status, name, email, phone, address, city, service, notes, source, kind, detail)
+    VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(id, new Date().toISOString(), value.name, value.email, value.phone,
-         value.address, value.city, value.service, value.notes, source);
+         value.address, value.city, value.service, value.notes, source,
+         value.kind || "new_customer", value.detail || "");
   return getRequest(id);
 }
 

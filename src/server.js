@@ -345,14 +345,24 @@ app.get("/api/requests/:id", (req, res) => {
 });
 
 app.post("/api/requests/:id/approve", async (req, res) => {
-  const tabName = String(req.body?.tabName || "").trim();
-  if (!ROUTE_DAY_TABS.includes(tabName)) {
-    return res.status(400).json({ error: "Unknown route tab.", allowed: ROUTE_DAY_TABS });
-  }
   const row = getRequest(req.params.id);
   if (!row) return res.status(404).json({ error: "Not found" });
   if (row.status !== "pending") {
     return res.status(409).json({ error: `Already ${row.status}.` });
+  }
+
+  // A hold, a missed pickup or a contact change is something the office acts
+  // on — approving it means "handled", not "add them to a route". Only a new
+  // customer gets appended to the sheet.
+  if (row.kind && row.kind !== "new_customer") {
+    const handled = decideRequest(req.params.id, "approved", null);
+    broadcast({ type: "request-decided", id: req.params.id, status: "approved" });
+    return res.json(handled);
+  }
+
+  const tabName = String(req.body?.tabName || "").trim();
+  if (!ROUTE_DAY_TABS.includes(tabName)) {
+    return res.status(400).json({ error: "Pick which route they go on.", allowed: ROUTE_DAY_TABS });
   }
 
   // Append FIRST, and only mark approved if the sheet write actually landed —
