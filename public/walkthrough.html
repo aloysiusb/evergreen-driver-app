@@ -25,17 +25,27 @@
     min-height: 100vh;
   }
   .stage {
-    max-width: 1140px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 28px 20px 40px;
+    padding: 24px 20px 40px;
     display: grid;
-    grid-template-columns: minmax(397px, 397px) 1fr;
-    gap: 40px;
-    align-items: start;
+    gap: 22px;
+    justify-items: center;
   }
-  @media (max-width: 940px) {
-    .stage { grid-template-columns: 1fr; gap: 24px; justify-items: center; }
-    .narration { max-width: 520px; }
+  .narration { width: 100%; max-width: 1000px; }
+
+  /* The demo shows an iPad because that is what sits on the dash, but the
+     page itself gets opened on a phone all the time. Below iPad width the
+     side rail drops under the map so the map keeps the room, rather than both
+     being squeezed into columns too narrow to read. */
+  @media (max-width: 760px) {
+    .wt-stage { flex-direction: column; }
+    .wt-rail { width: auto; border-left: 0; border-top: 1px solid var(--border); }
+    .wt-mapwrap { min-height: 240px; }
+    .screen { aspect-ratio: auto; height: 560px; }
+    .phone { border-radius: 18px; padding: 8px; }
+    .viewpick-btn { flex-basis: 100%; }
+    .turn-dist { font-size: 22px; }
   }
 
   .intro { grid-column: 1 / -1; text-align: center; margin-bottom: 4px; }
@@ -70,25 +80,25 @@
   /* 375px of screen is a real iPhone's CSS viewport. At the 298px this used to
      be, every address wrapped and a single stop card came out 213px tall —
      nothing like what a driver actually sees. */
+  /* A landscape iPad, because that is what sits on the dash. The map gets the
+     room it deserves and the stop details move to a side rail, which is how
+     every in-car nav system lays out and why they are readable at a glance. */
   .phone {
-    width: 397px;
+    width: 100%;
+    max-width: 1000px;
     background: #10100f;
-    border-radius: 44px;          /* physical device curve, not a design token */
-    padding: 11px;
+    border-radius: 26px;          /* physical device curve, not a design token */
+    padding: 13px 15px;
     box-shadow: 0 22px 60px rgba(0,0,0,0.5), 0 0 0 2px #2a2a28;
     position: relative;
-    justify-self: center;
   }
-  .notch {
-    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-    width: 96px; height: 24px; background: #10100f; border-radius: 999px; z-index: 5;
-  }
+  .notch { display: none; }       /* no notch on a landscape slab */
   .screen {
     position: relative;
-    border-radius: 34px;
+    border-radius: 12px;
     overflow: hidden;
     background: var(--bg);
-    height: 720px;
+    aspect-ratio: 4 / 3;          /* iPad landscape */
     display: flex;
     flex-direction: column;
   }
@@ -141,8 +151,28 @@
   /* A stand-in for the Google map. The walkthrough has to run with no API key
      and no network, so the map is drawn rather than loaded — everything
      layered on top of it (turn banner, nav card) is the app's real markup. */
-  .wt-map { background: #e8ece7; height: 168px; overflow: hidden; }
+  /* Map left, details right — the in-car layout. */
+  .wt-stage { display: flex; flex: 1; min-height: 0; }
+  .wt-mapwrap { position: relative; flex: 1; min-width: 0; }
+  .wt-rail {
+    width: 300px; flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+  }
+  .wt-map {
+    position: absolute; inset: 0;
+    background: #e8ece7; overflow: hidden;
+  }
+  /* The turn banner floats over the map instead of stealing a slice of it. */
+  #turn-banner {
+    position: absolute; z-index: 6;
+    top: 10px; left: 10px; right: 10px;
+    margin: 0;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
   .wt-map svg { display: block; width: 100%; height: 100%; }
+  #wt-streetview { background: #111; }
   /* Short: the drive loop moves this every 60 ms, so a long transition would
      smear it into a lag rather than smoothing it. */
   #wt-driver { transition: cx 0.12s linear, cy 0.12s linear; }
@@ -160,6 +190,11 @@
   #wt-sat { cursor: pointer; user-select: none; }
 
   .wt-navcard { padding: 10px 12px 14px; background: var(--surface); }
+  .sv-note:not(:empty) {
+    margin: 10px 12px 0; padding: 8px 10px;
+    background: var(--hold-bg); color: var(--hold-text);
+    border-radius: var(--r-control); font-size: 12px; line-height: 1.4;
+  }
 
   /* Asked before anything happens, and left on screen afterwards so it doubles
      as the switch. A question that vanishes once answered is the reason nobody
@@ -286,8 +321,8 @@
         <div class="wt-modebar">
           <span class="wt-mode">📋 Planned</span>
           <span class="wt-mode on">🧭 Follow</span>
-          <span class="wt-mode" id="wt-sat" onclick="toggleWtSat()" role="button" tabindex="0"
-                title="Switch between street map and satellite">🛰 Satellite</span>
+          <span class="wt-mode" id="wt-sat" onclick="setWtView('sat')" role="button" tabindex="0">🛰 Satellite</span>
+          <span class="wt-mode" id="wt-sv" onclick="setWtView('street')" role="button" tabindex="0">👁 Street View</span>
         </div>
 
         <div id="turn-banner" class="show">
@@ -299,6 +334,9 @@
           </div>
         </div>
 
+        <div class="wt-stage">
+        <div class="wt-mapwrap">
+        <div class="wt-map" id="wt-streetview" style="display:none"></div>
         <div class="wt-map" id="wt-realmap" style="display:none"></div>
         <div class="wt-map" id="wt-drawnmap">
           <svg viewBox="0 0 320 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -369,6 +407,10 @@
           </svg>
         </div>
 
+        </div>
+
+        <div class="wt-rail">
+        <div class="sv-note" id="sv-note"></div>
         <div class="wt-navcard">
           <div class="nav-progress-row">
             <span class="nav-stop-count" id="wt-nav-count">3 of 5</span>
@@ -383,6 +425,8 @@
             <button class="nav-btn nav-btn-done">✓ Done</button>
             <button class="nav-btn nav-btn-next">Next →</button>
           </div>
+        </div>
+        </div>
         </div>
       </div>
 
@@ -399,15 +443,20 @@
     <div class="viewpick" id="viewpick">
       <div class="viewpick-q">How do you want to see it?</div>
       <div class="viewpick-opts">
-        <button id="pick-map" class="viewpick-btn on" type="button" onclick="setWtSat(false)">
+        <button id="pick-map" class="viewpick-btn on" type="button" onclick="setWtView('map')">
           <span class="viewpick-ico">🗺</span>
           <span class="viewpick-name">Street map</span>
           <span class="viewpick-why">Road names, clearest while driving</span>
         </button>
-        <button id="pick-sat" class="viewpick-btn" type="button" onclick="setWtSat(true)">
+        <button id="pick-sat" class="viewpick-btn" type="button" onclick="setWtView('sat')">
           <span class="viewpick-ico">🛰</span>
           <span class="viewpick-name">Satellite</span>
           <span class="viewpick-why">See driveways, gates and where the bin sits</span>
+        </button>
+        <button id="pick-street" class="viewpick-btn" type="button" onclick="setWtView('street')">
+          <span class="viewpick-ico">👁</span>
+          <span class="viewpick-name">Street View</span>
+          <span class="viewpick-why">The property from the road, as the driver will see it</span>
         </button>
       </div>
       <div class="viewpick-note" id="sat-note">Switch any time — drivers get the same toggle in the app.</div>
@@ -681,6 +730,7 @@ const REAL_ROUTE = [
 ];
 
 let realMap = null, realMarker = null, realPath = null, realReady = false;
+let svService = null, svPano = null, svStopIdx = -1;
 
 async function initRealMap() {
   try {
@@ -692,7 +742,9 @@ async function initRealMap() {
     await new Promise((res, rej) => {
       if (window.google?.maps) return res();
       const sc = document.createElement('script');
-      sc.src = 'https://maps.googleapis.com/maps/api/js?key=' + key;
+      // geometry gives computeHeading, so the panorama faces the property
+      // instead of whichever way the camera car happened to be pointing.
+      sc.src = 'https://maps.googleapis.com/maps/api/js?libraries=geometry&key=' + key;
       sc.async = true; sc.onload = res; sc.onerror = rej;
       document.head.appendChild(sc);
     });
@@ -726,9 +778,25 @@ async function initRealMap() {
               strokeColor: '#fff', strokeWeight: 2 },
     }));
 
+    // Street View: the property from the road, which is what a driver is
+    // actually looking at when they pull up. Imagery is patchy on rural
+    // roads, so every lookup widens its radius before giving up, and the
+    // message says so rather than showing a black box.
+    svService = new google.maps.StreetViewService();
+    svPano = new google.maps.StreetViewPanorama(
+      document.getElementById('wt-streetview'),
+      {
+        visible: false,
+        addressControl: false, fullscreenControl: false,
+        motionTracking: false, motionTrackingControl: false,
+        zoomControl: false, linksControl: false, panControl: false,
+        clickToGo: false, showRoadLabels: true,
+        disableDefaultUI: true,
+      }
+    );
+
     realReady = true;
-    document.getElementById('pick-sat')?.removeAttribute('data-drawn');
-    console.log('[walkthrough] real satellite imagery loaded');
+    console.log('[walkthrough] real imagery loaded (satellite + street view)');
   } catch (err) {
     console.log('[walkthrough] real map unavailable, using the drawn one:', err.message);
     const why = document.getElementById('sat-note');
@@ -842,6 +910,7 @@ function driveFrame() {
       // Stop complete — advance
       doneCount++;
       legI = (legI + 1) % LEGS.length;
+      if (wtView === 'street') updateStreetView(Math.min(legI, REAL_ROUTE.length - 1));
       if (legI === 0) doneCount = 2;        // loop back round
       segI = 0; segT = 0;
       document.getElementById('toast').classList.remove('show');
@@ -955,25 +1024,40 @@ let wtSat = false;
 
 /* Both the chooser above the phone and the chip inside it drive this, so the
    two can never disagree about which view is showing. */
-window.setWtSat = function (on) {
-  wtSat = !!on;
+/* 'map' | 'sat' | 'street'. One place decides, so the chooser above the device
+   and the chips inside it can never disagree. */
+let wtView = 'map';
 
-  // Real imagery when we have it, the drawing when we do not.
-  const real = document.getElementById('wt-realmap');
-  const drawn = document.getElementById('wt-drawnmap');
+window.setWtView = function (view) {
+  if (view === 'street' && !realReady) view = 'sat';    // nothing to show without imagery
+  wtView = view;
+  wtSat = view === 'sat';
+
+  const real   = document.getElementById('wt-realmap');
+  const drawn  = document.getElementById('wt-drawnmap');
+  const street = document.getElementById('wt-streetview');
+
+  street.style.display = view === 'street' ? '' : 'none';
   if (realReady) {
-    real.style.display = wtSat ? '' : 'none';
-    drawn.style.display = wtSat ? 'none' : '';
-    if (wtSat && realMap) google.maps.event.trigger(realMap, 'resize');
+    real.style.display  = view === 'sat' ? '' : 'none';
+    drawn.style.display = view === 'map' ? '' : 'none';
+    if (view === 'sat' && realMap) google.maps.event.trigger(realMap, 'resize');
+  } else {
+    // No key: the drawing is all we have, so it stands in for both.
+    drawn.style.display = 'none' === street.style.display ? '' : '';
+    document.getElementById('wt-roads').style.display  = wtSat ? 'none' : '';
+    document.getElementById('wt-aerial').style.display = wtSat ? '' : 'none';
   }
 
-  document.getElementById('wt-roads').style.display  = wtSat ? 'none' : '';
-  document.getElementById('wt-aerial').style.display = wtSat ? '' : 'none';
-  document.getElementById('wt-sat')?.classList.toggle('on', wtSat);
-  document.getElementById('pick-sat')?.classList.toggle('on', wtSat);
-  document.getElementById('pick-map')?.classList.toggle('on', !wtSat);
+  if (view === 'street') updateStreetView(Math.min(legI, REAL_ROUTE.length - 1));
 
-  // The green route line disappears against grass; brighten it on the aerial.
+  document.getElementById('wt-sat')?.classList.toggle('on', view === 'sat');
+  document.getElementById('wt-sv')?.classList.toggle('on', view === 'street');
+  document.getElementById('pick-map')?.classList.toggle('on', view === 'map');
+  document.getElementById('pick-sat')?.classList.toggle('on', view === 'sat');
+  document.getElementById('pick-street')?.classList.toggle('on', view === 'street');
+
+  // Green route line vanishes against grass and aerial alike.
   const route = document.getElementById('wt-route');
   if (route) {
     route.setAttribute('stroke', wtSat ? '#7dd3fc' : '#22c55e');
@@ -981,7 +1065,41 @@ window.setWtSat = function (on) {
   }
 };
 
-window.toggleWtSat = function () { setWtSat(!wtSat); };
+// kept so the older chip handler still works
+window.setWtSat = function (on) { setWtView(on ? 'sat' : 'map'); };
+window.toggleWtSat = function () { setWtView(wtView === 'sat' ? 'map' : 'sat'); };
+
+/* Put the panorama outside whichever stop the drive is heading for, looking
+   at it. Only re-queries when the stop changes — Street View lookups are
+   billed, and re-fetching every tick would be both slow and expensive. */
+function updateStreetView(stopIdx) {
+  if (!svPano || !svService || stopIdx === svStopIdx) return;
+  svStopIdx = stopIdx;
+
+  const stop = REAL_ROUTE[Math.min(stopIdx, REAL_ROUTE.length - 1)];
+  const at = { lat: stop.lat, lng: stop.lng };
+  const note = document.getElementById('sv-note');
+
+  const place = (data) => {
+    svPano.setPano(data.location.pano);
+    // Face the property rather than whatever direction the car was pointing.
+    const heading = google.maps.geometry?.spherical
+      ? google.maps.geometry.spherical.computeHeading(data.location.latLng, new google.maps.LatLng(at))
+      : 0;
+    svPano.setPov({ heading, pitch: 0 });
+    svPano.setVisible(true);
+    if (note) note.textContent = '';
+  };
+
+  svService.getPanorama({ location: at, radius: 80, source: 'outdoor' }, (d1, s1) => {
+    if (s1 === 'OK' && d1?.location) return place(d1);
+    svService.getPanorama({ location: at, radius: 350 }, (d2, s2) => {
+      if (s2 === 'OK' && d2?.location) return place(d2);
+      svPano.setVisible(false);
+      if (note) note.textContent = 'No Street View imagery near ' + stop.name + '.';
+    });
+  });
+}
 
 function setReadout(html) {
   const el = document.getElementById('drive-readout');
