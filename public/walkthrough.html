@@ -106,6 +106,18 @@
      it has to sit in normal flow, so a few positions are re-anchored here. */
   .screen .route-header { flex-shrink: 0; }
   .screen .content { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+  /* app.css caps .content at 600px and centres it, which is right for a phone
+     and wrong for a landscape slab — it left the map 396px wide inside a
+     970px screen. The map view is a full-width flex column here. */
+  .screen #view-map {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
   .screen #toast {
     position: absolute; bottom: 74px;
   }
