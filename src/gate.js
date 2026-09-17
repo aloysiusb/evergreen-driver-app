@@ -33,7 +33,11 @@ const ADMIN_CODE = process.env.ADMIN_CODE || "";
 //
 // Nothing here exposes the route sheet: the portal is a form, and the pages
 // pull their data from endpoints that ARE gated.
-const PUBLIC_PAGES = new Set(["/portal.html", "/pay.html"]);
+// walkthrough.html is here because it is the thing you send people to show
+// them the app. It is safe to expose: it makes no network calls at all and
+// every name and address in it is invented, so there is nothing real behind it
+// to leak. Demo links should not need a driver's access code.
+const PUBLIC_PAGES = new Set(["/portal.html", "/pay.html", "/walkthrough.html"]);
 
 // Stylesheets, client scripts and the manifest. No secrets live in these — the
 // sensitive thing is the route API, not the CSS — and leaving them gated would
