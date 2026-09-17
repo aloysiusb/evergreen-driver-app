@@ -74,6 +74,14 @@ data/
   fresh HTML against day-old JavaScript. **Don't remove it** and don't add
   hashed filenames on top — this is the cache-busting mechanism.
 - **Style system** — `src/db.js` stores CSS custom property values in SQLite. `/api/styles` GET/POST/reset. Admin page at `/admin.html` pushes changes to all drivers via WebSocket `style-updated` message.
+- **Palettes** — the analysis/report pages (briefing, hub, routing, streetview,
+  weekly, aspenone) share one palette from `tokens.css`, selected with
+  `data-palette="report"` on `<html>`. **Not `data-theme`** — that is already
+  taken for the light/dark override. Each page used to carry the same palette
+  three times over (light, `@media (prefers-color-scheme: dark)`, and
+  `:root[data-theme="dark"]`), 18 copies in all; five were byte-identical and
+  aspenone had drifted a few shades off. Adding a page to the family means
+  setting the attribute and deleting its `:root` blocks, not copying colours.
 - **Corners** — every `border-radius` in the app resolves to one of five role
   tokens defined in `public/css/tokens.css`: `--r-chip`, `--r-control`,
   `--r-card`, `--r-panel`, `--r-sheet` (plus `--r-pill` / `--r-circle`).

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-palette="report">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,30 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <style>
-:root{
-  --bg:#f7f8f6; --surface:#ffffff; --surface-2:#f0f3ef; --border:#dde3d9;
-  --forest:#1b3a2a; --accent:#2d7d4f; --accent-l:#e3f0e8;
-  --text:#1c2a21; --muted:#64786b;
-  --amber:#b45309; --amber-l:#fdf0dc;
-  --red:#b91c1c; --red-l:#fde8e8;
-  --blue:#1e4e79; --blue-l:#e4edf5;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
-    --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
-    --text:#e4ede7; --muted:#7d9686;
-    --amber:#e0a35c; --amber-l:#2e2113;
-    --red:#f08b8b; --red-l:#33191a; --blue:#8fbadd; --blue-l:#14242f;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0d1410; --surface:#161f19; --surface-2:#1b2620; --border:#253328;
-  --forest:#a8d5bb; --accent:#5cb37f; --accent-l:#16311f;
-  --text:#e4ede7; --muted:#7d9686;
-  --amber:#e0a35c; --amber-l:#2e2113;
-  --red:#f08b8b; --red-l:#33191a; --blue:#8fbadd; --blue-l:#14242f;
-}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);
   line-height:1.55;font-size:15px}
