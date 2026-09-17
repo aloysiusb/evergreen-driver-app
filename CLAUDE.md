@@ -17,13 +17,18 @@ src/
   routeParser.js  — Parses raw sheet rows into stop objects, detects section headers
   config.js       — Whitelist of allowed tabs/columns (security: nothing flows through by default)
   db.js           — SQLite (node:sqlite, requires Node 22+) for persisted style settings
+  gate.js         — Shared access code, mounted in front of every route (see below)
 public/
   index.html      — Route grid (tap a route to open it)
   driver.html     — Driver view: stop list, done toggles, notes
   admin.html      — Style editor: color pickers, sliders, Push button to broadcast styles live
+  css/tokens.css  — Corner radius scale + palettes. Linked FIRST by every page.
   css/app.css     — Shared styles
   js/routes.js    — Route definitions
-  js/driver.js    — Driver page logic
+  js/driver.js    — Driver page logic + the offline write queue
+  js/map.js       — Driver map: GPS, follow mode, arrival prompts, reroute nudges
+  js/style-units.js — needsPx()/shouldApplyStyleVar(), shared by index/driver/admin
+  js/sim.js       — Test-drive mode for driver.html (?sim=1). Inert otherwise.
 data/
   .gitkeep        — Keeps data/ in git; app.db lives here (gitignored, created at runtime)
 ```
