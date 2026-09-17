@@ -129,6 +129,12 @@ export function mountGate(app) {
     if (PUBLIC_PREFIXES.some(prefix => req.path.startsWith(prefix))) return next();
     if (req.path === "/manifest.json") return next();
 
+    // The public walkthrough loads real satellite imagery, which needs this.
+    // The key is already visible to any browser that opens the driver app — it
+    // is a browser key, protected by an HTTP-referrer restriction in the Google
+    // console, not by being secret. If that restriction is not set, set it.
+    if (req.path === "/api/maps-key") return next();
+
     // The portal's "get my invoice link" button. Customer-facing by design and
     // reachable before the gate existed, so gating it now would take away a
     // feature customers already use. Worth knowing it will confirm whether an

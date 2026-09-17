@@ -39,6 +39,30 @@
   }
 
   .intro { grid-column: 1 / -1; text-align: center; margin-bottom: 4px; }
+  .demo-flag {
+    display: inline-block;
+    background: #f59e0b;
+    color: #241a02;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: var(--r-pill);
+    margin-bottom: 12px;
+  }
+  /* A screen-within-a-screen reads as footage, not as something to press. */
+  .phone::after {
+    content: "DEMO";
+    position: absolute;
+    top: 50%; left: -34px;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.22em;
+    color: rgba(255,255,255,0.28);
+  }
+  .screen { cursor: default; }
+  .screen button, .screen select, .screen a { pointer-events: none; }
   .intro h1 { font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.01em; }
   .intro p { margin: 0; opacity: 0.65; font-size: 14px; }
 
@@ -225,8 +249,10 @@
 
 <div class="stage">
   <div class="intro">
+    <div class="demo-flag">▶ Demonstration — a recording of the app, not the app itself</div>
     <h1>A day on the route</h1>
-    <p>What a driver sees, start to finish. Plays on its own — no truck required.</p>
+    <p>What a driver sees, start to finish. Plays on its own — no truck required.
+       Nothing here is live: the stops are made up and no buttons do anything.</p>
   </div>
 
   <div class="phone">
@@ -273,7 +299,8 @@
           </div>
         </div>
 
-        <div class="wt-map">
+        <div class="wt-map" id="wt-realmap" style="display:none"></div>
+        <div class="wt-map" id="wt-drawnmap">
           <svg viewBox="0 0 320 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <!-- Map view: the plain schematic -->
             <g id="wt-roads">
@@ -383,7 +410,7 @@
           <span class="viewpick-why">See driveways, gates and where the bin sits</span>
         </button>
       </div>
-      <div class="viewpick-note">Switch any time — drivers get the same toggle in the app.</div>
+      <div class="viewpick-note" id="sat-note">Switch any time — drivers get the same toggle in the app.</div>
     </div>
 
     <div class="modeswitch">
@@ -636,6 +663,81 @@ function renderNarration() {
   ).join('');
 }
 
+/* ── Real satellite ────────────────────────────────────────────────────────
+   The drawn map below is a fallback. When the Maps key is reachable this
+   loads the actual Google satellite imagery of Carbondale and drives the
+   truck over real terrain — which is the point of a satellite view and
+   something no amount of drawing achieves.
+
+   It degrades on purpose: if the key is missing, gated behind ACCESS_CODE, or
+   the network is down, the drawn map stays and the walkthrough still plays.
+   A demo that dies on a hotel wifi is worse than a stylised one.
+   ───────────────────────────────────────────────────────────────────────── */
+
+const REAL_ROUTE = [
+  { name: 'Kestrel Bakery',   addr: '88 Main St, Carbondale',        lat: 39.4021, lng: -107.2114 },
+  { name: 'Sopris Park Stop', addr: '4th & Sopris Ave, Carbondale',  lat: 39.3996, lng: -107.2149 },
+  { name: 'River Valley Ranch',addr: 'RVR Dr, Carbondale',           lat: 39.3921, lng: -107.2099 },
+];
+
+let realMap = null, realMarker = null, realPath = null, realReady = false;
+
+async function initRealMap() {
+  try {
+    const r = await fetch('/api/maps-key');
+    if (!r.ok) throw new Error('key gated or missing');
+    const { key } = await r.json();
+    if (!key) throw new Error('no key');
+
+    await new Promise((res, rej) => {
+      if (window.google?.maps) return res();
+      const sc = document.createElement('script');
+      sc.src = 'https://maps.googleapis.com/maps/api/js?key=' + key;
+      sc.async = true; sc.onload = res; sc.onerror = rej;
+      document.head.appendChild(sc);
+    });
+
+    const el = document.getElementById('wt-realmap');
+    realMap = new google.maps.Map(el, {
+      center: { lat: REAL_ROUTE[0].lat, lng: REAL_ROUTE[0].lng },
+      zoom: 17,
+      mapTypeId: 'hybrid',          // real imagery, with street names kept
+      disableDefaultUI: true,
+      gestureHandling: 'none',      // it is footage, not a map to play with
+      keyboardShortcuts: false,
+    });
+
+    realPath = new google.maps.Polyline({
+      map: realMap, path: REAL_ROUTE.map(s => ({ lat: s.lat, lng: s.lng })),
+      strokeColor: '#7dd3fc', strokeWeight: 6, strokeOpacity: 0.95,
+    });
+
+    realMarker = new google.maps.Marker({
+      map: realMap, position: REAL_ROUTE[0],
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8,
+              fillColor: '#2563eb', fillOpacity: 1,
+              strokeColor: '#fff', strokeWeight: 2.5 },
+    });
+
+    REAL_ROUTE.forEach(s => new google.maps.Marker({
+      map: realMap, position: s,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 5,
+              fillColor: '#ef4444', fillOpacity: 1,
+              strokeColor: '#fff', strokeWeight: 2 },
+    }));
+
+    realReady = true;
+    document.getElementById('pick-sat')?.removeAttribute('data-drawn');
+    console.log('[walkthrough] real satellite imagery loaded');
+  } catch (err) {
+    console.log('[walkthrough] real map unavailable, using the drawn one:', err.message);
+    const why = document.getElementById('sat-note');
+    if (why) why.textContent = 'Satellite here is a drawing — the live app uses real imagery.';
+  }
+}
+
+initRealMap();
+
 /* ─────────────────────────────────────────────────────────────────────────
    Drive mode — a continuous run, not a slideshow.
 
@@ -773,6 +875,19 @@ function driveFrame() {
   document.getElementById('wt-driver').setAttribute('cx', x.toFixed(1));
   document.getElementById('wt-driver').setAttribute('cy', y.toFixed(1));
 
+  // Mirror the same progress onto the real map, so switching views mid-drive
+  // shows the truck in the same place on both.
+  if (realReady && realMarker) {
+    const total = LEGS.reduce((n, l) => n + l.pts.length - 1, 0);
+    const doneSegs = LEGS.slice(0, legI).reduce((n, l) => n + l.pts.length - 1, 0) + segI + segT;
+    const t = Math.min(doneSegs / total, 0.999) * (REAL_ROUTE.length - 1);
+    const i = Math.floor(t), f = t - i;
+    const A = REAL_ROUTE[i], B = REAL_ROUTE[Math.min(i + 1, REAL_ROUTE.length - 1)];
+    const pos = { lat: A.lat + (B.lat - A.lat) * f, lng: A.lng + (B.lng - A.lng) * f };
+    realMarker.setPosition(pos);
+    if (wtSat) realMap.panTo(pos);
+  }
+
   const toEnd = distToLegEnd(leg, segI, segT);
   const toTurn = segLen(a, b) * (1 - segT);
 
@@ -842,6 +957,16 @@ let wtSat = false;
    two can never disagree about which view is showing. */
 window.setWtSat = function (on) {
   wtSat = !!on;
+
+  // Real imagery when we have it, the drawing when we do not.
+  const real = document.getElementById('wt-realmap');
+  const drawn = document.getElementById('wt-drawnmap');
+  if (realReady) {
+    real.style.display = wtSat ? '' : 'none';
+    drawn.style.display = wtSat ? 'none' : '';
+    if (wtSat && realMap) google.maps.event.trigger(realMap, 'resize');
+  }
+
   document.getElementById('wt-roads').style.display  = wtSat ? 'none' : '';
   document.getElementById('wt-aerial').style.display = wtSat ? '' : 'none';
   document.getElementById('wt-sat')?.classList.toggle('on', wtSat);
