@@ -474,10 +474,35 @@ async function notifyNewRequest(request) {
 // dependency. Until then it logs and returns, so the queue works regardless.
 async function sendConfirmation(request) {
   const key = process.env.RESEND_API_KEY;
-  // Deliberately NOT falling back to the sandbox sender: this one goes to a
-  // member of the public, and the sandbox will not deliver to them. Silently
-  // "sending" mail customers never receive is worse than not sending.
-  const from = process.env.REQUESTS_FROM_EMAIL;
+  const verifiedFrom = process.env.REQUESTS_FROM_EMAIL;
+
+  // Two ways this is allowed to send, and no third.
+  //
+  //   A verified sending domain — the real setup. Goes to anyone.
+  //
+  //   Practice: the "customer" is us. Resend's sandbox sender only delivers to
+  //   the address the account was registered with, so submitting a request
+  //   with our own address puts BOTH emails — the notification and the
+  //   customer confirmation — in our own inbox. That is how you rehearse the
+  //   whole loop without owning a sending domain.
+  //
+  // What is still refused is the dangerous middle: sandbox sender, real
+  // customer address. That would log "sent" for mail nobody receives, which
+  // is the failure this codebase keeps having to dig out.
+  const notifyTo = (getSettings().notify_email || "").trim().toLowerCase();
+  const isPractice = Boolean(request.email) &&
+    request.email.trim().toLowerCase() === notifyTo;
+
+  const from = verifiedFrom || (isPractice ? SANDBOX_FROM : "");
+
+  if (key && !from && request.email) {
+    console.log(
+      `[requests] ${request.id} confirmation NOT sent to ${request.email} — ` +
+      `no verified sending domain. Set REQUESTS_FROM_EMAIL, or submit with ` +
+      `${notifyTo || "the notify address"} to rehearse it.`
+    );
+  }
+
   if (!key || !from || !request.email) {
     console.log(`[requests] ${request.id} stored; confirmation email not sent (not configured)`);
     return;
