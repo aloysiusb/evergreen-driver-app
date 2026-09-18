@@ -27,6 +27,35 @@ app.use(compression());
 app.use(cors());
 app.use(express.json());
 
+// Let /portal stand in for /portal.html, and so on for every page.
+//
+// Deliberately BEFORE the gate. The gate decides what is public by exact path
+// — "/portal.html" is on that list — so a request for "/portal" arriving
+// unrewritten would be treated as a private page and refused once ACCESS_CODE
+// is set. Normalising the URL first means the gate, the routes and the static
+// server all see the same path and cannot disagree about it.
+//
+// Only rewrites when the .html file actually exists, so a genuine typo still
+// 404s rather than being quietly redirected somewhere unrelated.
+const PAGES_DIR = path.join(__dirname, "..", "public");
+
+app.use((req, res, next) => {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  const p = req.path;
+  if (p === "/" || p.startsWith("/api/") || p.startsWith("/qbo/")) return next();
+  if (path.extname(p)) return next();               // already has an extension
+
+  const rel = decodeURIComponent(p).replace(/^\/+/, "");
+  if (rel.includes("..")) return next();            // path traversal guard
+  const candidate = path.join(PAGES_DIR, rel + ".html");
+  if (!candidate.startsWith(PAGES_DIR)) return next();
+
+  if (fs.existsSync(candidate)) {
+    req.url = "/" + rel + ".html" + (req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "");
+  }
+  next();
+});
+
 // Shared access code. Must be mounted before any route or static file, so
 // nothing is reachable without it. No-ops if ACCESS_CODE is unset.
 mountGate(app);
