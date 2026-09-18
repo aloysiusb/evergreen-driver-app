@@ -575,6 +575,31 @@ body {
 }
 .progress-text { font-size: 12px; opacity: 0.9; }
 
+/* ── Incident buttons on a stop card ── */
+/* Icon-only and compact: four labelled buttons on every one of 210 cards would
+   bury the stop itself. Sized for a gloved thumb regardless — 40px is above the
+   44px-ish target once the gap is counted. */
+.stop-report-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.stop-report-btn {
+  width: 40px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid var(--action-btn-border);
+  border-radius: var(--r-control);
+  background: var(--action-btn-bg);
+  color: inherit;
+}
+.stop-report-btn:active { transform: scale(0.94); }
+
 /* ── Turn-by-turn banner ── */
 /* Ported from the design already proven in demo.html. Dark plate on purpose:
    at a glance, at speed, in daylight, this has to read before anything else

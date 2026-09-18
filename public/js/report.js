@@ -149,6 +149,68 @@
 
   // ── Open / close ──────────────────────────────────────────────────────────
 
+  /* One tap is the whole point. Tapping Contamination files "🚫 Contamination"
+     immediately and says so; the confirmation offers "Add detail" for anyone
+     who wants to say which kind and how much. Fast by default, precise when it
+     matters — and we stop losing reports because a driver could not face three
+     more taps in the rain. */
+  const HEADLINE = {
+    contamination: '🚫 Contamination',
+    overflow: '📦 Overflow',
+    skip: '⏭ Skipped',
+    photo: '📷 Photo taken',
+  };
+
+  window.reportFile = function(type, rowNumber, tabName) {
+    const headline = HEADLINE[type];
+    if (!headline) return;
+
+    activeRowNumber = rowNumber;
+    activeTabName = tabName;
+
+    writeNote(rowNumber, headline);
+    toastFiled(headline, type, rowNumber, tabName);
+  };
+
+  /* Add to the note rather than replace it. Filing an incident used to
+     overwrite whatever the office had written on that stop — a gate code, a
+     dog warning — with no way to get it back. */
+  function writeNote(rowNumber, addition) {
+    const existing = (typeof existingNote === 'function' ? existingNote(rowNumber) : '').trim();
+    // Replace a previous report of our own rather than stacking them up.
+    const cleaned = existing
+      .split(' · ')
+      .filter(part => !/^(🚫|📦|⏭|📷)/.test(part.trim()))
+      .join(' · ')
+      .trim();
+    const combined = cleaned ? cleaned + ' · ' + addition : addition;
+
+    if (typeof queueNoteWrite === 'function') return queueNoteWrite(rowNumber, combined);
+    return fetch(
+      `/api/routes/${encodeURIComponent(activeTabName)}/stops/${rowNumber}/notes`,
+      { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: combined }) }
+    );
+  }
+
+  function toastFiled(headline, type, rowNumber, tabName) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.innerHTML = escHtml(headline) + ' logged ' +
+      '<button id="report-detail-btn" style="margin-left:8px;padding:4px 10px;border:none;' +
+      'border-radius:var(--r-control);background:var(--done-btn-bg);color:var(--done-btn-text);' +
+      'font-weight:700;font-family:inherit;cursor:pointer;">Add detail</button>';
+    toast.classList.add('show');
+
+    const btn = document.getElementById('report-detail-btn');
+    if (btn) btn.addEventListener('click', () => {
+      toast.classList.remove('show');
+      reportOpen(type, rowNumber, tabName);
+    });
+
+    setTimeout(() => toast.classList.remove('show'), 6000);
+  }
+
   window.reportOpen = function(type, rowNumber, tabName) {
     activeScreen = SCREENS[type];
     answers = {};
@@ -258,23 +320,11 @@
       return;
     }
 
-    try {
-      await fetch(
-        `/api/routes/${encodeURIComponent(tabName)}/stops/${rowNumber}/notes`,
-        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ notes: noteText }) }
-      );
-      // Update local stop data
-      if (window.allStops) {
-        const s = window.allStops.find(x => x.rowNumber === rowNumber);
-        if (s) { s.notes = noteText; s.noteUrgency = classifyReportNote(noteText); }
-      }
-      if (window.notifyStopsUpdated) window.notifyStopsUpdated();
-      // Re-render nav card if on map view
-      if (typeof renderNavCard === 'function') renderNavCard();
-    } catch {
-      alert('Could not save report — check connection.');
-    }
+    // Goes through the same queue as everything else, so a report filed in a
+    // dead zone waits rather than being lost to an alert nobody reads.
+    await writeNote(rowNumber, noteText);
+    if (window.notifyStopsUpdated) window.notifyStopsUpdated();
+    if (typeof renderNavCard === 'function') renderNavCard();
   };
 
   function classifyReportNote(text) {

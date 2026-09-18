@@ -1142,10 +1142,10 @@ function renderNavCard() {
     ${accessHtml}
     ${noteHtmlStyled}
     <div class="nav-report-btns">
-      <button class="report-quick-btn contamination" onclick="reportOpen('contamination',${row},'${escHtml(tabName)}')">🚫 Contamination</button>
-      <button class="report-quick-btn overflow"      onclick="reportOpen('overflow',${row},'${escHtml(tabName)}')">📦 Overflow</button>
-      <button class="report-quick-btn skip"          onclick="reportOpen('skip',${row},'${escHtml(tabName)}')">⏭ Skip</button>
-      <button class="report-quick-btn photo"         onclick="reportOpen('photo',${row},'${escHtml(tabName)}')">📷 Photo</button>
+      <button class="report-quick-btn contamination" onclick="reportFile('contamination',${row},'${escHtml(tabName)}')">🚫 Contamination</button>
+      <button class="report-quick-btn overflow"      onclick="reportFile('overflow',${row},'${escHtml(tabName)}')">📦 Overflow</button>
+      <button class="report-quick-btn skip"          onclick="reportFile('skip',${row},'${escHtml(tabName)}')">⏭ Skip</button>
+      <button class="report-quick-btn photo"         onclick="reportFile('photo',${row},'${escHtml(tabName)}')">📷 Photo</button>
     </div>
     <div id="nav-app-picker">
       <button class="nav-app-btn" onclick="navOpenIn('google')">🗺 Google Maps · next ${navHandoffCount()} stops</button>

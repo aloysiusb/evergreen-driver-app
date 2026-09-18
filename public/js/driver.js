@@ -84,6 +84,7 @@
 
     list.innerHTML = html.join('');
     attachStopListeners(list);
+    attachReportListeners(list);
   }
 
   /* Black or white text on a sheet colour, decided by real contrast.
@@ -154,6 +155,20 @@
     const mapBtn = item.address
       ? `<a class="stop-action-btn" href="https://maps.google.com/?q=${mapQuery}" target="_blank" rel="noopener">📍 Map</a>`
       : '';
+
+    // Incident buttons lived only on the map card, so a driver working from
+    // this list never saw them. One tap files the report.
+    const reportBtns = isCompleted ? '' : `
+      <div class="stop-report-row">
+        <button class="stop-report-btn" data-report="contamination" data-row="${item.rowNumber}"
+                title="Contamination" aria-label="Report contamination">🚫</button>
+        <button class="stop-report-btn" data-report="overflow" data-row="${item.rowNumber}"
+                title="Overflow" aria-label="Report overflow">📦</button>
+        <button class="stop-report-btn" data-report="skip" data-row="${item.rowNumber}"
+                title="Skipped" aria-label="Report skipped">⏭</button>
+        <button class="stop-report-btn" data-report="photo" data-row="${item.rowNumber}"
+                title="Photo taken" aria-label="Note that a photo was taken">📷</button>
+      </div>`;
     const dirBtn = '';  // directions shown as chip now
     const accessChip = item.directions
       ? `<div class="stop-access-chip">🔑 ${esc(item.directions)}</div>`
@@ -178,12 +193,23 @@
             <div class="stop-account">${esc(nameOrAddr)}</div>
             ${addrLine ? `<div class="stop-address">${esc(addrLine)}</div>` : ''}
             ${mapBtn ? `<div class="stop-action-row">${mapBtn}</div>` : ''}
+            ${reportBtns}
             ${accessChip}
             ${noteHtml}
           </div>
           ${actionBtn}
         </div>
       </div>`;
+  }
+
+  function attachReportListeners(container) {
+    container.querySelectorAll('.stop-report-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();          // never let it also toggle the stop
+        const row = Number(btn.dataset.row);
+        if (typeof reportFile === 'function') reportFile(btn.dataset.report, row, route.tabName);
+      });
+    });
   }
 
   function attachStopListeners(container) {
@@ -317,6 +343,26 @@
       ? '1 change waiting for signal — it will save automatically'
       : n + ' changes waiting for signal — they will save automatically';
   }
+
+  /* report.js writes notes too, and was doing it with a bare fetch — so an
+     incident filed in a dead zone was lost with nothing but an alert. Hand it
+     the same queue the done-button uses. */
+  window.queueNoteWrite = function (rowNumber, notes) {
+    const stop = allStops.find(s => s.rowNumber === rowNumber);
+    if (stop) { stop.notes = notes; stop.noteUrgency = classifyNote(notes); render(); }
+    return sendOrQueue(
+      'notes:' + rowNumber,
+      `/api/routes/${encodeURIComponent(route.tabName)}/stops/${rowNumber}/notes`,
+      { notes }
+    );
+  };
+
+  /* What is already on the stop, so an incident can be added to the office's
+     note instead of erasing it. */
+  window.existingNote = function (rowNumber) {
+    const stop = allStops.find(s => s.rowNumber === rowNumber);
+    return stop && stop.notes ? String(stop.notes) : '';
+  };
 
   window.addEventListener('online', flushQueue);
   setInterval(flushQueue, 30000);
