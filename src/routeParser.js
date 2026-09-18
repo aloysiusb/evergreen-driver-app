@@ -33,6 +33,47 @@ function isDateRow(row, label) {
  * @param {string[][]} rawRows - raw values from the sheet, including header row
  * @returns {{ items: object[], routeDate: string|null, headerRowOffset: number }}
  */
+/* Which spreadsheet column holds what, worked out from the header row.
+ *
+ * parseRouteTab already did this internally, which is why READING copes with
+ * a sheet that has the legacy "Ney" column and one that doesn't. Writing used
+ * fixed letters from config.js and did not cope at all — on a sheet with Ney
+ * present every column is shifted one to the right, so "mark done" wrote into
+ * Ney and a note wrote into Address, destroying it.
+ *
+ * Exported so the write path can use the same answer as the read path. Two
+ * different opinions about where a column is, is how a note ends up in the
+ * address.
+ */
+export function detectColumns(rawRows) {
+  const normalized = (rawRows || []).map(r =>
+    Array.isArray(r) ? { values: r } : r
+  );
+  const headerIdx = normalized.findIndex(
+    ({ values: row }) => row && row.includes("Address") && row.includes("Account Name")
+  );
+  if (headerIdx < 0) return null;
+
+  const headerRow = normalized[headerIdx].values;
+  const fi = (kw) =>
+    headerRow.findIndex(h => h && h.trim().toLowerCase().includes(kw.toLowerCase()));
+
+  const letter = (i) => (i < 0 ? null : String.fromCharCode(65 + i));
+
+  const cols = {
+    doneCol:        letter(fi("Yay")),
+    addressCol:     letter(fi("Address")),
+    notesCol:       letter(fi("Driver Notes")),
+    directionsCol:  letter(fi("Direction")),
+    accountNameCol: letter(fi("Account Name")),
+    cityCol:        letter(fi("City")),
+  };
+
+  // Only trust it if the two we actually write to were both found.
+  if (!cols.doneCol || !cols.notesCol) return null;
+  return cols;
+}
+
 export function parseRouteTab(rawRows) {
   if (!rawRows || rawRows.length === 0) {
     return { items: [], routeDate: null };

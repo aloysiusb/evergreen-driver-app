@@ -8,7 +8,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
 import { readRange, readRangeWithColors, writeRange, appendRows, duplicateSheet, getSheetsClient } from "./sheets.js";
-import { parseRouteTab, classifyNote } from "./routeParser.js";
+import { parseRouteTab, classifyNote, detectColumns } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
@@ -121,7 +121,8 @@ app.patch("/api/routes/:tabName/stops/:rowNumber", async (req, res) => {
       return res.status(400).json({ error: "Body must include boolean 'done'." });
     }
 
-    const cell = `'${tabName}'!${ROUTE_COLUMNS.doneCol}${rowNumber}`;
+    const cols = await columnsFor(tabName);
+    const cell = `'${tabName}'!${cols.doneCol}${rowNumber}`;
     await writeRange(SPREADSHEET_ID, cell, [[done ? "TRUE" : "FALSE"]]);
 
     broadcast({
@@ -148,7 +149,8 @@ app.patch("/api/routes/:tabName/stops/:rowNumber/notes", async (req, res) => {
       return res.status(400).json({ error: "Body must include string 'notes'." });
     }
 
-    const cell = `'${tabName}'!${ROUTE_COLUMNS.notesCol}${rowNumber}`;
+    const cols = await columnsFor(tabName);
+    const cell = `'${tabName}'!${cols.notesCol}${rowNumber}`;
     await writeRange(SPREADSHEET_ID, cell, [[notes]]);
 
     broadcast({
@@ -359,6 +361,34 @@ app.get("/api/backup/:tabName", async (req, res) => {
   }
 });
 
+// --- Which column is which, per tab ---------------------------------------
+//
+// Read from the sheet's own header rather than assumed from config, because
+// tabs differ: some carry the legacy "Ney" column and some don't, which shifts
+// everything after it. Cached per tab — the header does not move during a
+// shift, and re-reading it on every tick of a 200-stop day would be absurd.
+
+const columnCache = new Map();
+const COLUMN_TTL_MS = 10 * 60 * 1000;
+
+async function columnsFor(tabName) {
+  const hit = columnCache.get(tabName);
+  if (hit && Date.now() - hit.at < COLUMN_TTL_MS) return hit.cols;
+
+  try {
+    const rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:J6`);
+    const cols = detectColumns(rows);
+    if (cols) {
+      columnCache.set(tabName, { cols, at: Date.now() });
+      return cols;
+    }
+    console.warn(`[sheet] no header found on '${tabName}' — falling back to config`);
+  } catch (err) {
+    console.warn(`[sheet] could not read header of '${tabName}':`, err.message);
+  }
+  return ROUTE_COLUMNS;   // better than refusing to write at all
+}
+
 // --- Sheet check ----------------------------------------------------------
 //
 // Pointing the app at a different spreadsheet fails in four different ways and
@@ -416,8 +446,11 @@ app.get("/api/sheet-check", async (req, res) => {
     out.columnCheck = [];
     for (const tab of out.tabsMatched.slice(0, 3)) {
       try {
-        const rows = await readRange(sheetId, `'${tab}'!A1:H3`);
-        out.columnCheck.push({ tab, firstRows: rows });
+        const span = String(req.query.rows || "1:3");
+        const safe = /^[0-9]+:[0-9]+$/.test(span) ? span : "1:3";
+        const [a,b]=safe.split(":");
+        const rows = await readRange(sheetId, `'${tab}'!A${a}:H${b}`);
+        out.columnCheck.push({ tab, firstRows: rows, detected: detectColumns(rows) });
       } catch (err) {
         out.columnCheck.push({ tab, error: err.message });
       }
