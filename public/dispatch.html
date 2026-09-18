@@ -188,6 +188,81 @@ body {
 }
 
 /* ── Grid ── */
+/* ── The day's feed ───────────────────────────────────────────────────
+   Everything the drivers do, in order, as it happens. The route cards above
+   answer "how far along is each truck"; this answers "what just happened",
+   which is the thing you otherwise have to ask someone. */
+.feed-wrap {
+  max-width: 1400px;
+  margin: 0 auto 26px;
+  padding: 0 20px;
+}
+.feed-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.feed-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.feed-count { font-size: 12.5px; color: var(--muted); }
+
+.feed {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  max-height: 310px;
+  overflow-y: auto;
+}
+.feed-empty { padding: 20px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+
+.feed-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 3px 12px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.feed-item:last-child { border-bottom: 0; }
+
+/* A stripe carries the kind, so a wall of text is scannable at a glance. */
+.feed-item.done   { border-left: 3px solid var(--done); }
+.feed-item.note   { border-left: 3px solid var(--accent); }
+.feed-item.issue  { border-left: 3px solid var(--warn); }
+.feed-item.undone { border-left: 3px solid var(--muted); }
+
+.feed-icon { font-size: 14px; line-height: 1.4; }
+.feed-body { min-width: 0; }
+.feed-who {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.feed-what {
+  font-size: 13px;
+  color: var(--muted);
+  word-break: break-word;
+}
+.feed-time {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.feed-route {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
 .grid-wrap {
   padding: 20px;
   display: grid;
@@ -436,6 +511,19 @@ body {
   </div>
 </header>
 
+<div class="feed-wrap">
+  <div class="feed-head">
+    <h2 class="feed-title">As it happens</h2>
+    <span class="feed-count" id="feed-count">nothing yet today</span>
+  </div>
+  <div class="feed" id="feed">
+    <div class="feed-empty">
+      Stops marked done, notes written and incidents filed will appear here the
+      moment a driver taps them. Nothing to refresh.
+    </div>
+  </div>
+</div>
+
 <div class="grid-wrap" id="grid">
   <div class="loading-grid"><div class="spinner"></div>Loading routes…</div>
 </div>
@@ -645,16 +733,86 @@ function connectWS() {
     if (msg.type === 'stop-updated') {
       const s = state.items.find(x => x.rowNumber === msg.rowNumber);
       if (s) s.done = msg.done;
+      addFeed({
+        kind: msg.done ? 'done' : 'undone',
+        icon: msg.done ? '✅' : '↩️',
+        who: stopLabel(s),
+        what: msg.done ? 'Marked done' : 'Reopened',
+        routeName: route.name,
+        color: route.color,
+      });
       renderCard(route);
       updateFleet();
     }
     if (msg.type === 'note-updated') {
       const s = state.items.find(x => x.rowNumber === msg.rowNumber);
       if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; }
+      const incident = isIncident(msg.notes);
+      addFeed({
+        kind: incident ? 'issue' : 'note',
+        icon: incident ? '⚠️' : '📝',
+        who: stopLabel(s),
+        what: msg.notes,
+        routeName: route.name,
+        color: route.color,
+      });
       renderCard(route);
       updateFleet();
     }
   };
+}
+
+// ── The day's feed ────────────────────────────────────────────────────────
+//
+// The WebSocket was already carrying every one of these events — they were
+// used to repaint a card and then dropped. Keeping them in order turns the
+// board from "how far along is each truck" into "what has happened today",
+// which is the question you otherwise have to interrupt someone to answer.
+
+const feed = [];
+const FEED_MAX = 120;   // a day's worth; the oldest fall off rather than growing forever
+
+function stopLabel(item) {
+  if (!item) return 'a stop';
+  return item.accountName || item.address || 'a stop';
+}
+
+/* Incidents are notes that start with one of the report marks, so they can be
+   told apart from something a driver typed. */
+function isIncident(text) {
+  return /(^|·\s*)(🚫|📦|⏭|📷)/.test(String(text || ''));
+}
+
+function addFeed(entry) {
+  feed.unshift({ ...entry, at: new Date() });
+  if (feed.length > FEED_MAX) feed.length = FEED_MAX;
+  renderFeed();
+}
+
+function renderFeed() {
+  const el = document.getElementById('feed');
+  const count = document.getElementById('feed-count');
+  if (!el) return;
+
+  if (!feed.length) return;   // leave the explanatory empty state in place
+
+  count.textContent = feed.length === 1 ? '1 update' : feed.length + ' updates';
+
+  el.innerHTML = feed.map(f => {
+    const time = f.at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const routeChip = f.routeName
+      ? '<span class="feed-route" style="background:' + f.color + '22;color:' + f.color + '">'
+        + esc(f.routeName) + '</span>'
+      : '';
+    return '<div class="feed-item ' + f.kind + '">' +
+      '<span class="feed-icon">' + f.icon + '</span>' +
+      '<div class="feed-body">' +
+        '<div class="feed-who">' + esc(f.who) + routeChip + '</div>' +
+        (f.what ? '<div class="feed-what">' + esc(f.what) + '</div>' : '') +
+      '</div>' +
+      '<span class="feed-time">' + time + '</span>' +
+    '</div>';
+  }).join('');
 }
 
 // ── Theme toggle ──────────────────────────────────────────────────────────
