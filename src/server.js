@@ -202,7 +202,39 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
   }
 });
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+// /health proved the process was alive and nothing else, which is the least
+// useful thing it could tell us. The question that actually matters is whether
+// the database is on the persistent disk: if Render is ignoring the disk block
+// in render.yaml — which it does when the service was created by connecting
+// the repo rather than through a Blueprint — then every deploy silently wipes
+// the request queue, the error log and the style settings. That was flagged as
+// unverified in July and never checked.
+app.get("/health", (req, res) => {
+  const dir = process.env.DATA_DIR || "(default ./data)";
+  const onPersistentDisk = Boolean(process.env.DATA_DIR);
+
+  let writable = false;
+  let dbBytes = null;
+  try {
+    fs.accessSync(dir, fs.constants.W_OK);
+    writable = true;
+    dbBytes = fs.statSync(path.join(dir, "app.db")).size;
+  } catch { /* reported as false/null below */ }
+
+  res.json({
+    status: "ok",
+    commit: (process.env.RENDER_GIT_COMMIT || "").slice(0, 7) || null,
+    data: {
+      dir,
+      onPersistentDisk,
+      writable,
+      dbBytes,
+      // The one that answers the question. If this is false on Render, the
+      // disk is not attached and data does not survive a deploy.
+      survivesDeploy: onPersistentDisk && writable,
+    },
+  });
+});
 
 // --- Maps config ---------------------------------------------------------
 
