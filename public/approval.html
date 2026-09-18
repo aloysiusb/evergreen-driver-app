@@ -329,50 +329,13 @@
   }
 
   /* ── Demo links section ── */
-  .demo-section {
-    max-width: 860px;
-    margin: 0 24px 32px;
-    padding: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r-panel);
-  }
 
-  .demo-title {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
 
-  .demo-links {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
 
-  .demo-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 16px;
-    border-radius: var(--r-card);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    text-decoration: none;
-    transition: border-color 0.15s, background 0.15s;
-    cursor: pointer;
-  }
 
-  .demo-link:hover { border-color: var(--green); background: var(--green-lt); color: var(--green-tx); }
 
   @media (max-width: 600px) {
-    .list, .demo-section { padding-left: 14px; padding-right: 14px; margin-left: 0; margin-right: 0; }
+    .list { padding-left: 14px; padding-right: 14px; margin-left: 0; margin-right: 0; }
     .filter-bar { padding: 12px 14px; }
     .page-header { padding: 16px 14px 20px; }
     .topnav { padding: 0 14px; }
@@ -432,17 +395,13 @@
 <!-- REQUEST LIST -->
 <div class="list" id="request-list"></div>
 
-<!-- DEMO LINKS - all on Render -->
-<div class="demo-section">
-  <div class="demo-title">All demo pages</div>
-  <div class="demo-links">
-    <a class="demo-link" href="/pitch.html" target="_blank">🌿 Presentation</a>
-    <a class="demo-link" href="/portal.html" target="_blank">📋 Customer Portal</a>
-    <a class="demo-link" href="/iphone.html" target="_blank">📱 iPhone Preview</a>
-    <a class="demo-link" href="https://evergreen-driver-app.onrender.com" target="_blank">🚛 Driver App</a>
-    <a class="demo-link" href="https://evergreen-driver-app.onrender.com/admin.html" target="_blank">🎨 Style Editor</a>
-  </div>
-</div>
+<!-- The "all demo pages" block that used to sit here — pitch deck, iPhone
+     preview, style editor — belonged to this page when it was a mockup being
+     shown to people. It is now the screen Alyssa works out of every day, and
+     a sales reel in the middle of an inbox is just noise. Those pages are all
+     linked from hub.html, which is where browsing belongs.
+     Removed 2026-09-18. -->
+<!-- DEMO LINKS REMOVED -->
 
 <script>
   /* Live data. This page used to hold 22 hardcoded rows and flip a local

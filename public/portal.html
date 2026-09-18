@@ -439,13 +439,15 @@
 
 <div class="wrap">
 
-  <!-- Account strip (would be populated after lookup) -->
+  <!-- No account strip: there is no customer login, so the page cannot know
+       who is visiting. It used to show an invented customer ("Smith, Jennifer,
+       476 Midland Ave"), which on a public page reads as somebody else's
+       details leaking. The forms ask who you are instead. -->
   <div class="account-strip">
     <div>
-      <div class="account-name">Smith, Jennifer</div>
-      <div class="account-meta">476 Midland Ave · Carbondale · Route: Weds DV</div>
+      <div class="account-name">EverGreen ZeroWaste</div>
+      <div class="account-meta">Tell us what you need and we'll take it from there.</div>
     </div>
-    <div class="status-pill">Active</div>
   </div>
 
   <!-- Tabs -->
@@ -497,12 +499,12 @@
 
       <button class="btn-submit" id="hold-btn" onclick="submitHold()">Submit hold request</button>
       <div class="form-error" id="hold-error"></div>
-      <p class="form-footer">You'll receive a confirmation email. Alyssa's team reviews all requests the same day.</p>
+      <p class="form-footer">Alyssa's team reviews requests the same day and will be in touch.</p>
     </div>
     <div class="success" id="success-hold">
       <div class="success-icon">✅</div>
       <h3>Hold requested</h3>
-      <p>We've received your request and will send a confirmation to your email shortly. Your service will resume automatically.</p>
+      <p>We've got it. Alyssa's team will confirm the dates with you, and your service resumes automatically after the hold.</p>
       <button class="btn-back" onclick="hideSuccess('hold')">Submit another request</button>
     </div>
   </div>
@@ -652,12 +654,12 @@
 
       <button class="btn-submit" id="update-btn" onclick="submitUpdate()">Submit change request</button>
       <div class="form-error" id="update-error"></div>
-      <p class="form-footer">Changes are reviewed by Alyssa's team and confirmed by email within one business day.</p>
+      <p class="form-footer">Changes are reviewed by Alyssa's team, usually within one business day.</p>
     </div>
     <div class="success" id="success-update">
       <div class="success-icon">✏️</div>
       <h3>Change request sent</h3>
-      <p>We'll update your account and confirm the change by email once it's processed.</p>
+      <p>We've got it. Alyssa's team will make the change and follow up with you.</p>
       <button class="btn-back" onclick="hideSuccess('update')">Submit another request</button>
     </div>
   </div>
