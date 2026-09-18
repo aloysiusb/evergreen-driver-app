@@ -210,7 +210,11 @@ app.post("/api/routes/:tabName/backup", async (req, res) => {
 // the request queue, the error log and the style settings. That was flagged as
 // unverified in July and never checked.
 app.get("/health", (req, res) => {
-  const dir = process.env.DATA_DIR || "(default ./data)";
+  // Resolve the SAME path db.js uses, rather than a label — an earlier
+  // version of this check reported a description string as if it were a
+  // directory and declared it unwritable, which was a bug in the diagnostic
+  // and not a finding about the disk.
+  const dir = process.env.DATA_DIR || path.join(__dirname, "..", "data");
   const onPersistentDisk = Boolean(process.env.DATA_DIR);
 
   let writable = false;
