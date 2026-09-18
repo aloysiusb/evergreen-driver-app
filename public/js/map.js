@@ -447,25 +447,76 @@ function showRerouteNudge(saving) {
 }
 
 // ── Navigation app handoff ────────────────────────────────────────────────
+//
+// We do not write a navigation system. There is no web API for turn-by-turn —
+// a browser cannot give voice guidance with the screen off or hold GPS in the
+// background — so anything built here would be a worse Google Maps. Instead we
+// hand the route to the app the driver already knows.
+//
+// This used to send ONE stop. On a 200-stop route that is 200 round trips
+// between two apps in a working day. Google's URL API takes intermediate
+// waypoints, so we send the next several stops as a single multi-stop route
+// and the driver stays in their nav app through a whole run of them.
+//
+// Waze and Apple Maps take a single destination only — that is their URL
+// scheme, not an oversight — so those stay one stop at a time.
+
+const HANDOFF_MAX_STOPS = 9;   // Google's consumer URL tops out around here
+
+function stopAddress(stop) {
+  if (!stop) return '';
+  const base = stop.address + (stop.city ? ', ' + stop.city : '');
+  // Rural addresses are ambiguous without a state; every route is in Colorado.
+  return /\bCO\b/i.test(base) ? base : base + ', CO';
+}
+
+/** Coordinates beat a typed address — no geocoding to get wrong. */
+function stopPoint(stop) {
+  if (stop && stop._latLng) return stop._latLng.lat() + ',' + stop._latLng.lng();
+  return stopAddress(stop);
+}
+
+/** The run of stops ahead of the driver, starting with the one they are on. */
+function upcomingStops(max) {
+  const out = [];
+  for (let i = currentIdx; i < navStops.length && out.length < max; i++) {
+    const s = navStops[i];
+    if (s && !s.done) out.push(s);
+  }
+  return out;
+}
+
 window.navOpenIn = function(app) {
   const stop = navStops[currentIdx];
   if (!stop) return;
-  const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', CO';
-  const lat = stop._latLng ? stop._latLng.lat() : null;
-  const lng = stop._latLng ? stop._latLng.lng() : null;
 
   let url;
   if (app === 'waze') {
-    url = lat !== null
-      ? `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`
-      : `https://www.waze.com/ul?q=${encodeURIComponent(addr)}&navigate=yes`;
+    const p = stop._latLng
+      ? `ll=${stop._latLng.lat()},${stop._latLng.lng()}`
+      : `q=${encodeURIComponent(stopAddress(stop))}`;
+    url = `https://www.waze.com/ul?${p}&navigate=yes`;
   } else if (app === 'apple') {
-    url = `https://maps.apple.com/?daddr=${encodeURIComponent(addr)}&dirflg=d`;
+    url = `https://maps.apple.com/?daddr=${encodeURIComponent(stopAddress(stop))}&dirflg=d`;
   } else {
-    url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}&travelmode=driving`;
+    const run = upcomingStops(HANDOFF_MAX_STOPS);
+    const destination = run[run.length - 1] || stop;
+    const between = run.slice(0, -1);
+
+    url = 'https://www.google.com/maps/dir/?api=1'
+        + '&destination=' + encodeURIComponent(stopPoint(destination))
+        + (between.length
+            ? '&waypoints=' + encodeURIComponent(between.map(stopPoint).join('|'))
+            : '')
+        + '&travelmode=driving';
   }
   window.open(url, '_blank', 'noopener');
   closeNavPicker();
+};
+
+/** How many stops the Google handoff will cover — shown on the button. */
+window.navHandoffCount = function() {
+  return upcomingStops(HANDOFF_MAX_STOPS).length;
 };
 
 window.toggleNavPicker = function() {
@@ -983,7 +1034,7 @@ function renderNavCard() {
       <button class="report-quick-btn photo"         onclick="reportOpen('photo',${row},'${escHtml(tabName)}')">📷 Photo</button>
     </div>
     <div id="nav-app-picker">
-      <button class="nav-app-btn" onclick="navOpenIn('google')">🗺 Google Maps</button>
+      <button class="nav-app-btn" onclick="navOpenIn('google')">🗺 Google Maps · next ${navHandoffCount()} stops</button>
       <button class="nav-app-btn" onclick="navOpenIn('waze')">🚦 Waze</button>
       <button class="nav-app-btn" onclick="navOpenIn('apple')">🍎 Apple Maps</button>
     </div>
