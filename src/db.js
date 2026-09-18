@@ -69,28 +69,30 @@ export const DEFAULT_STYLES = {
   // ── Section headers ──────────────────────────────────────
   "--section-header-font-size":      "11.5",
   "--section-header-font-weight":    "700",
-  "--completed-section-bg":          "#16301f",
-  "--completed-section-text":        "#8ecfa6",
-  "--completed-section-border":      "#24452f",
+  "--completed-section-bg":          "#e6f0e9",
+  "--completed-section-text":        "#2f6b46",
+  "--completed-section-border":      "#c4dccd",
 
   // ── Stop card ────────────────────────────────────────────
+  "--stop-card-bg":     "#ffffff",
+  "--stop-card-text":   "#16211a",
   "--stop-account-font-size":   "16",
   "--stop-account-font-weight": "600",
   "--stop-address-font-size":   "13",
   "--stop-address-font-weight": "400",
-  "--stop-done-bg":             "#14241b",
-  "--stop-done-border":         "#24452f",
+  "--stop-done-bg":             "#e6f0e9",
+  "--stop-done-border":         "#c4dccd",
 
   // ── Note chips ───────────────────────────────────────────
-  "--urgent-bg":         "#3a1b15",
-  "--urgent-text":       "#e39383",
-  "--hold-bg":           "#33270f",
-  "--hold-text":         "#e0aa52",
+  "--urgent-bg":         "#fbe4df",
+  "--urgent-text":       "#8c3322",
+  "--hold-bg":           "#fbf0d9",
+  "--hold-text":         "#7a5210",
   "--stop-note-font-size":   "13",
   "--stop-note-font-weight": "400",
 
   // ── Note textarea ────────────────────────────────────────
-  "--note-edit-bg":          "#1d2821",
+  "--note-edit-bg":          "#ffffff",
   "--note-edit-font-size":   "13",
   "--note-edit-font-weight": "400",
 
@@ -100,9 +102,9 @@ export const DEFAULT_STYLES = {
   "--done-btn-done-bg": "#3f5f52",
 
   // ── Map / Directions buttons ─────────────────────────────
-  "--action-btn-bg":         "#1d2821",
-  "--action-btn-text":       "#8ea395",
-  "--action-btn-border":     "#2a372e",
+  "--action-btn-bg":         "#f2f5f2",
+  "--action-btn-text":       "#5d7065",
+  "--action-btn-border":     "#d7e0d9",
   "--action-btn-font-size":  "12",
   "--action-btn-font-weight":"500",
 

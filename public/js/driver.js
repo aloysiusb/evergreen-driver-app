@@ -85,6 +85,28 @@
     attachStopListeners(list);
   }
 
+  /* Black or white text on a sheet colour, decided by real contrast.
+   *
+   * The old rule was (r*299 + g*587 + b*114)/1000 > 150. That formula is a
+   * 1950s television approximation and it badly underweights green: pure
+   * #00ff00 — about as bright as a colour gets — scores 149.7 and lost to a
+   * threshold of 150 by a third of a point, so every neon green row in the
+   * Tuesday sheet got WHITE text on it.
+   *
+   * This is the WCAG relative-luminance calculation instead, with the standard
+   * 0.179 crossover. It gets #00ff00 right, still puts white on genuinely dark
+   * colours like the #9900ff purple, and will keep being right for whatever
+   * colour someone reaches for in the sheet next.
+   */
+  function textOn(r, g, b) {
+    const lin = (v) => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
+    const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    return L > 0.179 ? '#1a1a1a' : '#ffffff';
+  }
+
   function sectionHeaderHtml(item) {
     let style = '';
     let textColor = 'var(--route-color-dark)';
@@ -92,8 +114,7 @@
       const r = Math.round((item.rowColor.red   ?? 0) * 255);
       const g = Math.round((item.rowColor.green ?? 0) * 255);
       const b = Math.round((item.rowColor.blue  ?? 0) * 255);
-      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-      textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
+      textColor = textOn(r, g, b);
       style = ` style="background:rgb(${r},${g},${b});color:${textColor};border-color:rgba(0,0,0,0.15);"`;
     }
     const extra = [item.accountName, item.directions, item.notes].filter(Boolean);
@@ -144,8 +165,7 @@
       const r = Math.round((item.rowColor.red   ?? 0) * 255);
       const g = Math.round((item.rowColor.green ?? 0) * 255);
       const b = Math.round((item.rowColor.blue  ?? 0) * 255);
-      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-      const textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
+      const textColor = textOn(r, g, b);
       colorStyle = `style="background:rgb(${r},${g},${b}); border-color:rgba(0,0,0,0.12); color:${textColor};"`;
       sheetColored = ' has-sheet-color';
     }
