@@ -37,7 +37,7 @@ const ADMIN_CODE = process.env.ADMIN_CODE || "";
 // them the app. It is safe to expose: it makes no network calls at all and
 // every name and address in it is invented, so there is nothing real behind it
 // to leak. Demo links should not need a driver's access code.
-const PUBLIC_PAGES = new Set(["/portal.html", "/pay.html", "/walkthrough.html"]);
+const PUBLIC_PAGES = new Set(["/portal.html", "/pay.html", "/walkthrough.html", "/updates.html"]);
 
 // Stylesheets, client scripts and the manifest. No secrets live in these — the
 // sensitive thing is the route API, not the CSS — and leaving them gated would

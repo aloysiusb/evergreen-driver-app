@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en" data-radius="tight" data-palette="report">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EverGreen Driver App — What It Does</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet { max-width: 880px; margin: 0 auto; padding: 40px 24px 90px; }
+  .measure { max-width: 66ch; }
+
+  /* ── Masthead ───────────────────────────────────────────── */
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(30px, 5vw, 42px); font-weight: 600;
+    line-height: 1.1; letter-spacing: -0.015em;
+    margin: 10px 0 14px; text-wrap: balance;
+  }
+  .standfirst { font-size: 17px; color: var(--muted); max-width: 66ch; }
+  .masthead { border-bottom: 2px solid var(--text); padding-bottom: 24px; }
+  .byline {
+    display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 18px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted);
+  }
+
+  /* ── Contents ───────────────────────────────────────────── */
+  .toc {
+    margin-top: 28px; padding: 18px 20px;
+    background: var(--surface-2); border-radius: var(--r-card);
+  }
+  .toc-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px;
+  }
+  .toc ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 22px; }
+  .toc a { color: var(--text); text-decoration: none; font-size: 14.5px; font-weight: 500; }
+  .toc a:hover { color: var(--accent); text-decoration: underline; }
+
+  /* ── Sections ───────────────────────────────────────────── */
+  section { margin-top: 48px; scroll-margin-top: 20px; }
+  h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 26px; font-weight: 600; letter-spacing: -0.01em;
+    margin-bottom: 6px; text-wrap: balance;
+  }
+  .lede { color: var(--muted); font-size: 15px; margin-bottom: 20px; max-width: 66ch; }
+
+  h3 { font-size: 16px; font-weight: 600; margin: 0; }
+
+  /* ── Function rows ──────────────────────────────────────── */
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: grid; grid-template-columns: 1fr auto; gap: 5px 18px;
+    align-items: baseline; padding: 15px 0; border-top: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: 1px solid var(--border); }
+  .row p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 14.5px; max-width: 70ch; }
+  .row .how {
+    grid-column: 1 / -1; margin-top: 5px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted);
+    opacity: 0.85;
+  }
+
+  .chip {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: var(--r-chip); white-space: nowrap;
+    background: var(--accent-l); color: var(--accent);
+  }
+  .chip.todo { background: var(--amber-l); color: var(--amber); }
+  .chip.untested { background: var(--blue-l); color: var(--blue); }
+
+  /* ── Fix list ───────────────────────────────────────────── */
+  .fixes { display: flex; flex-direction: column; gap: 18px; }
+  .fix { display: grid; grid-template-columns: auto 1fr; gap: 3px 13px; }
+  .fix-mark { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); padding-top: 3px; }
+  .fix h3, .fix p { grid-column: 2; }
+  .fix p { margin: 0; color: var(--muted); font-size: 14.5px; max-width: 70ch; }
+
+  /* ── Callout ────────────────────────────────────────────── */
+  .callout {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber); padding: 18px 20px; margin-top: 18px;
+    border-radius: 0 var(--r-card) var(--r-card) 0;
+  }
+  .callout h3 { margin-bottom: 7px; }
+  .callout p { color: var(--muted); font-size: 14.5px; margin-bottom: 9px; max-width: 70ch; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ── Links ──────────────────────────────────────────────── */
+  a { color: var(--accent); text-underline-offset: 2px; }
+  code {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.87em;
+    background: var(--surface-2); padding: 1px 5px; border-radius: var(--r-chip);
+  }
+  .links { display: flex; flex-direction: column; gap: 12px; }
+  .link-row {
+    display: grid; grid-template-columns: 190px 1fr; gap: 3px 16px;
+    align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .link-row:last-child { border-bottom: 0; }
+  .link-row a { font-weight: 600; font-size: 15px; }
+  .link-row .what { color: var(--muted); font-size: 14px; }
+  @media (max-width: 640px) { .link-row { grid-template-columns: 1fr; } }
+
+  footer {
+    margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border);
+    font-size: 14px; color: var(--muted);
+  }
+  strong { font-weight: 600; color: var(--text); }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <div class="eyebrow">EverGreen ZeroWaste</div>
+  <h1>The driver app, and everything around it</h1>
+  <p class="standfirst">
+    A full account of what the system does today — for the driver in the truck,
+    for the office, and for the customer. Written to be read straight through or
+    skimmed by section.
+  </p>
+  <div class="byline">
+    <span>Prepared by Virginia Payson</span>
+    <span>For Alyssa &amp; Dave</span>
+    <span>18 September 2026</span>
+  </div>
+</header>
+
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#driver">1 · In the truck</a></li>
+    <li><a href="#map">2 · The map</a></li>
+    <li><a href="#office">3 · The office</a></li>
+    <li><a href="#customer">4 · The customer</a></li>
+    <li><a href="#demo">5 · Showing people</a></li>
+    <li><a href="#fixed">6 · What was wrong</a></li>
+    <li><a href="#open">7 · Still open</a></li>
+    <li><a href="#links">8 · Every page</a></li>
+  </ol>
+</div>
+
+<!-- ── 1 ─────────────────────────────────────────────────── -->
+<section id="driver">
+  <h2>1 · In the truck</h2>
+  <p class="lede">
+    The route lives in the Google Sheet the office already keeps. The app reads
+    it and writes back the moment a stop is marked done. Nothing here replaces
+    the sheet.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <h3>Pick a route</h3><span class="chip">Working</span>
+      <p>
+        Nine routes on one screen, colour-coded and labelled by day — Tuesday
+        Valley, 4WD Action, Wednesday Residential, Commercial, Upper Valley,
+        Com/Eagle, Friday, Monday, Max Routes. Tap one to open the day.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>The day's stops, in sheet order</h3><span class="chip">Working</span>
+      <p>
+        Every stop with account name, address and city. Valley Residential runs
+        to about 210 stops and they all load. Order comes from the sheet, so
+        whatever the office arranges is what the driver sees.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Row colours and section headers carry through</h3><span class="chip">Working</span>
+      <p>
+        A row highlighted in the sheet appears highlighted in the app, in the
+        same colour. Section headers — rows with no street number — are detected
+        and shown as dividers, keeping their colour too. Text switches between
+        black and white automatically so it stays readable on any highlight.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Notes and access details on every stop</h3><span class="chip">Working</span>
+      <p>
+        The office's notes ride along with the stop: gate codes, where the bin
+        sits, which dog to call about. Urgent notes show red, holds show amber,
+        and driving directions appear as a separate key chip.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Mark done, and undo</h3><span class="chip">Working</span>
+      <p>
+        One large button per stop — easy with gloves. Completed stops collapse
+        into a section at the bottom and can be reopened if tapped by mistake.
+        The progress bar and count update as the day goes.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Work survives a dead zone</h3><span class="chip">Working</span>
+      <p>
+        A stop marked done with no signal <strong>stays done</strong>. The change
+        is held on the phone, a banner says how many are waiting, and they go out
+        the moment signal returns — including after the app has been closed and
+        reopened. Repeated edits to the same stop collapse to the final state, so
+        nothing arrives out of order.
+      </p>
+      <div class="how">held in the phone's own storage · retried on reconnect, on return to the app, and every 30s</div>
+    </div>
+
+    <div class="row">
+      <h3>Add a note from the truck</h3><span class="chip">Working</span>
+      <p>
+        Type a note against any stop and it writes back to the sheet — a new gate
+        code, a blocked bin, anything the office should know. Notes are queued
+        the same way if there's no signal.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Report an incident in two taps</h3><span class="chip">Working</span>
+      <p>
+        Four buttons on the map card: <strong>contamination</strong>,
+        <strong>overflow</strong>, <strong>skip</strong>, and
+        <strong>photo</strong>. Filed against the stop, straight into the sheet.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Arrival alerts, three ways</h3><span class="chip">Working</span>
+      <p>
+        Within <strong>80 metres</strong> of the next stop the phone alerts and
+        asks — one tap marks it done and moves on. Set per phone:
+        <strong>sound</strong> (a soft two-note chime plus a buzz),
+        <strong>silent</strong> (buzz only), or <strong>off</strong>. It fires
+        once per stop, and re-arms only after the driver has genuinely left.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>The screen stays awake</h3><span class="chip">Working</span>
+      <p>
+        No waking the phone with wet or gloved hands between stops. Releases
+        automatically when the app is put away, so it costs no battery once the
+        driver is done.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Start My Day backup</h3><span class="chip">Working</span>
+      <p>
+        One tap duplicates the day's tab in the sheet before any changes, so
+        there's always an untouched copy. Once per route per day. "View Original"
+        shows that copy if anyone needs to check what the day started as.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Installs like an app</h3><span class="chip">Working</span>
+      <p>
+        Add to Home Screen on a phone or tablet and it opens full screen with no
+        browser chrome. It's still a website — nothing to install from a store,
+        nothing to update.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 2 ─────────────────────────────────────────────────── -->
+<section id="map">
+  <h2>2 · The map</h2>
+  <p class="lede">
+    We deliberately do not write a navigation system. There's no way for a
+    website to give voice guidance with the screen off, so anything built here
+    would be a worse Google Maps. The app owns the route and the proof of work;
+    Google owns the driving.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <h3>Hand the run to Google Maps</h3><span class="chip">Working</span>
+      <p>
+        One tap sends the <strong>next nine stops as a single route</strong> to
+        the app the driver already knows. On a 200-stop day that replaces 200
+        round trips between two apps. Waze and Apple Maps are offered too, though
+        those take one destination at a time — their limitation, not ours.
+      </p>
+      <div class="how">uses stop coordinates rather than typed addresses, so there's no geocoding to get wrong</div>
+    </div>
+
+    <div class="row">
+      <h3>The map rides with the driver</h3><span class="chip untested">Needs a real drive</span>
+      <p>
+        Street-level map that follows the truck. Panning by hand steps out of
+        follow so it doesn't fight the driver; one tap resumes.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Next turn on screen</h3><span class="chip untested">Needs a real drive</span>
+      <p>
+        Distance, the manoeuvre, and what follows it — without leaving the app
+        and losing the stop notes. Re-routes within seconds if the driver comes
+        off the line.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Which side of the road</h3><span class="chip untested">Needs a real drive</span>
+      <p>
+        On arrival it says <em>on your left</em> or <em>on your right</em>, so
+        the driver looks out one window instead of scanning both kerbs. Stays
+        quiet rather than guessing when the truck is stationary and the heading
+        is unreliable.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Satellite and Street View</h3><span class="chip">Working</span>
+      <p>
+        Aerial imagery for spotting driveways, gates and bin placement before
+        pulling up, and Street View to scout an unfamiliar property. The plain
+        street map stays the default — it's the clearest to read while moving.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Planned or Live order</h3><span class="chip">Working</span>
+      <p>
+        Planned follows the sheet. Live reorders the remaining stops for current
+        traffic and says how many minutes it saves. It never reorders on its own
+        — if conditions shift enough to matter it offers, and the driver decides.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Live traffic and drive time</h3><span class="chip">Working</span>
+      <p>
+        Traffic overlaid on the map and an estimate for the run ahead. Where a
+        rural road has no traffic data it falls back to the plain estimate rather
+        than failing.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Light on data</h3><span class="chip">Working</span>
+      <p>
+        On a slow connection the map asks before loading rather than eating the
+        driver's data silently.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 3 ─────────────────────────────────────────────────── -->
+<section id="office">
+  <h2>3 · The office</h2>
+
+  <div class="rows">
+    <div class="row">
+      <h3>Dispatcher dashboard</h3><span class="chip">Working</span>
+      <p>
+        Every route on one screen, updating live as drivers work — stops done
+        against stops total, progress per route, which stop each driver is on,
+        and any incidents filed today. Nothing to refresh: it updates as it
+        happens. This is the screen to leave open during a run.
+      </p>
+      <div class="how">evergreen-driver-app.onrender.com/dispatch</div>
+    </div>
+
+    <div class="row">
+      <h3>Request queue</h3><span class="chip">Working</span>
+      <p>
+        Holds, missed pickups, account changes and new-customer enquiries from
+        the portal, in one screen to approve or decline. Approving a new customer
+        appends them to the route tab you choose. Approving a hold simply marks
+        it handled — it doesn't put anyone on a route. A request can't be decided
+        twice, and if the sheet write fails the request stays pending rather than
+        being marked done and lost.
+      </p>
+      <div class="how">/approval · filters by type · updates live as requests arrive</div>
+    </div>
+
+    <div class="row">
+      <h3>Email on every new request</h3><span class="chip">Working</span>
+      <p>
+        Name, address, contact details, what they asked for, and a link straight
+        to the queue. The recipient is a setting rather than something baked in,
+        so it can be handed over without a code change, and it can be switched
+        off.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Style editor</h3><span class="chip">Working</span>
+      <p>
+        Colours, typefaces, text sizes and corner rounding for the whole driver
+        app, with a live preview. Changes save centrally and push to every
+        driver's phone immediately — no reinstall, no waiting. Includes a set of
+        ten typefaces and a reset.
+      </p>
+      <div class="how">/admin</div>
+    </div>
+
+    <div class="row">
+      <h3>Error log</h3><span class="chip">Working</span>
+      <p>
+        The app reports its own failures rather than failing quietly. Identical
+        problems are counted rather than repeated, so one fault appears as a
+        single line with a number beside it. It has already caught a live bug
+        that had been hidden for months.
+      </p>
+      <div class="how">/errors</div>
+    </div>
+
+    <div class="row">
+      <h3>Sheet checker</h3><span class="chip">Working</span>
+      <p>
+        Point it at any spreadsheet and it says whether the app can open it,
+        which tabs it recognises, which it will ignore, and what the columns look
+        like — before switching over, rather than finding out from a driver.
+      </p>
+      <div class="how">/api/sheet-check?id=…</div>
+    </div>
+
+    <div class="row">
+      <h3>Access code</h3><span class="chip todo">Not switched on</span>
+      <p>
+        A shared code protecting the route data. Drivers tap a link once and stay
+        signed in for a year — no login screen in the cab. A separate code
+        protects the style editor and the error log. <strong>Until it's set,
+        customer names, addresses and gate codes are readable by anyone with the
+        link.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 4 ─────────────────────────────────────────────────── -->
+<section id="customer">
+  <h2>4 · The customer</h2>
+  <p class="lede">
+    Self-service, no phone call. Until yesterday three of these four forms showed
+    a confirmation and threw the request away.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <h3>Request a hold</h3><span class="chip">Working</span>
+      <p>Start and resume dates with a reason. Reaches the office queue.</p>
+    </div>
+    <div class="row">
+      <h3>Report a missed pickup</h3><span class="chip">Working</span>
+      <p>Including whether the bin was actually out, which settles most of them.</p>
+    </div>
+    <div class="row">
+      <h3>Update account details</h3><span class="chip">Working</span>
+      <p>Address, phone, email, billing, access instructions, or cancellation.</p>
+    </div>
+    <div class="row">
+      <h3>Pay an invoice</h3><span class="chip">Working</span>
+      <p>Connected to QuickBooks. Returns a payment link for the open invoice.</p>
+    </div>
+    <div class="row">
+      <h3>Confirmation email to the customer</h3><span class="chip todo">Needs a sending domain</span>
+      <p>
+        Written and tested, with different wording for each kind of request. It
+        can only send from a domain we control — about fifteen minutes of setup
+        on the EverGreen domain, whenever you want it. Until then the office
+        follows up by hand, which is what happens today anyway.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 5 ─────────────────────────────────────────────────── -->
+<section id="demo">
+  <h2>5 · Showing people</h2>
+
+  <div class="rows">
+    <div class="row">
+      <h3>A day on the route</h3><span class="chip">Working</span>
+      <p>
+        A two-minute demonstration that plays itself: the truck moving, the
+        distance counting down, the arrival alert firing. Switches between street
+        map, real satellite imagery and Street View. Needs no login and works on
+        any phone or laptop — the link to send someone who asks what the app
+        does.
+      </p>
+      <div class="how">/walkthrough</div>
+    </div>
+
+    <div class="row">
+      <h3>Test drive without a truck</h3><span class="chip">Working</span>
+      <p>
+        Adding <code>?sim=1</code> to a route drives the real app from a desk —
+        synthetic GPS along the actual route, with a switch to simulate losing
+        signal so the offline behaviour can be watched. Nothing it does reaches
+        the live sheet.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Navigation demo and Street View walkthrough</h3><span class="chip">Working</span>
+      <p>
+        Two longer demonstrations using real route data — turn-by-turn across a
+        real Carbondale route, and a stop-by-stop walk in Street View with each
+        property's real notes.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Weekly coverage map</h3><span class="chip">Working</span>
+      <p>
+        Every route plotted by day, sized by stop count, showing where the trucks
+        actually go across a week.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 6 ─────────────────────────────────────────────────── -->
+<section id="fixed">
+  <h2>6 · What was wrong</h2>
+  <p class="lede">
+    These were all running in the live app. None of them showed an error message
+    — that is precisely why they lasted as long as they did.
+  </p>
+
+  <div class="fixes">
+    <div class="fix">
+      <span class="fix-mark">01</span>
+      <h3>A driver's work could vanish</h3>
+      <p>
+        Marking a stop done without signal showed a tick, then quietly undid it
+        three seconds later. The stop was neither done on the phone nor in the
+        sheet, and nothing recorded that it had ever happened. The most expensive
+        of these by a distance.
+      </p>
+    </div>
+
+    <div class="fix">
+      <span class="fix-mark">02</span>
+      <h3>The route line never drew on a real route</h3>
+      <p>
+        The map asked Google for directions through all 210 stops at once; Google
+        accepts 25. Every request was rejected, which also silently killed the
+        drive-time estimate, the Live reordering and the traffic prompt — four
+        features, none of them working, no error anywhere.
+      </p>
+    </div>
+
+    <div class="fix">
+      <span class="fix-mark">03</span>
+      <h3>A crash hiding behind that one</h3>
+      <p>
+        Fixing the above let the code run for the first time in months — and
+        revealed a crash where a rural road has no traffic data. Caught by the
+        new error log within hours rather than never.
+      </p>
+    </div>
+
+    <div class="fix">
+      <span class="fix-mark">04</span>
+      <h3>Updates weren't reaching drivers</h3>
+      <p>
+        A fix could be deployed and drivers would keep running the old version
+        for up to a day, with no way for anyone to tell.
+      </p>
+    </div>
+
+    <div class="fix">
+      <span class="fix-mark">05</span>
+      <h3>Three of four customer forms were pretend</h3>
+      <p>
+        "Request hold", "Missed pickup" and "Update info" showed a green tick and
+        recorded nothing. The portal also displayed an invented customer's name
+        and address to whoever opened it.
+      </p>
+    </div>
+
+    <div class="fix">
+      <span class="fix-mark">06</span>
+      <h3>The arrival alert repeated</h3>
+      <p>
+        It re-fired every twelve seconds while a driver was parked at a stop.
+        Survivable as a silent message; not once it buzzes the phone.
+      </p>
+    </div>
+
+    <div class="fix">
+      <span class="fix-mark">07</span>
+      <h3>Saved data was wiped on every update</h3>
+      <p>
+        The request queue and settings lived inside the container rather than on
+        the attached disk, so deploying erased them. Now fixed and verified.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 7 ─────────────────────────────────────────────────── -->
+<section id="open">
+  <h2>7 · Still open</h2>
+
+  <div class="callout">
+    <h3>One drive with a phone on the dash</h3>
+    <p>
+      Follow mode, the turn instructions and the left/right call have been tested
+      in simulation but never against real GPS at real speed. Worth one route
+      before Dave depends on them — particularly whether the arrival alert fires
+      once per stop rather than repeatedly.
+    </p>
+  </div>
+
+  <div class="callout">
+    <h3>Turn the access code on</h3>
+    <p>
+      Until it's set, the route data is readable by anyone with the link. Two
+      entries in the hosting dashboard, and drivers get a link they tap once.
+    </p>
+  </div>
+
+  <div class="callout">
+    <h3>Customer confirmation emails</h3>
+    <p>
+      Needs a sending domain before customers receive anything. The office
+      notification already works.
+    </p>
+  </div>
+</section>
+
+<!-- ── 8 ─────────────────────────────────────────────────── -->
+<section id="links">
+  <h2>8 · Every page</h2>
+  <div class="links">
+    <div class="link-row">
+      <a href="/walkthrough">A day on the route</a>
+      <span class="what">The two-minute demonstration. Plays itself, needs no login.</span>
+    </div>
+    <div class="link-row">
+      <a href="/">The driver app</a>
+      <span class="what">Pick a route to open the day's stops.</span>
+    </div>
+    <div class="link-row">
+      <a href="/dispatch">Dispatcher dashboard</a>
+      <span class="what">Every route, live, as drivers work. The screen to leave open.</span>
+    </div>
+    <div class="link-row">
+      <a href="/approval">Request queue</a>
+      <span class="what">Approve or decline what comes in from the portal.</span>
+    </div>
+    <div class="link-row">
+      <a href="/portal">Customer portal</a>
+      <span class="what">What a customer sees when they want a hold.</span>
+    </div>
+    <div class="link-row">
+      <a href="/admin">Style editor</a>
+      <span class="what">Colours, typefaces and sizes, pushed live to every driver.</span>
+    </div>
+    <div class="link-row">
+      <a href="/errors">Error log</a>
+      <span class="what">Anything the app reports about itself.</span>
+    </div>
+    <div class="link-row">
+      <a href="/weekly">Weekly coverage map</a>
+      <span class="what">Where the trucks go across a week.</span>
+    </div>
+    <div class="link-row">
+      <a href="/streetview">Street View walkthrough</a>
+      <span class="what">Walk a route stop by stop, with each property's notes.</span>
+    </div>
+    <div class="link-row">
+      <a href="/demo">Navigation demo</a>
+      <span class="what">Turn-by-turn across a real route.</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  The route sheet remains the source of truth. The app reads from it and writes
+  back to it, and nothing described here replaces it.
+</footer>
+
+</div>
+</body>
+</html>
