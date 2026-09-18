@@ -501,6 +501,64 @@ async function notifyNewRequest(request) {
 // Confirmation email. No provider is wired up yet: set RESEND_API_KEY and
 // REQUESTS_FROM_EMAIL in Render and this starts sending, with no new npm
 // dependency. Until then it logs and returns, so the queue works regardless.
+// The confirmation read "we have your request for ." on anything but a new
+// signup, because only a new customer gives an address — a hold or a missed
+// pickup is against an account we already have. It also promised to confirm a
+// "collection day" to someone asking us to PAUSE their collections.
+//
+// One template cannot cover four different things, so it no longer tries.
+
+function confirmationSubject(request) {
+  switch (request.kind) {
+    case "hold":   return "We got your hold request";
+    case "missed": return "We got your missed pickup report";
+    case "update": return "We got your account change";
+    default:       return "We got your Evergreen compost request";
+  }
+}
+
+function confirmationBody(request) {
+  const hi = `Hi ${request.name},\n\n`;
+  const sign = "\n\nEverGreen ZeroWaste";
+  // Only mention the detail line when there is one to mention.
+  const detail = request.detail ? `\n\nWhat we have: ${request.detail}` : "";
+
+  switch (request.kind) {
+    case "hold":
+      return hi
+        + "Thanks — we've got your request to pause collections."
+        + detail
+        + "\n\nAlyssa's team will confirm the dates with you. Your service "
+        + "resumes automatically at the end of the hold."
+        + sign;
+
+    case "missed":
+      return hi
+        + "Thanks for letting us know — we've logged the missed pickup and "
+        + "someone will look into what happened."
+        + detail
+        + "\n\nWe'll be in touch within one business day."
+        + sign;
+
+    case "update":
+      return hi
+        + "Thanks — we've got your account change request."
+        + detail
+        + "\n\nAlyssa's team will make the change and follow up with you."
+        + sign;
+
+    default: {
+      const where = request.address
+        ? ` for ${request.address}${request.city ? ", " + request.city : ""}`
+        : "";
+      return hi
+        + `Thanks — we've got your request${where}.`
+        + "\n\nSomeone will be in touch to confirm your collection day."
+        + sign;
+    }
+  }
+}
+
 async function sendConfirmation(request) {
   const key = process.env.RESEND_API_KEY;
   const verifiedFrom = process.env.REQUESTS_FROM_EMAIL;
@@ -542,9 +600,8 @@ async function sendConfirmation(request) {
     body: JSON.stringify({
       from,
       to: request.email,
-      subject: "We got your Evergreen compost request",
-      text: `Hi ${request.name},\n\nThanks — we have your request for ${request.address}. `
-          + `Someone will confirm your collection day shortly.\n\nEverGreen ZeroWaste`,
+      subject: confirmationSubject(request),
+      text: confirmationBody(request),
     }),
   });
   if (!r.ok) throw new Error("Resend responded " + r.status);
