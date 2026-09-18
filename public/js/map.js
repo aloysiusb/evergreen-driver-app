@@ -183,6 +183,7 @@ async function initMap() {
 
   watchForManualPan();
   setFollow(true);
+  updateAlertChip();
 
   directionsService = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer({
@@ -860,6 +861,116 @@ function haversineM(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// ── Arrival alerts ────────────────────────────────────────────────────────
+//
+// A driver's eyes are on the road, so sound is the channel that actually
+// works. The design goal is distinctive rather than loud: two soft notes at
+// low volume are noticed without being an alarm, and a driver hears them
+// forty times a day — anything sharper becomes something they resent and
+// eventually mute.
+//
+// Three modes, because one truck is not another:
+//   sound   — two-note chime, a short buzz, and the visual
+//   silent  — buzz and visual only, for a quiet cab or a passenger asleep
+//   off     — visual only
+//
+// Stored per device rather than in the shared settings table on purpose.
+// There is no per-driver identity in this app — the access code is shared —
+// so a value in the database would force one driver's choice onto everyone.
+// This is a preference about one person's phone, so it lives on that phone.
+
+const ALERT_MODES = ['sound', 'silent', 'off'];
+const ALERT_KEY = 'ev_alert_mode';
+
+function alertMode() {
+  try {
+    const v = localStorage.getItem(ALERT_KEY);
+    return ALERT_MODES.includes(v) ? v : 'sound';
+  } catch { return 'sound'; }     // private mode, blocked storage
+}
+
+function setAlertMode(mode) {
+  try { localStorage.setItem(ALERT_KEY, mode); } catch {}
+  updateAlertChip();
+}
+
+let audioCtx = null;
+
+// Browsers refuse to make noise until the user has interacted with the page.
+// The driver taps to open their route, so we build the context on that first
+// gesture — otherwise the very first arrival of the day would be silent.
+function primeAudio() {
+  if (audioCtx) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+  } catch {}
+}
+['pointerdown', 'keydown'].forEach(ev =>
+  window.addEventListener(ev, primeAudio, { once: true, passive: true }));
+
+/** Two soft notes. Synthesised, so there is no audio file to load or lose. */
+function chime() {
+  if (!audioCtx) primeAudio();
+  if (!audioCtx) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    [[660, 0], [880, 0.12]].forEach(([freq, offset]) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';                       // no harshness
+      osc.frequency.value = freq;
+      // Quick fade in and out: a hard start is what makes a beep feel like an
+      // alarm, and the tail is what makes it feel like a chime.
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.13, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.22);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.24);
+    });
+  } catch {}
+}
+
+/** Fire the alert for the current mode. Visual always happens either way. */
+function fireArrivalAlert() {
+  const mode = alertMode();
+  if (mode === 'off') return;
+  // Two short taps rather than one long buzz — a long one reads as a phone
+  // call and makes a driver reach for the phone.
+  try { navigator.vibrate?.([90, 70, 90]); } catch { /* iOS has no vibrate */ }
+  if (mode === 'sound') chime();
+}
+
+// The chip is in the page from the start, so it has to show the saved choice
+// immediately. Doing this only on map init left a driver who picked Silent
+// looking at a chip that said Sound until they opened the map tab.
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", updateAlertChip);
+} else {
+  updateAlertChip();
+}
+
+window.cycleAlertMode = function () {
+  const next = ALERT_MODES[(ALERT_MODES.indexOf(alertMode()) + 1) % ALERT_MODES.length];
+  setAlertMode(next);
+  primeAudio();
+  if (next === 'sound') chime();      // let them hear what they just chose
+  else if (next === 'silent') { try { navigator.vibrate?.([90, 70, 90]); } catch {} }
+};
+
+function updateAlertChip() {
+  const el = document.getElementById('mode-alert');
+  if (!el) return;
+  const mode = alertMode();
+  el.textContent = mode === 'sound' ? '🔔 Sound'
+                 : mode === 'silent' ? '📳 Silent'
+                 : '🔕 Alerts off';
+  el.classList.toggle('active', mode !== 'off');
+  el.title = 'Arrival alerts: ' + mode + ' — tap to change';
+}
+
 let arrivalPromptRow = null;   // the toast currently on screen
 let arrivalHandledRow = null;  // already prompted for this visit — see below
 
@@ -872,10 +983,9 @@ function promptArrival(stop) {
   arrivalHandledRow = stop.rowNumber;
   arrivalPromptRow = stop.rowNumber;
 
-  // A driver watching the road will not see a toast. A short buzz is the part
-  // that actually lands, and it is safer than expecting eyes on the screen.
-  // Ignored on iOS Safari, which does not implement vibrate — harmless there.
-  try { navigator.vibrate?.([120, 80, 120]); } catch { /* iOS has no vibrate */ }
+  // A driver watching the road will not see a toast, so the alert has to reach
+  // them some other way. Honours the sound/silent/off choice.
+  fireArrivalAlert();
 
   const side = lastGpsPos
     ? sideOfApproach(lastGpsPos.lat, lastGpsPos.lng, stop._latLng)
