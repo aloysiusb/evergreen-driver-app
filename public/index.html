@@ -27,6 +27,7 @@
 
 
 <script src="/js/report-errors.js"></script>
+<script src="/js/fonts.js"></script>
 <script src="/js/style-units.js"></script>
 <script src="/js/routes.js"></script>
 <script>
@@ -37,7 +38,8 @@ fetch('/api/styles').then(r => r.json()).then(styles => {
   const root = document.documentElement;
   for (const [key, val] of Object.entries(styles)) {
     if (key.startsWith('--') && shouldApplyStyleVar(key)) {
-      root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
+      if (isFontVar(key)) applyFont(key, val);
+      else root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
     }
   }
   // Apply editable home page content (empty string → element hidden via CSS :empty)

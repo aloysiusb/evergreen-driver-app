@@ -258,6 +258,31 @@
       </div>
     </div>
 
+    <!-- ── TYPEFACES ── -->
+    <div class="panel-section">
+      <h2>Typefaces</h2>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        The font loads as soon as you pick it, so the preview is the real thing
+        rather than a guess at it.
+      </p>
+      <div class="control-row">
+        <label>Headings<br><small style="opacity:.6">Route names, page titles</small></label>
+        <div class="inputs">
+          <select data-var="--font-display" id="pick-font-display"></select>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Body text<br><small style="opacity:.6">Stop names, addresses, buttons</small></label>
+        <div class="inputs">
+          <select data-var="--font" id="pick-font-body"></select>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>&nbsp;</label>
+        <div class="inputs"><small id="font-note" style="opacity:.6"></small></div>
+      </div>
+    </div>
+
     <!-- ── CORNERS ── -->
     <div class="panel-section">
       <h2>Corners</h2>
@@ -618,11 +643,47 @@
 </div>
 
 <script src="/js/report-errors.js"></script>
+<script src="/js/fonts.js"></script>
 <script src="/js/style-units.js"></script>
 <script>
 const frame = document.getElementById('preview-frame');
 const pushStatus = document.getElementById('push-status');
 
+
+/* Fill both pickers from the shared registry, and make choosing one load it
+   in the preview immediately — a font picker that does not show you the font
+   is just a list of words. */
+(function initFontPickers() {
+  const fill = (el) => {
+    el.innerHTML = Object.keys(FONT_CHOICES)
+      .map(name => '<option value="' + name + '">' + name + '</option>').join('');
+  };
+  const head = document.getElementById('pick-font-display');
+  const body = document.getElementById('pick-font-body');
+  if (!head || !body) return;
+  fill(head); fill(body);
+
+  const note = document.getElementById('font-note');
+  const preview = (el, cssVar) => {
+    const name = el.value;
+    applyFont(null, name);                         // load it here, for the label
+    el.style.fontFamily = FONT_CHOICES[name].stack;
+    if (note) note.textContent = FONT_CHOICES[name].note || '';
+    const doc = frame.contentDocument;
+    if (doc && doc.defaultView) {
+      // and again inside the preview frame, which is a separate document
+      const link = doc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=' +
+        FONT_CHOICES[name].google + '&display=swap';
+      doc.head.appendChild(link);
+      doc.documentElement.style.setProperty(cssVar, FONT_CHOICES[name].stack);
+    }
+  };
+
+  head.addEventListener('change', () => preview(head, '--font-display'));
+  body.addEventListener('change', () => preview(body, '--font'));
+})();
 
 function collectStyles() {
   const styles = {};

@@ -16,7 +16,8 @@
   function applyStyles(styles) {
     for (const [key, val] of Object.entries(styles)) {
       if (key.startsWith('--') && shouldApplyStyleVar(key)) {
-        root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
+        if (typeof isFontVar === 'function' && isFontVar(key)) applyFont(key, val);
+        else root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
       }
     }
     // Use stored route color if available, else fall back to routes.js value

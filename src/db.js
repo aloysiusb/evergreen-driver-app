@@ -29,6 +29,11 @@ export const DEFAULT_STYLES = {
   "--r-card":           "9",   // cards, table wrappers, callouts
   "--r-panel":          "12",  // large containers, modals
   "--r-sheet":          "20",  // bottom sheets
+  // Family NAMES, not CSS stacks — fonts.js turns one into the other and
+  // fetches the webfont. Storing the stack here would mean the font was named
+  // but never loaded.
+  "--font":             "IBM Plex Sans",
+  "--font-display":     "Source Serif 4",
   "--font-size":        "16",
   "--font-weight":      "400",
   "--line-height":      "1.5",
