@@ -370,7 +370,11 @@ function fetchPlannedTime() {
   }, (result, status) => {
     if (status === 'OK') {
       const legs = result.routes[0].legs;
-      plannedMins = Math.round(legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60);
+      // duration_in_traffic only comes back when Google HAS traffic data for a
+      // leg, which on a rural county road it frequently does not. Reading
+      // .value off the missing object threw, and the whole estimate died with
+      // it. demo.html already guarded this; the driver map did not.
+      plannedMins = Math.round(legs.reduce((s, l) => s + (l.duration_in_traffic || l.duration).value, 0) / 60);
       const freeFlow = Math.round(legs.reduce((s, l) => s + l.duration.value, 0) / 60);
       trafficDelayMins = Math.max(0, plannedMins - freeFlow);
       plannedFailed = false;
