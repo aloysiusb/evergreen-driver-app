@@ -235,6 +235,14 @@ body {
 .feed-item.note   { border-left: 3px solid var(--accent); }
 .feed-item.issue  { border-left: 3px solid var(--warn); }
 .feed-item.undone { border-left: 3px solid var(--muted); }
+.feed-item.photo  { border-left: 3px solid var(--blue, #1e4e79); }
+.feed-photo {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+}
 
 .feed-icon { font-size: 14px; line-height: 1.4; }
 .feed-body { min-width: 0; }
@@ -747,10 +755,12 @@ function connectWS() {
     if (msg.type === 'note-updated') {
       const s = state.items.find(x => x.rowNumber === msg.rowNumber);
       if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; }
+      const photo = String(msg.notes || '').match(/https://drive.google.com/S+/);
       const incident = isIncident(msg.notes);
       addFeed({
-        kind: incident ? 'issue' : 'note',
-        icon: incident ? '⚠️' : '📝',
+        kind: photo ? 'photo' : incident ? 'issue' : 'note',
+        icon: photo ? '📷' : incident ? '⚠️' : '📝',
+        link: photo ? photo[0] : null,
         who: stopLabel(s),
         what: msg.notes,
         routeName: route.name,
@@ -809,6 +819,7 @@ function renderFeed() {
       '<div class="feed-body">' +
         '<div class="feed-who">' + esc(f.who) + routeChip + '</div>' +
         (f.what ? '<div class="feed-what">' + esc(f.what) + '</div>' : '') +
+        (f.link ? '<a class="feed-photo" href="' + esc(f.link) + '" target="_blank" rel="noopener">📷 Open photo</a>' : '') +
       '</div>' +
       '<span class="feed-time">' + time + '</span>' +
     '</div>';

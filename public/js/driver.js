@@ -207,7 +207,13 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();          // never let it also toggle the stop
         const row = Number(btn.dataset.row);
-        if (typeof reportFile === 'function') reportFile(btn.dataset.report, row, route.tabName);
+        if (btn.dataset.report === 'photo') {
+          // 📷 means take one, not note that one was taken.
+          const stop = allStops.find(s => s.rowNumber === row);
+          if (typeof capturePhoto === 'function') capturePhoto(row, route.tabName, stop && stop.accountName);
+        } else if (typeof reportFile === 'function') {
+          reportFile(btn.dataset.report, row, route.tabName);
+        }
       });
     });
   }

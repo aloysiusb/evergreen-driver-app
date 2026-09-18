@@ -12,6 +12,7 @@ import { parseRouteTab, classifyNote, detectColumns } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
+import { uploadPhoto, photosFolderId } from "./drive.js";
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
@@ -239,6 +240,7 @@ app.get("/health", (req, res) => {
       // disk is not attached and data does not survive a deploy.
       survivesDeploy: onPersistentDisk && writable,
     },
+    photos: { configured: Boolean(photosFolderId()) },
   });
 });
 
@@ -360,6 +362,51 @@ app.get("/api/backup/:tabName", async (req, res) => {
     res.status(err.status || 500).json({ error: err.message });
   }
 });
+
+// --- Photos ---------------------------------------------------------------
+//
+// The phone shrinks the image before sending — a raw phone photo is 3-5 MB and
+// a driver on rural cell service would be standing at the bin waiting for it.
+// Arrives as the JPEG itself rather than base64 in JSON, which avoids a third
+// more bytes over the slowest part of the journey.
+
+app.post(
+  "/api/photo",
+  express.raw({ type: "image/jpeg", limit: "6mb" }),
+  async (req, res) => {
+    const tabName = String(req.query.tab || "").trim();
+    const rowNumber = Number(req.query.row);
+    const account = String(req.query.account || "").slice(0, 80);
+
+    if (!photosFolderId()) {
+      return res.status(503).json({
+        error: "Photos are not configured yet — PHOTOS_FOLDER_ID is not set.",
+      });
+    }
+    if (!tabName || !Number.isFinite(rowNumber)) {
+      return res.status(400).json({ error: "Which stop is this photo of?" });
+    }
+    try {
+      assertAllowedTab(tabName);
+    } catch (err) {
+      return res.status(err.status || 400).json({ error: err.message });
+    }
+    if (!req.body || !req.body.length) {
+      return res.status(400).json({ error: "No image received." });
+    }
+
+    try {
+      const saved = await uploadPhoto(req.body, { tabName, rowNumber, account });
+      console.log(`[photo] ${saved.name} (${Math.round(req.body.length / 1024)} KB)`);
+      res.json({ ok: true, ...saved });
+    } catch (err) {
+      console.error("[photo] upload failed:", err.message);
+      // Never answer ok for a photo that did not land — a driver would walk
+      // away believing it saved.
+      res.status(502).json({ error: "Could not save the photo. " + err.message });
+    }
+  }
+);
 
 // --- Which column is which, per tab ---------------------------------------
 //
