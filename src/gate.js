@@ -145,12 +145,15 @@ export function mountGate(app) {
     // fetches /api/styles to paint itself.
     // The error log is an ops page, not a driver page. Drivers POST to it —
     // that is the whole point — but reading it back or clearing it is admin.
+    // The sheet check names tabs and prints the top of the sheet.
+    const readsSheetCheck = req.path === "/api/sheet-check";
+
     const readsErrors = req.path === "/errors.html" ||
       (req.path.startsWith("/api/client-errors") && req.method !== "POST");
 
     const touchesStyles = req.path === "/admin.html" || req.path.startsWith("/api/styles");
     const isStyleRead = req.method === "GET" && req.path.startsWith("/api/styles");
-    const needsAdmin = (readsErrors || (touchesStyles && !isStyleRead)) && Boolean(ADMIN_CODE);
+    const needsAdmin = (readsErrors || readsSheetCheck || (touchesStyles && !isStyleRead)) && Boolean(ADMIN_CODE);
 
     const expected = needsAdmin ? ADMIN_CODE : ACCESS_CODE;
     const jar = needsAdmin ? ADMIN_JAR : DRIVER_JAR;

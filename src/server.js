@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
-import { readRange, readRangeWithColors, writeRange, appendRows, duplicateSheet } from "./sheets.js";
+import { readRange, readRangeWithColors, writeRange, appendRows, duplicateSheet, getSheetsClient } from "./sheets.js";
 import { parseRouteTab, classifyNote } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
@@ -357,6 +357,88 @@ app.get("/api/backup/:tabName", async (req, res) => {
     console.error(`[backup/${req.params.tabName}] ${err.message}`);
     res.status(err.status || 500).json({ error: err.message });
   }
+});
+
+// --- Sheet check ----------------------------------------------------------
+//
+// Pointing the app at a different spreadsheet fails in four different ways and
+// three of them look identical from the outside ("routes won't load"). This
+// answers all four at once:
+//
+//   1. is the service account allowed to open it        — the step people miss
+//   2. which tabs exist, and do they match the whitelist
+//   3. do the columns sit where the parser expects them
+//   4. which tabs would actually serve a route today
+//
+// Admin-gated: it names the tabs and the first row of the sheet.
+
+app.get("/api/sheet-check", async (req, res) => {
+  const sheetId = String(req.query.id || SPREADSHEET_ID || "").trim();
+
+  // The address to share the sheet with. Not a secret — it is an identifier,
+  // and Google's own instructions are to paste it into the Share dialog.
+  let serviceAccount = null;
+  try {
+    serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "{}").client_email || null;
+  } catch { /* malformed key reported below as unreadable */ }
+
+  const out = {
+    spreadsheetId: sheetId || null,
+    shareWith: serviceAccount,
+    expected: { tabs: ROUTE_DAY_TABS, columns: ROUTE_COLUMNS },
+  };
+
+  if (!sheetId) {
+    out.ok = false;
+    out.problem = "No spreadsheet id. Set ROUTE_SHEET_ID, or pass ?id=… to test one.";
+    return res.json(out);
+  }
+  if (!serviceAccount) {
+    out.ok = false;
+    out.problem = "GOOGLE_SERVICE_ACCOUNT_KEY is missing or not valid JSON.";
+    return res.json(out);
+  }
+
+  try {
+    const sheets = await getSheetsClient();
+    const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
+
+    out.title = meta.data.properties?.title || null;
+    const present = (meta.data.sheets || []).map(sh => sh.properties.title);
+    out.tabsInSheet = present;
+
+    out.tabsMatched = ROUTE_DAY_TABS.filter(t => present.includes(t));
+    out.tabsMissing = ROUTE_DAY_TABS.filter(t => !present.includes(t));
+    out.tabsUnused  = present.filter(t => !ROUTE_DAY_TABS.includes(t) && !EXCLUDED_TABS.includes(t));
+
+    // Read the top of each matched tab so the columns can be eyeballed against
+    // what routeParser expects.
+    out.columnCheck = [];
+    for (const tab of out.tabsMatched.slice(0, 3)) {
+      try {
+        const rows = await readRange(sheetId, `'${tab}'!A1:H3`);
+        out.columnCheck.push({ tab, firstRows: rows });
+      } catch (err) {
+        out.columnCheck.push({ tab, error: err.message });
+      }
+    }
+
+    out.ok = out.tabsMatched.length > 0;
+    out.problem = out.ok
+      ? null
+      : "The service account can open the sheet, but none of its tabs match the " +
+        "names in config.js. Rename the tabs, or update ROUTE_DAY_TABS.";
+  } catch (err) {
+    out.ok = false;
+    const m = err.message || String(err);
+    out.problem = /permission|403|forbidden/i.test(m)
+      ? `The service account cannot open this sheet. Share it with ${serviceAccount} (Viewer is enough to read; Editor is needed to mark stops done).`
+      : /not found|404/i.test(m)
+        ? "No spreadsheet with that id. Check the id in the sheet's URL."
+        : m;
+  }
+
+  res.json(out);
 });
 
 // --- Client error reporting ----------------------------------------------
