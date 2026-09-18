@@ -139,6 +139,7 @@
 
     // Row color from sheet as card background
     let colorStyle = '';
+    let sheetColored = '';
     if (item.rowColor) {
       const r = Math.round((item.rowColor.red   ?? 0) * 255);
       const g = Math.round((item.rowColor.green ?? 0) * 255);
@@ -146,10 +147,11 @@
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
       const textColor = brightness > 150 ? '#1a1a1a' : '#ffffff';
       colorStyle = `style="background:rgb(${r},${g},${b}); border-color:rgba(0,0,0,0.12); color:${textColor};"`;
+      sheetColored = ' has-sheet-color';
     }
 
     return `
-      <div class="stop-card${isCompleted ? ' completed' : ''}" data-row="${item.rowNumber}" ${colorStyle}>
+      <div class="stop-card${isCompleted ? ' completed' : ''}${sheetColored}" data-row="${item.rowNumber}" ${colorStyle}>
         <div class="stop-main">
           <div class="stop-info">
             <div class="stop-account">${esc(nameOrAddr)}</div>

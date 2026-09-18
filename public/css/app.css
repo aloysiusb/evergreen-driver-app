@@ -771,6 +771,22 @@ body.sim-on { padding-bottom: 60px; }
   margin-top: 3px;
 }
 
+/* When a row carries a highlight colour from the sheet, the card has already
+   chosen black or white text for contrast against THAT colour. These children
+   were overriding it with the theme's own text colours, which is harmless on a
+   light theme — they were nearly the same — and unreadable on a dark one:
+   near-white "Christman, Susan" on a bright yellow row. The sheet's colour
+   wins inside its own card. */
+.stop-card.has-sheet-color .stop-account,
+.stop-card.has-sheet-color .stop-address,
+.stop-card.has-sheet-color .stop-note-add {
+  color: inherit;
+}
+.stop-card.has-sheet-color .stop-address,
+.stop-card.has-sheet-color .stop-note-add {
+  opacity: 0.78;   /* the secondary line stays secondary, whichever way it went */
+}
+
 .stop-note {
   font-size: var(--stop-note-font-size);
   font-weight: var(--stop-note-font-weight);
