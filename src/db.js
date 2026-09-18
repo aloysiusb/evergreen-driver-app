@@ -16,11 +16,11 @@ db.exec(`CREATE TABLE IF NOT EXISTS styles (
 
 export const DEFAULT_STYLES = {
   // ── Global ──────────────────────────────────────────────
-  "--bg":               "#f4f4f5",
-  "--surface":          "#ffffff",
-  "--border":           "#e4e4e7",
-  "--text":             "#18181b",
-  "--text-muted":       "#71717a",
+  "--bg":               "#0f1612",
+  "--surface":          "#17201a",
+  "--border":           "#2a372e",
+  "--text":             "#e5ece7",
+  "--text-muted":       "#8ea395",
   // ── Corner radius scale (see public/css/tokens.css) ─────
   // Roles, not sizes. Every border-radius in the app resolves
   // to one of these, so corners stay consistent site-wide.
@@ -34,8 +34,8 @@ export const DEFAULT_STYLES = {
   "--line-height":      "1.5",
 
   // ── Home header ─────────────────────────────────────────
-  "--home-header-bg":          "#18181b",
-  "--home-header-text":        "#ffffff",
+  "--home-header-bg":          "#17201a",
+  "--home-header-text":        "#e5ece7",
   "--home-header-padding":     "36",
   "--home-heading-font-size":  "22",
   "--home-heading-font-weight":"800",
@@ -43,80 +43,80 @@ export const DEFAULT_STYLES = {
   "--home-subhead-font-weight":"400",
 
   // ── Home page content ────────────────────────────────────
-  "site-logo":    "🌿",
+  "site-logo":    "",
   "site-heading": "Evergreen Compost",
   "site-subhead": "Tap your route to get started",
 
   // ── Route cards (home page) ──────────────────────────────
   "--route-card-radius": "16",
   "route-card-text":     "#ffffff",
-  "route-tues-dv":         "#0ea5e9",
-  "route-tues-4wd":        "#f97316",
-  "route-weds-res":        "#22c55e",
-  "route-weds-commercial": "#a855f7",
-  "route-thurs-uv":        "#06b6d4",
-  "route-thurs-comeagle":  "#ef4444",
-  "route-friday":          "#eab308",
-  "route-monday":          "#ec4899",
-  "route-max-routes":      "#6366f1",
+  "route-tues-dv":         "#3d7f91",
+  "route-tues-4wd":        "#a06a3e",
+  "route-weds-res":        "#4a8a5e",
+  "route-weds-commercial": "#6e5f8a",
+  "route-thurs-uv":        "#3f8a80",
+  "route-thurs-comeagle":  "#9a5b52",
+  "route-friday":          "#8a7c42",
+  "route-monday":          "#8a5a70",
+  "route-max-routes":      "#5a6a8a",
 
   // ── Route header (driver page) ───────────────────────────
-  "--route-header-text":         "#ffffff",
+  "--route-header-text":         "#f2f7f4",
   "--route-title-font-size":     "22",
   "--route-title-font-weight":   "700",
-  "--progress-bar-fill":         "#ffffff",
+  "--progress-bar-fill":         "#63b681",
 
   // ── Section headers ──────────────────────────────────────
   "--section-header-font-size":      "11.5",
   "--section-header-font-weight":    "700",
-  "--completed-section-bg":          "#dcfce7",
-  "--completed-section-text":        "#15803d",
-  "--completed-section-border":      "#bbf7d0",
+  "--completed-section-bg":          "#16301f",
+  "--completed-section-text":        "#8ecfa6",
+  "--completed-section-border":      "#24452f",
 
   // ── Stop card ────────────────────────────────────────────
   "--stop-account-font-size":   "16",
   "--stop-account-font-weight": "600",
   "--stop-address-font-size":   "13",
   "--stop-address-font-weight": "400",
-  "--stop-done-bg":             "#f0fdf4",
-  "--stop-done-border":         "#bbf7d0",
+  "--stop-done-bg":             "#14241b",
+  "--stop-done-border":         "#24452f",
 
   // ── Note chips ───────────────────────────────────────────
-  "--urgent-bg":         "#fee2e2",
-  "--urgent-text":       "#991b1b",
-  "--hold-bg":           "#fef3c7",
-  "--hold-text":         "#92400e",
+  "--urgent-bg":         "#3a1b15",
+  "--urgent-text":       "#e39383",
+  "--hold-bg":           "#33270f",
+  "--hold-text":         "#e0aa52",
   "--stop-note-font-size":   "13",
   "--stop-note-font-weight": "400",
 
   // ── Note textarea ────────────────────────────────────────
-  "--note-edit-bg":          "#ffffff",
+  "--note-edit-bg":          "#1d2821",
   "--note-edit-font-size":   "13",
   "--note-edit-font-weight": "400",
 
   // ── Done button ──────────────────────────────────────────
-  "--done-btn-bg":      "#22c55e",
-  "--done-btn-text":    "#ffffff",
-  "--done-btn-done-bg": "#93c5fd",
+  "--done-btn-bg":      "#2d7d4f",
+  "--done-btn-text":    "#f2f7f4",
+  "--done-btn-done-bg": "#3f5f52",
 
   // ── Map / Directions buttons ─────────────────────────────
-  "--action-btn-bg":         "#ffffff",
-  "--action-btn-text":       "#71717a",
-  "--action-btn-border":     "#e4e4e7",
+  "--action-btn-bg":         "#1d2821",
+  "--action-btn-text":       "#8ea395",
+  "--action-btn-border":     "#2a372e",
   "--action-btn-font-size":  "12",
   "--action-btn-font-weight":"500",
 
   // ── Bottom action bar ────────────────────────────────────
-  "--action-bar-bg": "#ffffff",
+  "--action-bar-bg": "#131c16",
 
   // ── Primary button (Day Complete / Start My Day) ─────────
-  "--primary-btn-text":        "#ffffff",
+  "--primary-btn-text":        "#f2f7f4",
   "--primary-btn-font-size":   "14",
   "--primary-btn-font-weight": "600",
 
   // ── Toast notification ───────────────────────────────────
-  "--toast-bg":          "#18181b",
-  "--toast-text":        "#ffffff",
+  "--toast-bg":          "#e5ece7",
+  "--toast-text":        "#14241b",
   "--toast-font-size":   "13",
   "--toast-font-weight": "400",
 };
