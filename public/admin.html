@@ -95,6 +95,16 @@
     border-color: #4a9e3f;
   }
 
+  .inputs select {
+    font: inherit;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: var(--r-control);
+    border: 1px solid #3a453e;
+    background: #232b26;
+    color: #e6ece9;
+  }
+
   .inputs input[type=text] {
     width: 150px;
     font: inherit;
@@ -694,7 +704,8 @@
     <div class="panel-section">
       <h2>Incident buttons</h2>
       <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
-        The four buttons on every stop card. What you type here is what appears
+        Choose <em>Driver — a route</em> in the preview above to watch these
+        change. The four buttons on every stop card. What you type here is what appears
         on the button <em>and</em> what gets written into the Driver Notes
         column — they cannot say different things. Keep them short; long wording
         is trimmed on a narrow phone.
@@ -714,6 +725,78 @@
       <div class="control-row">
         <label>📷 Button 4</label>
         <div class="inputs"><input type="text" data-text="report-photo-label" maxlength="22" placeholder="Photo"></div>
+      </div>
+
+      <div class="subsection">Appearance</div>
+      <div class="control-row">
+        <label>Fill</label>
+        <div class="inputs"><input type="color" data-var="--report-btn-bg" value="#f2f5f2"></div>
+      </div>
+      <div class="control-row">
+        <label>Text colour</label>
+        <div class="inputs"><input type="color" data-var="--report-btn-text" value="#1c2a21"></div>
+      </div>
+      <div class="control-row">
+        <label>Edge</label>
+        <div class="inputs"><input type="color" data-var="--report-btn-border" value="#d7e0d9"></div>
+      </div>
+      <div class="control-row">
+        <label>Corners<br><small style="opacity:.6">Turn it up for fully round ends</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-radius" min="0" max="40" step="1" value="20">
+          <span class="pair-val" data-for="--report-btn-radius">20</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Height</label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-height" min="48" max="110" step="2" value="72">
+          <span class="pair-val" data-for="--report-btn-height">72</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Width before wrapping<br><small style="opacity:.6">Smaller fits more across</small></label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-min-width" min="70" max="200" step="2" value="104">
+          <span class="pair-val" data-for="--report-btn-min-width">104</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Space between</label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-gap" min="2" max="24" step="1" value="10">
+          <span class="pair-val" data-for="--report-btn-gap">10</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Icon size</label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-icon-size" min="14" max="40" step="1" value="24">
+          <span class="pair-val" data-for="--report-btn-icon-size">24</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Text size</label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-font-size" min="9" max="20" step="0.5" value="12">
+          <span class="pair-val" data-for="--report-btn-font-size">12</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Text weight</label>
+        <div class="inputs">
+          <input type="range" data-var="--report-btn-font-weight" min="100" max="900" step="100" value="600">
+          <span class="pair-val" data-for="--report-btn-font-weight">600</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Text style</label>
+        <div class="inputs">
+          <select data-var="--report-btn-font-style">
+            <option value="normal">Normal</option>
+            <option value="italic">Italic</option>
+          </select>
+        </div>
       </div>
     </div>
 

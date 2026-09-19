@@ -599,14 +599,19 @@ body {
    The grid fits as many across as the card allows and wraps the rest: three
    on a phone, four on an iPad, without either being hard-coded. Each button
    is as tall as a standard touch target and says what it does. */
+/* How many fit across is not written down anywhere — auto-fit packs in as
+   many as will fit at --report-btn-min-width and wraps the rest. A phone in
+   portrait gets two, a phone on its side or an iPad either way gets four, and
+   changing the minimum width in the editor changes all of those at once
+   without a single breakpoint being touched. */
 .stop-report-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--report-btn-min-width), 1fr));
+  gap: var(--report-btn-gap);
   margin-top: 12px;
 }
 .stop-report-btn {
-  min-height: 58px;
+  min-height: var(--report-btn-height);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -614,20 +619,21 @@ body {
   gap: 5px;
   padding: 9px 6px;
   font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: var(--report-btn-font-size);
+  font-weight: var(--report-btn-font-weight);
+  font-style: var(--report-btn-font-style);
   letter-spacing: 0.01em;
   line-height: 1.15;
   text-align: center;
   cursor: pointer;
-  border: 1px solid var(--action-btn-border);
-  border-radius: var(--r-control);
-  background: var(--action-btn-bg);
-  color: inherit;
+  border: 1px solid var(--report-btn-border);
+  border-radius: var(--report-btn-radius);
+  background: var(--report-btn-bg);
+  color: var(--report-btn-text);
 }
 .stop-report-btn:active { transform: scale(0.96); }
 
-.srb-icon { font-size: 21px; line-height: 1; }
+.srb-icon { font-size: var(--report-btn-icon-size); line-height: 1; }
 .srb-label {
   display: block;
   max-width: 100%;
@@ -636,8 +642,9 @@ body {
   white-space: nowrap;
 }
 
-/* Very narrow phones: two across still beats four squashed. */
-@media (max-width: 340px) {
+/* Very narrow phones: two across still beats four squashed, whatever the
+   minimum width is set to. */
+@media (max-width: 360px) {
   .stop-report-row { grid-template-columns: repeat(2, 1fr); }
 }
 

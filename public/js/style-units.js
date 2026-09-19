@@ -5,9 +5,14 @@
 function needsPx(key) {
   return key.startsWith('--r-') ||        // corner radius scale (tokens.css)
     key === '--radius' ||
-    key === '--route-card-radius' ||
+    key.endsWith('-radius') ||            // --route-card-radius, --report-btn-radius
     key.endsWith('-font-size') ||
-    key.endsWith('-padding');
+    key.endsWith('-padding') ||
+    // NOT --line-height, which is a bare ratio and would become '1.5px'.
+    (key.endsWith('-height') && key !== '--line-height') ||
+    key.endsWith('-min-width') ||
+    key.endsWith('-gap') ||
+    key.endsWith('-icon-size');
 }
 
 /* Pages that declare a radius preset (data-radius="tight"|"soft" on <html>)

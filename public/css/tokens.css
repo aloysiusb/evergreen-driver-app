@@ -20,6 +20,23 @@
      data-radius="soft"      marketing/deck pages (rounder)
    ============================================================ */
 
+/* Incident buttons on the driver's stop card. The style editor overrides
+   these on :root; what is here is what a page shows before the settings
+   arrive, or if they never do. */
+:root {
+  --report-btn-bg:          #f2f5f2;
+  --report-btn-text:        #1c2a21;
+  --report-btn-border:      #d7e0d9;
+  --report-btn-radius:      20px;
+  --report-btn-height:      72px;
+  --report-btn-min-width:   104px;
+  --report-btn-gap:         10px;
+  --report-btn-icon-size:   24px;
+  --report-btn-font-size:   12px;
+  --report-btn-font-weight: 600;
+  --report-btn-font-style:  normal;
+}
+
 :root {
   --r-chip:    4px;
   --r-control: 6px;

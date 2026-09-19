@@ -97,6 +97,23 @@ export const DEFAULT_STYLES = {
   "report-skip-label":          "Skipped",
   "report-photo-label":         "Photo",
 
+  // ── Incident button appearance ───────────────────────────
+  // Size and spacing are unitless; style-units.js puts the px back.
+  // --report-btn-min-width is what decides how many fit across: the row packs
+  // in as many as will fit at that width and wraps the rest, so a phone gets
+  // two and an iPad four without either being written down anywhere.
+  "--report-btn-bg":          "#f2f5f2",
+  "--report-btn-text":        "#1c2a21",
+  "--report-btn-border":      "#d7e0d9",
+  "--report-btn-radius":      "20",
+  "--report-btn-height":      "72",
+  "--report-btn-min-width":   "104",
+  "--report-btn-gap":         "10",
+  "--report-btn-icon-size":   "24",
+  "--report-btn-font-size":   "12",
+  "--report-btn-font-weight": "600",
+  "--report-btn-font-style":  "normal",
+
   // ── Note chips ───────────────────────────────────────────
   "--urgent-bg":         "#fbe4df",
   "--urgent-text":       "#8c3322",
