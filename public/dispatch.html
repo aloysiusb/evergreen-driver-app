@@ -779,7 +779,7 @@ function connectWS() {
     if (msg.type === 'note-updated') {
       const s = state.items.find(x => x.rowNumber === msg.rowNumber);
       if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; }
-      const photo = String(msg.notes || '').match(/https://drive.google.com/S+/);
+      const photo = String(msg.notes || '').match(/https:\/\/drive\.google\.com\/\S+/);
       const incident = isIncident(msg.notes);
       addFeed({
         kind: photo ? 'photo' : incident ? 'issue' : 'note',
