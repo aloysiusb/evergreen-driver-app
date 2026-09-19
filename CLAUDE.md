@@ -159,6 +159,10 @@ pattern: its palette is `--d-*`, fed from `--dispatch-*` inputs the editor
 sets, with light and dark read from separate keys. Copy that shape for any
 other page that needs its own themes.
 
+The app's WebSocket is mounted at **`/ws`**, not the host root. Every client
+must include the path or the handshake is refused and the reconnect loop retries
+forever, silently.
+
 `<html data-style-button>` opts a page into the paint button injected by
 `styles.js`. It is on the home and dispatcher pages. It is deliberately NOT on
 the route screen — a driver working a stop should not have a link to the style

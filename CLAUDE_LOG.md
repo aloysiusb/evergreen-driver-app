@@ -353,3 +353,29 @@ time. Same backslash-eating hazard as the earlier `map.js` incident.
 `public/*.html`. Thirteen scripts, zero broken. Verified live afterwards: the
 board loads, WebSocket reads Live, 1401 stops, no console errors in a clean
 tab.
+
+---
+
+## 2026-09-18 (later still) — route colours, hex fields, two bugs of mine
+
+**Hex codes can be pasted.** A native colour swatch has nowhere to type, so a
+hex from a palette could be read but not entered. Each of the 57 swatches now
+has a text field beside it, built in script rather than markup. It carries no
+`data-var` — `collectStyles()` gathers every `[data-var]` on the page, and a
+second element claiming the same key would race the swatch. The 3-digit short
+form expands only on blur, since `2d7d4f` passes through `2d7` on the way.
+
+**Route colours carry to the dispatcher.** The board kept its own copy of the
+route list and the two had drifted — Valley Route was muted teal on the picker
+and bright sky blue on the board. The copy is gone; it loads `routes.js` and
+reads the saved `route-<id>` colour, the same key the picker reads. Each card
+sets one `--route-color` and the stylesheet does the rest: top band, a wash
+behind the header, stripe, progress bar, done count.
+
+**Two bugs of mine, both from today.** `styles.js` opened its WebSocket at the
+host root when the server mounts it at `/ws`, so the route picker's live style
+updates never connected and retried every four seconds forever. And a chased
+phantom worth recording: `getComputedStyle().backgroundColor` read through the
+browser tool returned a stale value for the connection dot, which looked like
+a CSS bug for several minutes. The rendered pixel was correct all along —
+screenshot before trusting a computed-style read.
