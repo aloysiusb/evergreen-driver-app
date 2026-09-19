@@ -404,3 +404,34 @@ desaturation.
 **Navigation.** Driver route pages now carry a dispatcher button beside home,
 plus the paint button (previously withheld from the route screen; asked for
 explicitly). The dispatcher gained a link back to the routes.
+
+---
+
+## 2026-09-18 (night) — one top bar, and the error log earns its keep again
+
+**Shared chrome.** The style editor had the only version of the top bar. It is
+now `public/css/chrome.css`, carried by the route picker, a route, the
+dispatcher board, the request queue, the error log, the notes page and the
+editor. CSS and markup only — no script — because the error log and notes
+pages set their own palettes and pulling the style system in just to draw a
+bar would let the editor's inline variables override them. Four editable
+colours where the style system is already loaded, fallbacks everywhere else.
+The customer portal and payment page are deliberately excluded.
+
+**The map crashed where Google has no traffic data — again.** Three places
+summed a route's legs; I guarded exactly one of them in an earlier pass. The
+error log caught the other two in production (Thursday Com/Eagle, Wednesday
+Residential, three occurrences) with a clean stack. `duration_in_traffic` is
+absent wherever Google has no traffic model, and `.value` on the missing
+object throws and takes the callback with it — no estimate, no live reorder,
+no reroute nudge, nothing visible.
+
+`routeMinutes(legs, preferTraffic)` and `legSeconds(leg, preferTraffic)` now
+back all four sites, including the Distance Matrix ETA, which was the last
+direct `.value` read. **The lesson is the pattern, not the line:** fixing one
+instance of a crash shape and not searching for its siblings is how this came
+back. Grep for the shape before calling it fixed.
+
+**Also:** the style button came off the route picker and route screen —
+styling is the office's job, not the drivers' — leaving it on the dispatcher
+board only.
