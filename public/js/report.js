@@ -144,6 +144,10 @@
   let answers = {};
   let currentStep = 0;
   let photoTaken = false;
+  /* Whatever the driver types on the last step. Held here rather than read off
+     the element at submit time, because renderStep() rebuilds the panel's
+     innerHTML and would throw the text away on any re-render. */
+  let freeText = '';
   let activeRowNumber = null;
   let activeTabName = null;
 
@@ -233,6 +237,7 @@
   }
 
   window.reportOpen = function(type, rowNumber, tabName) {
+    freeText = '';
     activeScreen = SCREENS[type];
     answers = {};
     currentStep = 0;
@@ -265,6 +270,14 @@
         ${escHtml(o.label)}
       </button>`).join('');
 
+    /* The lists cover what happens most days. This is for the day they do
+       not — "wrong bin left out", "third time this month", a gate code that
+       changed. Optional: leaving it empty changes nothing. */
+    const freeHtml = `
+      <textarea id="report-free-text" class="report-free-text" rows="2"
+                placeholder="Anything else? (optional)"
+                oninput="reportFreeText(this.value)">${escHtml(freeText)}</textarea>`;
+
     const photoHtml = `
       <div class="report-photo-row">
         <label class="report-photo-btn ${photoTaken ? 'taken' : ''}">
@@ -287,6 +300,7 @@
       ${progressHtml}
       <div class="report-step-label">${escHtml(step.label)}</div>
       <div class="report-options">${optHtml}</div>
+      ${isLast ? freeHtml : ''}
       ${isLast ? photoHtml : ''}
       <div class="report-footer">
         ${currentStep > 0 ? `<button class="report-back" onclick="reportBack()">← Back</button>` : '<span></span>'}
@@ -301,6 +315,10 @@
              </button>`}
       </div>`;
   }
+
+  window.reportFreeText = function(value) {
+    freeText = value;      // no re-render: that would move the caret
+  };
 
   window.reportSelect = function(key, value) {
     answers[key] = value;
@@ -329,7 +347,8 @@
     const step = activeScreen.steps[currentStep];
     if (!answers[step.key]) return;
 
-    const noteText = activeScreen.format(answers, photoTaken);
+    const typed = freeText.trim().replace(/\s+/g, ' ').slice(0, 160);
+    const noteText = activeScreen.format(answers, photoTaken) + (typed ? ' · ' + typed : '');
     document.getElementById('report-overlay').classList.remove('open');
 
     // Get route tab from driver.js context

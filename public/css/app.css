@@ -509,6 +509,24 @@ body {
 .report-option.selected { font-weight: 700; }
 .report-option:active { transform: scale(0.98); }
 
+.report-free-text {
+  display: block;
+  /* The panel has no side padding of its own; every row sets its own 16px,
+     so this one matches rather than running to the edges. */
+  width: calc(100% - 32px);
+  margin: 10px 16px 0;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--note-edit-text);
+  background: var(--note-edit-bg);
+  border: 1px solid var(--action-btn-border);
+  border-radius: var(--r-card);
+  resize: none;
+}
+.report-free-text:focus { outline: none; border-color: var(--accent, #2d7d4f); }
+
 .report-photo-row { padding: 12px 16px 0; }
 .report-photo-btn {
   display: block;
