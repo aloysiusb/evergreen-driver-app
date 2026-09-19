@@ -853,7 +853,11 @@ function renderFeed() {
 // ── Theme toggle ──────────────────────────────────────────────────────────
 function toggleTheme() {
   const root = document.documentElement;
-  const cur = root.getAttribute('data-theme');
+  /* Until someone picks a theme there is no attribute to read, and assuming
+     "light" meant the first tap set dark-on-dark: the button appeared to do
+     nothing. Ask what is actually on screen instead. */
+  let cur = root.getAttribute('data-theme');
+  if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   const next = cur === 'dark' ? 'light' : 'dark';
   root.setAttribute('data-theme', next);
   // It is a screen someone leaves open all day; re-picking the theme after

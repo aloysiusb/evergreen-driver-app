@@ -144,6 +144,39 @@ API from a browser. The gate makes that far less interesting, but it should be
 restricted to the app's own origin. Per-driver identity is a separate job if
 Alyssa ever wants to know who did what.
 
+## Styling: how a saved setting reaches a page
+
+`public/js/styles.js` is the only copy of the fetch-and-apply loop. A page
+includes `style-units.js`, `fonts.js`, `styles.js` and calls `initStyles()`.
+Pages with a WebSocket of their own pass style messages to
+`window.onStyleMessage(msg)`; pages without one pass `{ socket: true }`.
+
+**The rule that matters:** the editor writes its values as INLINE styles on
+`:root`, and inline beats every selector. So a page that wants light and dark
+variants of a colour must not name that colour the same as a global key —
+the single global value would win in both. The dispatcher board shows the
+pattern: its palette is `--d-*`, fed from `--dispatch-*` inputs the editor
+sets, with light and dark read from separate keys. Copy that shape for any
+other page that needs its own themes.
+
+`<html data-style-button>` opts a page into the paint button injected by
+`styles.js`. It is on the home and dispatcher pages. It is deliberately NOT on
+the route screen — a driver working a stop should not have a link to the style
+editor under their thumb — and must never go on the customer portal.
+
+## Checks before pushing
+
+- `node --check <file>` for every `.js` touched.
+- `npm run check` — parses every inline `<script>` in `public/*.html`.
+  `node --check` does not look inside HTML, which is how `8ee83bd` shipped a
+  regex with its backslashes eaten (`/https://drive.google.com/S+/`). That one
+  malformed literal stopped the dispatcher board's entire script from parsing,
+  and the board showed "Loading routes…" for a day while the API answered
+  correctly the whole time.
+- Writing files through bash heredocs is what ate those backslashes. Use a
+  node script with the Write tool instead, and scan the result for stray
+  control characters.
+
 ## Open items — carry these forward (last reviewed 2026-09-18)
 
 Not for the stakeholder write-up at `public/updates.html` unless Virginia says

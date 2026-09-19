@@ -321,3 +321,35 @@ It warms the column cache as a side effect.
 not been restored — the originals are in the `Tues DV backup 2026-07-06` tab.
 `ACCESS_CODE` and `ADMIN_CODE` are still unset, so the route pages remain
 publicly readable by anyone with the URL.
+
+---
+
+## 2026-09-18 (later) — the dispatcher joins the style system
+
+**One copy of the style client.** The fetch-and-apply loop existed twice
+(index.html, driver.js) and the dispatcher board had no copy at all, which is
+the whole reason it ignored the editor. It now lives in
+`public/js/styles.js`; pages call `initStyles()`.
+
+**The dispatcher keeps its own light/dark.** It could not simply adopt the
+global colours: the editor writes `--bg` and friends as inline styles on
+`:root`, inline beats every selector, so one global value would have won in
+both themes and the toggle would have stopped mattering. Its palette is
+namespaced `--d-*` and fed from `--dispatch-*` inputs, light and dark held
+separately. Eighteen new keys, all editable, previewable from the editor via a
+new page picker. The toggle is now remembered between visits, restored inline
+in `<head>` so there is no flash, and its first tap no longer sets
+dark-on-dark when the system is already dark.
+
+**Found while testing: the dispatcher board had been dead since `8ee83bd`.**
+A regex written the day before lost its backslashes —
+`/https://drive.google.com/S+/` ends at the second slash — so the page's
+entire inline script failed to parse. Six route cards, 1401 stops, all of it
+blank behind one console error, while `/api/routes/*` answered 200 the whole
+time. Same backslash-eating hazard as the earlier `map.js` incident.
+
+`node --check` cannot see inside HTML, which is how it got through.
+`tools/check-html.mjs` (`npm run check`) now parses every inline script in
+`public/*.html`. Thirteen scripts, zero broken. Verified live afterwards: the
+board loads, WebSocket reads Live, 1401 stops, no console errors in a clean
+tab.
