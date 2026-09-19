@@ -102,10 +102,16 @@ export const DEFAULT_STYLES = {
   // --report-btn-min-width is what decides how many fit across: the row packs
   // in as many as will fit at that width and wraps the rest, so a phone gets
   // two and an iPad four without either being written down anywhere.
+  // One muted fill per button, so they are told apart by colour before the
+  // word is read. Light enough that dark text sits on all four comfortably.
+  "--report-bg-contamination": "#e6cfc7",
+  "--report-bg-overflow":      "#eadfc4",
+  "--report-bg-skip":          "#d9dee0",
+  "--report-bg-photo":         "#d3e0d4",
   "--report-btn-bg":          "#f2f5f2",
   "--report-btn-text":        "#1c2a21",
   "--report-btn-border":      "#d7e0d9",
-  "--report-btn-radius":      "20",
+  "--report-btn-radius":      "36",
   "--report-btn-height":      "72",
   "--report-btn-min-width":   "104",
   "--report-btn-gap":         "10",
@@ -124,7 +130,7 @@ export const DEFAULT_STYLES = {
   // #1c3a43 text on #2f6473, effectively unreadable. Its own pair now.
   "--note-bg":           "#e7eef1",
   "--note-text":         "#1d3742",
-  "--stop-note-font-size":   "13",
+  "--stop-note-font-size":   "15",
   "--stop-note-font-weight": "400",
 
   // ── Note textarea ────────────────────────────────────────

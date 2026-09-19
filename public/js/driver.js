@@ -147,20 +147,21 @@
       ? item.address + (item.city ? ', ' + item.city : '')
       : (item.city || '');
 
-    /* What is already on the stop, and a separate way to add to it.
-
-       Tapping the note used to open it in an editable box with the existing
-       text already in it — one careless keystroke from wiping whatever the
-       office had written there. The note is now read-only on this screen, and
-       "Add a note" appends to it instead, so nothing already written can be
-       lost by a driver adding to it. */
-    const noteHtml =
-      (item.notes
-        ? `<div class="stop-note ${noteClass}">${esc(item.notes)}</div>`
-        : '') +
-      (!isCompleted
-        ? `<button class="stop-note-add" data-row="${item.rowNumber}">✎ Add a note</button>`
-        : '');
+    /* One field, not two. Tapping it opens an EMPTY box and what is typed is
+       added to what is already there — so it reads as the stop's note, it is
+       obvious that it can be written on, and nothing already written can be
+       lost by adding to it. The existing text is never put in the box, which
+       is what stops it being edited. */
+    const noteHtml = isCompleted
+      ? (item.notes ? `<div class="stop-note ${noteClass}">${esc(item.notes)}</div>` : '')
+      : item.notes
+        ? `<div class="stop-note ${noteClass} stop-note-open" data-row="${item.rowNumber}"
+                role="button" tabindex="0">
+             <span class="stop-note-text">${esc(item.notes)}</span>
+             <span class="stop-note-hint">✎ Tap to add</span>
+           </div>`
+        : `<div class="stop-note stop-note-open stop-note-empty" data-row="${item.rowNumber}"
+                role="button" tabindex="0">✎ Tap to add a note</div>`;
 
     const actionBtn = isCompleted
       ? `<button class="undo-btn" data-row="${item.rowNumber}">Undo</button>`
@@ -171,11 +172,12 @@
            </svg>
          </button>`;
 
-    // Map + Directions buttons
+    /* The 📍 Map button is gone — the Map tab in the header is always on
+       screen, so a second button on every card was just noise. What it did
+       is not lost: the address line itself is the link now, which is where a
+       driver would tap anyway. */
     const mapQuery = encodeURIComponent((item.address || '') + (item.city ? ' ' + item.city : ''));
-    const mapBtn = item.address
-      ? `<a class="stop-action-btn" href="https://maps.google.com/?q=${mapQuery}" target="_blank" rel="noopener">📍 Map</a>`
-      : '';
+    const mapBtn = '';
 
     /* Incident buttons. Big enough to hit with a glove on, laid out in a grid
        that fits as many across as the screen allows and wraps the rest — three
@@ -219,7 +221,12 @@
         <div class="stop-main">
           <div class="stop-info">
             <div class="stop-account">${esc(nameOrAddr)}</div>
-            ${addrLine ? `<div class="stop-address">${esc(addrLine)}</div>` : ''}
+            ${addrLine
+              ? (item.address
+                  ? `<a class="stop-address stop-address-link" href="https://maps.google.com/?q=${mapQuery}"
+                        target="_blank" rel="noopener">${esc(addrLine)}</a>`
+                  : `<div class="stop-address">${esc(addrLine)}</div>`)
+              : ''}
             ${mapBtn ? `<div class="stop-action-row">${mapBtn}</div>` : ''}
             ${reportBtns}
             ${accessChip}
@@ -256,7 +263,7 @@
     container.querySelectorAll('.undo-btn').forEach(btn => {
       btn.addEventListener('click', () => markUndone(Number(btn.dataset.row)));
     });
-    container.querySelectorAll('.stop-note-add').forEach(el => {
+    container.querySelectorAll('.stop-note-open').forEach(el => {
       el.addEventListener('click', () => editNote(Number(el.dataset.row), el));
     });
 

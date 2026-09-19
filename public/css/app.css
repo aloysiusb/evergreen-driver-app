@@ -631,6 +631,13 @@ body {
   background: var(--report-btn-bg);
   color: var(--report-btn-text);
 }
+
+/* Colour before wording: the four are distinguishable at a glance, and each
+   fill falls back to the shared one if it is ever unset. */
+.stop-report-btn[data-report="contamination"] { background: var(--report-bg-contamination, var(--report-btn-bg)); }
+.stop-report-btn[data-report="overflow"]      { background: var(--report-bg-overflow, var(--report-btn-bg)); }
+.stop-report-btn[data-report="skip"]          { background: var(--report-bg-skip, var(--report-btn-bg)); }
+.stop-report-btn[data-report="photo"]         { background: var(--report-bg-photo, var(--report-btn-bg)); }
 .stop-report-btn:active { transform: scale(0.96); }
 
 .srb-icon { font-size: var(--report-btn-icon-size); line-height: 1; }
@@ -858,49 +865,69 @@ body.sim-on { padding-bottom: 60px; }
    near-white "Christman, Susan" on a bright yellow row. The sheet's colour
    wins inside its own card. */
 .stop-card .stop-account,
-.stop-card .stop-address,
-.stop-card .stop-note-add {
+.stop-card .stop-address {
   color: inherit;
+}
+
+/* It opens Google Maps for this stop — what the 📍 Map button used to do. */
+.stop-address-link {
+  display: inline-block;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-style: dotted;
 }
 .stop-card .stop-address {
   opacity: 0.72;   /* the secondary line stays secondary, whichever way it went */
 }
-/* The add control is a button now, not a faint line of text — on a sheet
-   coloured row it keeps its own contrast rather than fading into it. */
-.stop-card.has-sheet-color .stop-note-add {
+/* On a sheet-coloured row the empty note field keeps its own contrast
+   rather than fading into the colour behind it. */
+.stop-card.has-sheet-color .stop-note-empty {
   background: rgb(255 255 255 / 0.82);
   color: #1c2a21;
   border-color: rgb(0 0 0 / 0.18);
 }
 
+/* The stop's note: one field, big enough to read at arm's length in a truck.
+   Tapping it opens an empty box that ADDS to it — the existing words are
+   never loaded into that box, which is what keeps them safe. */
 .stop-note {
   font-size: var(--stop-note-font-size);
   font-weight: var(--stop-note-font-weight);
-  margin-top: 8px;
-  padding: 7px 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
   border-radius: var(--r-card);
-  line-height: 1.45;
-  /* Read-only here. Adding to it is a separate control below, so a driver
-     cannot wipe what the office wrote by tapping the wrong thing. */
+  line-height: 1.5;
 }
 
-/* A real button, full width, the same height as the ones above it. */
-.stop-note-add {
+.stop-note-open {
   display: block;
-  width: 100%;
-  margin-top: 8px;
-  padding: 11px 10px;
-  font-family: inherit;
-  font-size: 12.5px;
+  cursor: pointer;
+  border: 1px solid rgb(0 0 0 / 0.10);
+}
+.stop-note-open:active { transform: scale(0.995); }
+
+.stop-note-text { display: block; }
+
+/* Says what tapping does, without being loud about it. */
+.stop-note-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0.6;
+}
+
+/* Nothing written yet: the whole field is the invitation. */
+.stop-note-empty {
   font-weight: 600;
   text-align: center;
-  cursor: pointer;
-  color: var(--action-btn-text);
+  opacity: 0.75;
   background: var(--action-btn-bg);
-  border: 1px dashed var(--action-btn-border);
-  border-radius: var(--r-control);
+  color: var(--action-btn-text);
+  border-style: dashed;
 }
-.stop-note-add:active { transform: scale(0.99); }
 
 .note-urgent { background: var(--urgent-bg); color: var(--urgent-text); }
 .note-hold   { background: var(--hold-bg);   color: var(--hold-text);   }

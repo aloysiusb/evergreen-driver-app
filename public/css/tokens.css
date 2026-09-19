@@ -24,10 +24,14 @@
    these on :root; what is here is what a page shows before the settings
    arrive, or if they never do. */
 :root {
+  --report-bg-contamination: #e6cfc7;
+  --report-bg-overflow:      #eadfc4;
+  --report-bg-skip:          #d9dee0;
+  --report-bg-photo:         #d3e0d4;
   --report-btn-bg:          #f2f5f2;
   --report-btn-text:        #1c2a21;
   --report-btn-border:      #d7e0d9;
-  --report-btn-radius:      20px;
+  --report-btn-radius:      36px;
   --report-btn-height:      72px;
   --report-btn-min-width:   104px;
   --report-btn-gap:         10px;
