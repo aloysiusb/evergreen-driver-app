@@ -164,9 +164,11 @@ must include the path or the handshake is refused and the reconnect loop retries
 forever, silently.
 
 `<html data-style-button>` opts a page into the paint button injected by
-`styles.js`. It is on the home and dispatcher pages. It is deliberately NOT on
-the route screen — a driver working a stop should not have a link to the style
-editor under their thumb — and must never go on the customer portal.
+`styles.js`. **It is on the dispatcher board only.** Styling is the office's
+job, not the drivers' — Virginia was explicit about this on 2026-09-18 — so it
+is off the route picker and off the route screen, where it would also have sat
+under a driver's thumb while they work a stop. It must never go on the
+customer portal.
 
 ## Checks before pushing
 
