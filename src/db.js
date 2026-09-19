@@ -106,11 +106,11 @@ export const DEFAULT_STYLES = {
   // word is read. Light enough that dark text sits on all four comfortably.
   // Solid and muted, dark enough that white type sits on all four with room
   // to spare — each was checked against white rather than picked by eye.
-  "--report-bg-contamination": "#a05a48",
-  "--report-bg-overflow":      "#8a6b2e",
-  "--report-bg-skip":          "#5f6d75",
-  "--report-bg-photo":         "#446b50",
-  "--report-btn-bg":          "#5f6d75",
+  "--report-bg-contamination": "#8a4634",
+  "--report-bg-overflow":      "#73561f",
+  "--report-bg-skip":          "#4a565e",
+  "--report-bg-photo":         "#35573f",
+  "--report-btn-bg":          "#4a565e",
   "--report-btn-text":        "#ffffff",
   "--report-btn-border":      "#d7e0d9",
   "--report-btn-radius":      "36",

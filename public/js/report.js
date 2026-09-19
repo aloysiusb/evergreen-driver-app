@@ -20,7 +20,7 @@
 
     contamination: {
       title: '🚫 Contamination',
-      color: '#dc2626',
+      color: '#8a4634',
       steps: [
         {
           label: 'What type?',
@@ -65,7 +65,7 @@
 
     overflow: {
       title: '📦 Overflow',
-      color: '#d97706',
+      color: '#73561f',
       steps: [
         {
           label: 'Bin overflow — how much?',
@@ -92,7 +92,7 @@
 
     skip: {
       title: '⏭ Skip Stop',
-      color: '#6b7280',
+      color: '#4a565e',
       steps: [
         {
           label: 'Reason for skip?',
@@ -117,7 +117,7 @@
 
     photo: {
       title: '📷 Photo Note',
-      color: '#2563eb',
+      color: '#35573f',
       steps: [
         {
           label: 'What does this photo show?',
