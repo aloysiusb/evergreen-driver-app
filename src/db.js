@@ -121,6 +121,12 @@ export const DEFAULT_STYLES = {
   "--primary-btn-font-size":   "14",
   "--primary-btn-font-weight": "600",
 
+  // ── Top bar (every internal page) ────────────────────────
+  "--appbar-bg":     "#111611",
+  "--appbar-border": "#2a332d",
+  "--appbar-text":   "#ffffff",
+  "--appbar-link":   "#9fb8a8",
+
   // ── Dispatcher board ─────────────────────────────────────
   // Inputs, not the live variables. dispatch.html reads these through
   // var(--dispatch-*, fallback) so its light/dark toggle keeps working —

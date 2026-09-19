@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/chrome.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,18 +22,7 @@
     min-height: 100vh;
   }
 
-  header {
-    background: #111;
-    border-bottom: 1px solid #333;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-  header h1 { font-size: 1em; font-weight: 700; color: #fff; }
-  header a { font-size: 0.85em; color: #aaa; text-decoration: none; }
-  header a:hover { color: #fff; }
+  /* The bar is in chrome.css now, shared with every other page. */
 
   .layout { display: flex; flex: 1; overflow: hidden; }
 
@@ -198,9 +188,9 @@
 </head>
 <body>
 
-<header>
-  <h1>🌿 Evergreen — Style Editor</h1>
-  <a href="/">← Driver view</a>
+<header class="app-bar">
+  <h1><span class="app-mark">🌿</span> Evergreen <span class="app-page">Style editor</span></h1>
+  <nav><a href="/">Routes</a><a href="/dispatch">Dispatch</a></nav>
 </header>
 
 <div class="layout">
@@ -675,6 +665,30 @@
       <div class="control-row">
         <label>Max Routes</label>
         <div class="inputs"><input type="color" data-var="route-max-routes" value="#6366f1"></div>
+      </div>
+    </div>
+
+    <!-- ── TOP BAR ── -->
+    <div class="panel-section">
+      <h2>Top bar</h2>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        The strip across the top of every internal page.
+      </p>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--appbar-bg" value="#111611"></div>
+      </div>
+      <div class="control-row">
+        <label>Bottom edge</label>
+        <div class="inputs"><input type="color" data-var="--appbar-border" value="#2a332d"></div>
+      </div>
+      <div class="control-row">
+        <label>Name</label>
+        <div class="inputs"><input type="color" data-var="--appbar-text" value="#ffffff"></div>
+      </div>
+      <div class="control-row">
+        <label>Links<br><small style="opacity:.6">And the page label</small></label>
+        <div class="inputs"><input type="color" data-var="--appbar-link" value="#9fb8a8"></div>
       </div>
     </div>
 
