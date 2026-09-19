@@ -189,7 +189,9 @@
      One level, not two. A driver standing at a bin in the rain will take two
      taps; asking for three is how a report stops being filed at all. */
   const QUICK = {
-    contamination: ['1 bag', '2 bags', '3+ bags', 'Recyclables', 'Non-compost', 'Other'],
+    // 'Recyclables' broke across two lines as 'Recyclable' + 's' inside the
+    // circle. A shorter word that means the same thing fits on one.
+    contamination: ['1 bag', '2 bags', '3+ bags', 'Recycling', 'Non-compost', 'Other'],
     overflow:      ['Slight', 'Moderate', 'Severe', 'Left behind'],
     skip:          ['Not at curb', 'Gate locked', 'Customer', 'On hold'],
     photo:         [],
