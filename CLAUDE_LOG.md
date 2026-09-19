@@ -552,3 +552,31 @@ longest label, not the shortest.**
 
 The editor dropped corners, height, icon size and edge colour: a circle cannot
 use them, and leaving dead controls in a panel is worse than having fewer.
+
+---
+
+## 2026-09-19 (cont.) — a demo the dispatcher can see
+
+**The typing box was inheriting `--text`**, which on a pale card is a muted
+grey — fine for a label, too faint to read what you are typing in a moving
+truck. It has `--note-edit-text` of its own now, plus `--note-edit-height`, and
+bigger defaults: 13 → 16, weight 400 → 500, box 64 → 96. Verified live:
+`rgb(20,36,27)`, 16px, 500, 96px.
+
+**A test drive now shows on the dispatcher board.** It never did, and the
+reason was the safety feature: sim intercepts its own writes so the sheet
+cannot be touched, so the server never broadcast anything. The screen you most
+want to show someone during a demo was the one screen that stayed blank.
+
+`/api/sim-event` broadcasts and does nothing else — it never opens the
+spreadsheet. Messages are stamped `sim:true`; the board files them in the feed
+tagged "Test drive" and **deliberately does not let them touch `routeState`**,
+so the stop counts keep reporting what the sheet says. Verified end to end:
+two simulated events appeared labelled, and the fleet count stayed 5 / 1401.
+
+**The principle worth keeping:** when a safety measure hides something someone
+needs to see, add a path that shows it without removing the safety — do not
+weaken the original guard.
+
+**Also fixed:** `/driver/tues-dv/?sim=1` (trailing slash) reported "Route not
+found" because `split('/').pop()` returned the empty segment. `filter(Boolean)`.
