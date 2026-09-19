@@ -260,12 +260,14 @@ app.get("/api/styles", (req, res) => {
 
 app.post("/api/styles", (req, res) => {
   const styles = setStyles(req.body);
+  chromeTagCache = null;
   broadcast({ type: "style-updated", styles });
   res.json(styles);
 });
 
 app.post("/api/styles/reset", (req, res) => {
   const styles = setStyles(DEFAULT_STYLES);
+  chromeTagCache = null;
   broadcast({ type: "style-updated", styles });
   res.json(styles);
 });
@@ -872,6 +874,42 @@ const ASSET_V = (process.env.RENDER_GIT_COMMIT || String(Date.now())).slice(0, 1
 
 // Add ?v=<ASSET_V> to local js/css URLs. Only paths starting with a single "/"
 // are touched, so Google Fonts and other external URLs are left alone.
+/* The top bar's settings, written into every page as a tiny <style>.
+ *
+ * The bar is on pages that deliberately do NOT load the style system — the
+ * error log and the notes page set their own palettes, and the editor pushes
+ * its values as inline styles on :root, which would override them. Serving
+ * just the four bar colours plus the name from here keeps the bar editable
+ * everywhere without letting the rest of the editor near those pages.
+ *
+ * Cached, and thrown away whenever styles are saved.
+ */
+let chromeTagCache = null;
+
+/* Values come from the editor, so they are arbitrary text typed by a person.
+ * Anything that could close the style element or start a declaration of its
+ * own is removed rather than escaped — none of it belongs in a colour or a
+ * company name. */
+function cssSafe(value) {
+  return String(value == null ? "" : value).replace(/[<>{};\\"']/g, "").trim().slice(0, 60);
+}
+
+function chromeTag() {
+  if (chromeTagCache) return chromeTagCache;
+  const s = getStyles();
+  const pick = (key, fallback) => cssSafe(s[key]) || fallback;
+  chromeTagCache =
+    '<style id="chrome-vars">:root{' +
+    '--appbar-bg:' + pick("--appbar-bg", "#111611") + ';' +
+    '--appbar-border:' + pick("--appbar-border", "#2a332d") + ';' +
+    '--appbar-text:' + pick("--appbar-text", "#ffffff") + ';' +
+    '--appbar-link:' + pick("--appbar-link", "#9fb8a8") + ';' +
+    '--appbar-name:"' + pick("appbar-name", "EverGreen") + '";' +
+    '--appbar-mark:"' + pick("appbar-mark", "🌿") + '"' +
+    '}</style>';
+  return chromeTagCache;
+}
+
 function stampAssets(html) {
   return html.replace(
     /(<(?:script|link)\b[^>]*?\s(?:src|href)=")(\/[^"?#>]+\.(?:js|css))(")/g,
@@ -883,7 +921,11 @@ function sendStampedHtml(res, file, next) {
   fs.readFile(file, 'utf8', (err, html) => {
     if (err) return next ? next() : res.sendStatus(404);
     res.set('Cache-Control', 'no-cache');
-    res.type('html').send(stampAssets(html));
+    // Last thing in the head, so it beats chrome.css's fallbacks.
+    const withChrome = html.includes('</head>')
+      ? html.replace('</head>', chromeTag() + '\n</head>')
+      : html;
+    res.type('html').send(stampAssets(withChrome));
   });
 }
 

@@ -49,7 +49,7 @@ export const DEFAULT_STYLES = {
 
   // ── Home page content ────────────────────────────────────
   "site-logo":    "",
-  "site-heading": "Evergreen Compost",
+  "site-heading": "EverGreen Compost",
   "site-subhead": "Tap your route to get started",
 
   // ── Route cards (home page) ──────────────────────────────
@@ -136,6 +136,10 @@ export const DEFAULT_STYLES = {
   "--primary-btn-font-weight": "600",
 
   // ── Top bar (every internal page) ────────────────────────
+  // Written into every page's <head> by the server, so these reach pages
+  // that never load the style system. Plain strings; the server quotes them.
+  "appbar-name":     "EverGreen",
+  "appbar-mark":     "🌿",
   "--appbar-bg":     "#111611",
   "--appbar-border": "#2a332d",
   "--appbar-text":   "#ffffff",

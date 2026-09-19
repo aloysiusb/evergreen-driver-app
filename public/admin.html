@@ -201,7 +201,7 @@
 <body>
 
 <header class="app-bar">
-  <h1><span class="app-mark">🌿</span> Evergreen <span class="app-page">Style editor</span></h1>
+  <h1><span class="app-mark"></span><span class="app-name"></span> <span class="app-page">Style editor</span></h1>
   <nav><a href="/">Routes</a><a href="/dispatch">Dispatch</a></nav>
 </header>
 
@@ -724,6 +724,14 @@
         The strip across the top of every internal page.
       </p>
       <div class="control-row">
+        <label>Name</label>
+        <div class="inputs"><input type="text" data-text="appbar-name" maxlength="28" placeholder="EverGreen"></div>
+      </div>
+      <div class="control-row">
+        <label>Mark<br><small style="opacity:.6">The little symbol before it</small></label>
+        <div class="inputs"><input type="text" data-text="appbar-mark" maxlength="4" placeholder="🌿"></div>
+      </div>
+      <div class="control-row">
         <label>Background</label>
         <div class="inputs"><input type="color" data-var="--appbar-bg" value="#111611"></div>
       </div>
@@ -732,7 +740,7 @@
         <div class="inputs"><input type="color" data-var="--appbar-border" value="#2a332d"></div>
       </div>
       <div class="control-row">
-        <label>Name</label>
+        <label>Name colour</label>
         <div class="inputs"><input type="color" data-var="--appbar-text" value="#ffffff"></div>
       </div>
       <div class="control-row">
