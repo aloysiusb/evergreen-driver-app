@@ -611,13 +611,17 @@ body {
   margin-top: 12px;
 }
 .stop-report-btn {
-  min-height: var(--report-btn-height);
+  /* A circle, not a rounded box: aspect-ratio ties the height to whatever
+     width the column works out to, so they stay perfectly round at every
+     screen size without a size being written down anywhere. */
+  aspect-ratio: 1;
+  border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 9px 6px;
+  gap: 0;
+  padding: 10px;
   font-family: inherit;
   font-size: var(--report-btn-font-size);
   font-weight: var(--report-btn-font-weight);
@@ -626,8 +630,7 @@ body {
   line-height: 1.15;
   text-align: center;
   cursor: pointer;
-  border: 1px solid var(--report-btn-border);
-  border-radius: var(--report-btn-radius);
+  border: none;
   background: var(--report-btn-bg);
   color: var(--report-btn-text);
 }
@@ -640,13 +643,14 @@ body {
 .stop-report-btn[data-report="photo"]         { background: var(--report-bg-photo, var(--report-btn-bg)); }
 .stop-report-btn:active { transform: scale(0.96); }
 
-.srb-icon { font-size: var(--report-btn-icon-size); line-height: 1; }
+/* Inside a circle the word has to be allowed to wrap — "Contamination" on one
+   line would either overflow the shape or be cut to nothing. */
 .srb-label {
   display: block;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 /* Very narrow phones: two across still beats four squashed, whatever the

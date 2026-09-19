@@ -192,7 +192,6 @@
     const rbtn = (kind, icon, fallback, aria) =>
       `<button class="stop-report-btn" data-report="${kind}" data-row="${item.rowNumber}"
                 aria-label="${aria}">
-          <span class="srb-icon" aria-hidden="true">${icon}</span>
           <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
         </button>`;
 

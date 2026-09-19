@@ -104,17 +104,19 @@ export const DEFAULT_STYLES = {
   // two and an iPad four without either being written down anywhere.
   // One muted fill per button, so they are told apart by colour before the
   // word is read. Light enough that dark text sits on all four comfortably.
-  "--report-bg-contamination": "#e6cfc7",
-  "--report-bg-overflow":      "#eadfc4",
-  "--report-bg-skip":          "#d9dee0",
-  "--report-bg-photo":         "#d3e0d4",
-  "--report-btn-bg":          "#f2f5f2",
-  "--report-btn-text":        "#1c2a21",
+  // Solid and muted, dark enough that white type sits on all four with room
+  // to spare — each was checked against white rather than picked by eye.
+  "--report-bg-contamination": "#a05a48",
+  "--report-bg-overflow":      "#8a6b2e",
+  "--report-bg-skip":          "#5f6d75",
+  "--report-bg-photo":         "#446b50",
+  "--report-btn-bg":          "#5f6d75",
+  "--report-btn-text":        "#ffffff",
   "--report-btn-border":      "#d7e0d9",
   "--report-btn-radius":      "36",
   "--report-btn-height":      "88",
   "--report-btn-min-width":   "104",
-  "--report-btn-gap":         "16",
+  "--report-btn-gap":         "20",
   "--report-btn-icon-size":   "28",
   "--report-btn-font-size":   "13",
   "--report-btn-font-weight": "600",
