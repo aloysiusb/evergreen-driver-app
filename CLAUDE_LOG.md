@@ -379,3 +379,28 @@ phantom worth recording: `getComputedStyle().backgroundColor` read through the
 browser tool returned a stale value for the connection dot, which looked like
 a CSS bug for several minutes. The rendered pixel was correct all along —
 screenshot before trusting a computed-style read.
+
+---
+
+## 2026-09-18 (evening) — "the dispatcher settings aren't saving"
+
+They were. Verified end to end: `collectStyles()` gathers all 19 `--dispatch-*`
+keys, the Save button persists them, a reload reads them back. What was
+actually happening is that the board keeps its **own** light/dark setting, so
+editing the Light rows changes nothing visible while it is showing dark —
+indistinguishable from a failed save.
+
+Fix is in the editor, not the server: the preview now has Light / Dark buttons
+when the dispatcher is selected, and the section says in words that the rows
+only apply to the theme the board is in.
+
+**"The header colours seem transparent."** `.route-card.off-day` was
+`opacity: 0.45`. On a Friday that is six cards out of nine, and at 45% a solid
+route colour reads as broken rather than inactive. Opacity on the card cannot
+be countered on a child, so the fade moved off the card: the detail below the
+header is faded, the header keeps its colour at full strength with a slight
+desaturation.
+
+**Navigation.** Driver route pages now carry a dispatcher button beside home,
+plus the paint button (previously withheld from the route screen; asked for
+explicitly). The dispatcher gained a link back to the routes.
