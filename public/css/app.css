@@ -683,6 +683,27 @@ body {
 /* Inside a circle a long word has nowhere to go. 'anywhere' split
    'Contamination' into 'Contaminatio' + 'n', which reads as a bug. Hyphenate
    at a real syllable instead, and only break mid-word as a last resort. */
+/* The second array of buttons — the one that appears only when one of the
+   four is tapped. Smaller than the four it replaces, because there can be six
+   of them and the card should not double in height to show them. Same circle,
+   and each inherits the colour of the report it belongs to. */
+.stop-report-row.is-sub {
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--report-btn-min-width) * 0.7), 1fr));
+  gap: calc(var(--report-btn-gap) * 0.7);
+}
+.srb-sub {
+  font-size: calc(var(--report-btn-font-size) * 0.92);
+}
+
+/* Back out without filing anything further. Quieter than the choices it sits
+   beside, so it never looks like one of them. */
+.srb-back {
+  background: var(--action-btn-bg) !important;
+  color: var(--action-btn-text);
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .srb-label {
   display: block;
   max-width: 100%;

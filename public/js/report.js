@@ -182,6 +182,33 @@
     }
   };
 
+  /* The second array — what appears when one of the four is tapped, and only
+     then. Short labels on purpose: these are read off a circle, and they are
+     also the words that land in the Driver Notes column.
+
+     One level, not two. A driver standing at a bin in the rain will take two
+     taps; asking for three is how a report stops being filed at all. */
+  const QUICK = {
+    contamination: ['1 bag', '2 bags', '3+ bags', 'Recyclables', 'Non-compost', 'Other'],
+    overflow:      ['Slight', 'Moderate', 'Severe', 'Left behind'],
+    skip:          ['Not at curb', 'Gate locked', 'Customer', 'On hold'],
+    photo:         [],
+  };
+  window.reportQuickOptions = function (type) {
+    return QUICK[type] || [];
+  };
+
+  /* Refine a report already filed by the first tap. Goes through the same
+     writeNote, which strips the earlier marker rather than stacking a second
+     one on the same stop. */
+  window.reportFileDetail = function (type, rowNumber, tabName, detail) {
+    const headline = headlineFor(type);
+    if (!headline) return;
+    activeRowNumber = rowNumber;
+    activeTabName = tabName;
+    return writeNote(rowNumber, headline + ': ' + detail);
+  };
+
   function headlineFor(type) {
     return ICON[type] ? ICON[type] + ' ' + LABELS[type] : null;
   }
@@ -194,7 +221,7 @@
     activeTabName = tabName;
 
     writeNote(rowNumber, headline);
-    toastFiled(headline, type, rowNumber, tabName);
+    toastFiled(headline);
   };
 
   /* Add to the note rather than replace it. Filing an incident used to
@@ -218,22 +245,16 @@
     );
   }
 
-  function toastFiled(headline, type, rowNumber, tabName) {
+  /* Says it landed, and nothing else. Detail is offered on the card itself
+     now — a second array of buttons appearing where the first one was —
+     rather than behind a button on a message that disappears after six
+     seconds and was easy to miss entirely. */
+  function toastFiled(headline) {
     const toast = document.getElementById('toast');
     if (!toast) return;
-    toast.innerHTML = escHtml(headline) + ' logged ' +
-      '<button id="report-detail-btn" style="margin-left:8px;padding:4px 10px;border:none;' +
-      'border-radius:var(--r-control);background:var(--done-btn-bg);color:var(--done-btn-text);' +
-      'font-weight:700;font-family:inherit;cursor:pointer;">Add detail</button>';
+    toast.textContent = headline + ' logged';
     toast.classList.add('show');
-
-    const btn = document.getElementById('report-detail-btn');
-    if (btn) btn.addEventListener('click', () => {
-      toast.classList.remove('show');
-      reportOpen(type, rowNumber, tabName);
-    });
-
-    setTimeout(() => toast.classList.remove('show'), 6000);
+    setTimeout(() => toast.classList.remove('show'), 4000);
   }
 
   window.reportOpen = function(type, rowNumber, tabName) {

@@ -20,6 +20,11 @@
   /* Saved settings, kept so the stop cards can read the incident button
      wording out of them. Empty until /api/styles answers; every read falls
      back to the built-in wording, so the first paint is never blank. */
+  /* Which stop has its second array of buttons open, if any. One at a time:
+     opening another closes this one, so a card never shows sub-choices for a
+     report the driver has moved on from. */
+  let drill = { row: null, type: null };
+
   let siteStyles = {};
   function reportLabel(kind, fallback) {
     const v = siteStyles['report-' + kind + '-label'];
@@ -199,13 +204,36 @@
           <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
         </button>`;
 
-    const reportBtns = isCompleted ? '' : `
-      <div class="stop-report-row">
-        ${rbtn('contamination', '🚫', 'Contamination', 'Report contamination')}
-        ${rbtn('overflow', '📦', 'Overflow', 'Report overflow')}
-        ${rbtn('skip', '⏭', 'Skipped', 'Report skipped')}
-        ${rbtn('photo', '📷', 'Photo', 'Take a photo of this stop')}
-      </div>`;
+    /* The second array, shown ONLY where a button was just tapped. Every one
+       carries the same data-report as its parent, so it inherits that report's
+       colour without a second set of settings. */
+    const subBtn = (label) =>
+      `<button class="stop-report-btn srb-sub" data-report="${drill.type}"
+                data-drill-value="${esc(label)}" data-row="${item.rowNumber}">
+          <span class="srb-label">${esc(label)}</span>
+        </button>`;
+
+    const isDrilled = !isCompleted && drill.row === item.rowNumber && drill.type;
+    const quick = isDrilled && typeof reportQuickOptions === 'function'
+      ? reportQuickOptions(drill.type)
+      : [];
+
+    const reportBtns = isCompleted ? '' : (
+      isDrilled && quick.length
+        ? `<div class="stop-report-row is-sub">
+             ${quick.map(subBtn).join('')}
+             <button class="stop-report-btn srb-sub srb-back" data-drill-back="1"
+                     data-row="${item.rowNumber}" aria-label="Back">
+               <span class="srb-label">←</span>
+             </button>
+           </div>`
+        : `<div class="stop-report-row">
+             ${rbtn('contamination', '🚫', 'Contamination', 'Report contamination')}
+             ${rbtn('overflow', '📦', 'Overflow', 'Report overflow')}
+             ${rbtn('skip', '⏭', 'Skipped', 'Report skipped')}
+             ${rbtn('photo', '📷', 'Photo', 'Take a photo of this stop')}
+           </div>`
+    );
     const dirBtn = '';  // directions shown as chip now
     const accessChip = item.directions
       ? `<div class="stop-access-chip">🔑 ${esc(item.directions)}</div>`
@@ -254,13 +282,49 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();          // never let it also toggle the stop
         const row = Number(btn.dataset.row);
+
+        // Back out of the second array without filing anything further.
+        if (btn.dataset.drillBack) {
+          drill = { row: null, type: null };
+          render();
+          return;
+        }
+
+        // A choice from the second array: refine the report already filed.
+        if (btn.dataset.drillValue) {
+          const type = drill.type;
+          drill = { row: null, type: null };
+          if (btn.dataset.drillValue === 'Other') {
+            // The typing box, and only because Other was the one tapped.
+            render();
+            const el = document.querySelector(
+              `.stop-card[data-row="${row}"] .stop-note-open`
+            );
+            if (el) editNote(row, el);
+            return;
+          }
+          if (typeof reportFileDetail === 'function') {
+            reportFileDetail(type, row, route.tabName, btn.dataset.drillValue);
+          }
+          render();
+          return;
+        }
+
         if (btn.dataset.report === 'photo') {
           // 📷 means take one, not note that one was taken.
           const stop = allStops.find(s => s.rowNumber === row);
           if (typeof capturePhoto === 'function') capturePhoto(row, route.tabName, stop && stop.accountName);
-        } else if (typeof reportFile === 'function') {
+          return;
+        }
+
+        /* One tap files it. The second array then opens on this card so the
+           driver CAN say how much — and walking away without touching it
+           leaves a perfectly good report behind. */
+        if (typeof reportFile === 'function') {
           reportFile(btn.dataset.report, row, route.tabName);
         }
+        drill = { row, type: btn.dataset.report };
+        render();
       });
     });
   }

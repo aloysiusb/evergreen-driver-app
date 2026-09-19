@@ -580,3 +580,30 @@ weaken the original guard.
 
 **Also fixed:** `/driver/tues-dv/?sim=1` (trailing slash) reported "Route not
 found" because `split('/').pop()` returned the empty segment. `filter(Boolean)`.
+
+---
+
+## 2026-09-19 (cont.) — the drill-down
+
+The stepped panel already existed and already asked exactly what was wanted —
+contamination → what kind → 1 / 2 / 3+ bags. It was reachable only from the
+"Add detail" button on the confirmation toast, which is easy to miss.
+
+Added the one thing it had no room for: an optional typed box on the last step,
+for the day the lists do not fit. Held in a variable, not read off the element
+at submit — `renderStep()` rebuilds the panel's innerHTML and would throw the
+text away on any re-render.
+
+Restyled to match the circles that open it: options are pills (not circles —
+"Recyclables mixed in" has to stay readable), the chosen one fills with the
+colour of the report being filed, and the panel's own accents were still the
+bright red/amber/blue defaults belonging to nothing else in the app.
+
+Four fills taken darker: contrast with white went from ~5:1 to 7–8:1.
+
+Verified end to end in sim:
+`Testing · 🚫 Contamination: black trash bags ×2 · left of gate, third time this month`
+— original note kept, the earlier one-tap marker replaced rather than stacked.
+
+**Uncommitted-on-purpose note:** this entry is held back to ride along with the
+next code commit rather than triggering a redeploy of its own.
