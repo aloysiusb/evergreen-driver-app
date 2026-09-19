@@ -590,26 +590,56 @@ body {
 /* Icon-only and compact: four labelled buttons on every one of 210 cards would
    bury the stop itself. Sized for a gloved thumb regardless — 40px is above the
    44px-ish target once the gap is counted. */
+/* Incident buttons.
+
+   These were 40×34 squares with nothing but an emoji on them — below the
+   size a gloved thumb can reliably hit, and giving no clue what they did
+   without holding a finger on one to wait for a tooltip.
+
+   The grid fits as many across as the card allows and wraps the rest: three
+   on a phone, four on an iPad, without either being hard-coded. Each button
+   is as tall as a standard touch target and says what it does. */
 .stop-report-row {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
 }
 .stop-report-btn {
-  width: 40px;
-  height: 34px;
-  display: inline-flex;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  line-height: 1;
+  gap: 5px;
+  padding: 9px 6px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-align: center;
   cursor: pointer;
   border: 1px solid var(--action-btn-border);
   border-radius: var(--r-control);
   background: var(--action-btn-bg);
   color: inherit;
 }
-.stop-report-btn:active { transform: scale(0.94); }
+.stop-report-btn:active { transform: scale(0.96); }
+
+.srb-icon { font-size: 21px; line-height: 1; }
+.srb-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Very narrow phones: two across still beats four squashed. */
+@media (max-width: 340px) {
+  .stop-report-row { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* ── Turn-by-turn banner ── */
 /* Ported from the design already proven in demo.html. Dark plate on purpose:
@@ -825,33 +855,52 @@ body.sim-on { padding-bottom: 60px; }
 .stop-card .stop-note-add {
   color: inherit;
 }
-.stop-card .stop-address,
-.stop-card .stop-note-add {
+.stop-card .stop-address {
   opacity: 0.72;   /* the secondary line stays secondary, whichever way it went */
+}
+/* The add control is a button now, not a faint line of text — on a sheet
+   coloured row it keeps its own contrast rather than fading into it. */
+.stop-card.has-sheet-color .stop-note-add {
+  background: rgb(255 255 255 / 0.82);
+  color: #1c2a21;
+  border-color: rgb(0 0 0 / 0.18);
 }
 
 .stop-note {
   font-size: var(--stop-note-font-size);
   font-weight: var(--stop-note-font-weight);
   margin-top: 8px;
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-radius: var(--r-card);
   line-height: 1.45;
-  cursor: pointer;
+  /* Read-only here. Adding to it is a separate control below, so a driver
+     cannot wipe what the office wrote by tapping the wrong thing. */
 }
 
+/* A real button, full width, the same height as the ones above it. */
 .stop-note-add {
-  font-size: var(--stop-note-font-size);
-  color: var(--text-muted);
-  margin-top: 6px;
-  padding: 4px 0;
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px 10px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
   cursor: pointer;
-  opacity: 0.55;
+  color: var(--action-btn-text);
+  background: var(--action-btn-bg);
+  border: 1px dashed var(--action-btn-border);
+  border-radius: var(--r-control);
 }
+.stop-note-add:active { transform: scale(0.99); }
 
 .note-urgent { background: var(--urgent-bg); color: var(--urgent-text); }
 .note-hold   { background: var(--hold-bg);   color: var(--hold-text);   }
-.note-info   { background: var(--route-color-light); color: var(--route-color-dark); }
+/* Not the route's own light/dark pair any more. On several routes those two
+   are a few shades apart — Valley Route put #1c3a43 text on #2f6473 — which
+   is a note you cannot read. Its own pair, editable like the others. */
+.note-info   { background: var(--note-bg); color: var(--note-text); }
 
 .stop-directions {
   font-size: 12px;

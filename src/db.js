@@ -88,11 +88,25 @@ export const DEFAULT_STYLES = {
   "--stop-done-bg":             "#e6f0e9",
   "--stop-done-border":         "#c4dccd",
 
+  // ── Incident buttons (driver stop card) ──────────────────
+  // The wording on the button IS the wording written into the sheet, so
+  // changing it here changes both. Drivers know the nuances of what goes
+  // wrong on a route; this is the knob for them.
+  "report-contamination-label": "Contamination",
+  "report-overflow-label":      "Overflow",
+  "report-skip-label":          "Skipped",
+  "report-photo-label":         "Photo",
+
   // ── Note chips ───────────────────────────────────────────
   "--urgent-bg":         "#fbe4df",
   "--urgent-text":       "#8c3322",
   "--hold-bg":           "#fbf0d9",
   "--hold-text":         "#7a5210",
+  // An ordinary note used to take the route's own light and dark colours,
+  // which on several routes are a few shades apart — Valley Route was
+  // #1c3a43 text on #2f6473, effectively unreadable. Its own pair now.
+  "--note-bg":           "#e7eef1",
+  "--note-text":         "#1d3742",
   "--stop-note-font-size":   "13",
   "--stop-note-font-weight": "400",
 

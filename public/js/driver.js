@@ -13,6 +13,15 @@
   const root = document.documentElement;
 
   // Load and apply server-side style settings (includes per-route color)
+  /* Saved settings, kept so the stop cards can read the incident button
+     wording out of them. Empty until /api/styles answers; every read falls
+     back to the built-in wording, so the first paint is never blank. */
+  let siteStyles = {};
+  function reportLabel(kind, fallback) {
+    const v = siteStyles['report-' + kind + '-label'];
+    return (typeof v === 'string' && v.trim()) ? v.trim() : fallback;
+  }
+
   /* The variable loop lives in styles.js. The route colour is the exception:
      it is stored under a per-route key rather than as a CSS variable, so it
      has to be picked out by hand.
@@ -20,8 +29,11 @@
      No socket option — this page already has one, and hands style messages to
      window.onStyleMessage from its own handler. */
   initStyles(styles => {
-    const routeColor = (styles && styles['route-' + route.id]) || route.color;
+    siteStyles = styles || {};
+    const routeColor = siteStyles['route-' + route.id] || route.color;
     root.style.setProperty('--route-color', routeColor);
+    if (typeof window.reportLabels === 'function') window.reportLabels(siteStyles);
+    if (allStops.length) render();   // wording may have changed
   });
 
   // Whatever happens to the request, the route must still have its colour.
@@ -135,9 +147,20 @@
       ? item.address + (item.city ? ', ' + item.city : '')
       : (item.city || '');
 
-    const noteHtml = item.notes
-      ? `<div class="stop-note ${noteClass}" data-row="${item.rowNumber}">${esc(item.notes)}</div>`
-      : (!isCompleted ? `<div class="stop-note-add" data-row="${item.rowNumber}">+ Add note</div>` : '');
+    /* What is already on the stop, and a separate way to add to it.
+
+       Tapping the note used to open it in an editable box with the existing
+       text already in it — one careless keystroke from wiping whatever the
+       office had written there. The note is now read-only on this screen, and
+       "Add a note" appends to it instead, so nothing already written can be
+       lost by a driver adding to it. */
+    const noteHtml =
+      (item.notes
+        ? `<div class="stop-note ${noteClass}">${esc(item.notes)}</div>`
+        : '') +
+      (!isCompleted
+        ? `<button class="stop-note-add" data-row="${item.rowNumber}">✎ Add a note</button>`
+        : '');
 
     const actionBtn = isCompleted
       ? `<button class="undo-btn" data-row="${item.rowNumber}">Undo</button>`
@@ -154,18 +177,25 @@
       ? `<a class="stop-action-btn" href="https://maps.google.com/?q=${mapQuery}" target="_blank" rel="noopener">📍 Map</a>`
       : '';
 
-    // Incident buttons lived only on the map card, so a driver working from
-    // this list never saw them. One tap files the report.
+    /* Incident buttons. Big enough to hit with a glove on, laid out in a grid
+       that fits as many across as the screen allows and wraps the rest — three
+       on a phone, four on an iPad — rather than four cramped squares.
+
+       The label is read from settings, so the wording can be changed without
+       a code change, and the same wording is what gets written to the sheet. */
+    const rbtn = (kind, icon, fallback, aria) =>
+      `<button class="stop-report-btn" data-report="${kind}" data-row="${item.rowNumber}"
+                aria-label="${aria}">
+          <span class="srb-icon" aria-hidden="true">${icon}</span>
+          <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
+        </button>`;
+
     const reportBtns = isCompleted ? '' : `
       <div class="stop-report-row">
-        <button class="stop-report-btn" data-report="contamination" data-row="${item.rowNumber}"
-                title="Contamination" aria-label="Report contamination">🚫</button>
-        <button class="stop-report-btn" data-report="overflow" data-row="${item.rowNumber}"
-                title="Overflow" aria-label="Report overflow">📦</button>
-        <button class="stop-report-btn" data-report="skip" data-row="${item.rowNumber}"
-                title="Skipped" aria-label="Report skipped">⏭</button>
-        <button class="stop-report-btn" data-report="photo" data-row="${item.rowNumber}"
-                title="Photo taken" aria-label="Note that a photo was taken">📷</button>
+        ${rbtn('contamination', '🚫', 'Contamination', 'Report contamination')}
+        ${rbtn('overflow', '📦', 'Overflow', 'Report overflow')}
+        ${rbtn('skip', '⏭', 'Skipped', 'Report skipped')}
+        ${rbtn('photo', '📷', 'Photo', 'Take a photo of this stop')}
       </div>`;
     const dirBtn = '';  // directions shown as chip now
     const accessChip = item.directions
@@ -226,7 +256,7 @@
     container.querySelectorAll('.undo-btn').forEach(btn => {
       btn.addEventListener('click', () => markUndone(Number(btn.dataset.row)));
     });
-    container.querySelectorAll('.stop-note, .stop-note-add').forEach(el => {
+    container.querySelectorAll('.stop-note-add').forEach(el => {
       el.addEventListener('click', () => editNote(Number(el.dataset.row), el));
     });
 
@@ -403,17 +433,22 @@
   function editNote(rowNumber, el) {
     const stop = allStops.find(s => s.rowNumber === rowNumber);
     if (!stop) return;
-    const prev = stop.notes || '';
+    const prev = (stop.notes || '').trim();
 
+    // Starts EMPTY, and what is typed is added to whatever is already there.
+    // Same separator the incident buttons use, so a stop reads as one line of
+    // history rather than a note that keeps being overwritten.
     const ta = document.createElement('textarea');
     ta.className = 'note-edit';
-    ta.value = prev;
-    ta.placeholder = 'Add a note…';
+    ta.value = '';
+    ta.placeholder = prev ? 'Add to this stop…' : 'Add a note…';
     el.replaceWith(ta);
     ta.focus();
 
     async function save() {
-      const val = ta.value.trim();
+      const added = ta.value.trim();
+      if (!added) { render(); return; }          // nothing typed, nothing changed
+      const val = prev ? prev + ' · ' + added : added;
       stop.notes = val;
       stop.noteUrgency = classifyNote(val);
       render();

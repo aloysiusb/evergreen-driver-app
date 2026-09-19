@@ -154,15 +154,36 @@
      who wants to say which kind and how much. Fast by default, precise when it
      matters — and we stop losing reports because a driver could not face three
      more taps in the rain. */
-  const HEADLINE = {
-    contamination: '🚫 Contamination',
-    overflow: '📦 Overflow',
-    skip: '⏭ Skipped',
-    photo: '📷 Photo taken',
+  /* What gets written into the sheet for each button.
+
+     The words are the ones shown ON the button, so changing the wording in
+     settings changes both at once — there is no way for the button to promise
+     one thing and the sheet to record another. The icon is fixed, because
+     writeNote() below uses it to recognise and replace a previous report on
+     the same stop. */
+  const ICON = { contamination: '🚫', overflow: '📦', skip: '⏭', photo: '📷' };
+  const FALLBACK = {
+    contamination: 'Contamination',
+    overflow: 'Overflow',
+    skip: 'Skipped',
+    photo: 'Photo',
+  };
+  const LABELS = { ...FALLBACK };
+
+  // Called by driver.js whenever settings arrive or change.
+  window.reportLabels = function (styles) {
+    for (const kind of Object.keys(FALLBACK)) {
+      const v = styles && styles['report-' + kind + '-label'];
+      LABELS[kind] = (typeof v === 'string' && v.trim()) ? v.trim() : FALLBACK[kind];
+    }
   };
 
+  function headlineFor(type) {
+    return ICON[type] ? ICON[type] + ' ' + LABELS[type] : null;
+  }
+
   window.reportFile = function(type, rowNumber, tabName) {
-    const headline = HEADLINE[type];
+    const headline = headlineFor(type);
     if (!headline) return;
 
     activeRowNumber = rowNumber;

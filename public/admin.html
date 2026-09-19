@@ -95,6 +95,18 @@
     border-color: #4a9e3f;
   }
 
+  .inputs input[type=text] {
+    width: 150px;
+    font: inherit;
+    font-size: 12px;
+    padding: 5px 8px;
+    border-radius: var(--r-control);
+    border: 1px solid #3a453e;
+    background: #232b26;
+    color: #e6ece9;
+  }
+  .inputs input[type=text]:focus { outline: none; border-color: #4a9e3f; }
+
   input[type=range] {
     width: 80px;
     accent-color: #4a9e3f;
@@ -455,6 +467,16 @@
         <div class="inputs"><input type="color" data-var="--hold-text" value="#92400e"></div>
       </div>
 
+      <div class="subsection">Ordinary note</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--note-bg" value="#e7eef1"></div>
+      </div>
+      <div class="control-row">
+        <label>Text color<br><small style="opacity:.6">Keep this well apart from the background</small></label>
+        <div class="inputs"><input type="color" data-var="--note-text" value="#1d3742"></div>
+      </div>
+
       <div class="subsection">Note textarea</div>
       <div class="control-row">
         <label>Background</label>
@@ -665,6 +687,33 @@
       <div class="control-row">
         <label>Max Routes</label>
         <div class="inputs"><input type="color" data-var="route-max-routes" value="#6366f1"></div>
+      </div>
+    </div>
+
+    <!-- ── INCIDENT BUTTONS ── -->
+    <div class="panel-section">
+      <h2>Incident buttons</h2>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        The four buttons on every stop card. What you type here is what appears
+        on the button <em>and</em> what gets written into the Driver Notes
+        column — they cannot say different things. Keep them short; long wording
+        is trimmed on a narrow phone.
+      </p>
+      <div class="control-row">
+        <label>🚫 Button 1</label>
+        <div class="inputs"><input type="text" data-text="report-contamination-label" maxlength="22" placeholder="Contamination"></div>
+      </div>
+      <div class="control-row">
+        <label>📦 Button 2</label>
+        <div class="inputs"><input type="text" data-text="report-overflow-label" maxlength="22" placeholder="Overflow"></div>
+      </div>
+      <div class="control-row">
+        <label>⏭ Button 3</label>
+        <div class="inputs"><input type="text" data-text="report-skip-label" maxlength="22" placeholder="Skipped"></div>
+      </div>
+      <div class="control-row">
+        <label>📷 Button 4</label>
+        <div class="inputs"><input type="text" data-text="report-photo-label" maxlength="22" placeholder="Photo"></div>
       </div>
     </div>
 
