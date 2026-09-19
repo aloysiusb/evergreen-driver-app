@@ -144,6 +144,66 @@ API from a browser. The gate makes that far less interesting, but it should be
 restricted to the app's own origin. Per-driver identity is a separate job if
 Alyssa ever wants to know who did what.
 
+## Open items — carry these forward (last reviewed 2026-09-18)
+
+Not for the stakeholder write-up at `public/updates.html` unless Virginia says
+so. This is the working list.
+
+### 1. Three damaged addresses on `Tues DV` — NOT yet repaired
+
+**What happened.** Writes used to use the fixed column letters in
+`src/config.js`. The live `Tues DV` tab carried a legacy "Ney" column that
+config did not know about, so every letter was off by one and a saved driver
+note was written one column to the left — on top of the **Address**. Three rows
+(observed at **6, 7 and 16**) lost their real address and hold note text in its
+place. The symptom to look for is `address` and `notes` being identical.
+
+**Cause is fixed** (`9899f90`, hardened in `0138368`): writes now resolve
+columns from the sheet's own header row, and refuse outright rather than
+falling back to guessed letters.
+
+**The repair is manual and has to be done in the sheet** — the app must not
+attempt it, because it cannot tell a damaged address from a legitimately odd
+one. Originals should be in the `Tues DV backup 2026-07-06` tab (also
+`backup 2026-06-29`). Match by row position and account name, not row number
+alone, in case rows were added since.
+
+**Verify current state before acting** — this has not been re-checked since the
+column fix, and the rows may already have been corrected by hand:
+
+```
+GET /api/routes/Tues%20DV   →  items[] where address.trim() === notes.trim()
+```
+
+Note the payload key is `items`, not `stops`.
+
+### 2. `ACCESS_CODE` and `ADMIN_CODE` are still unset
+
+Until they are, customer names, addresses and gate codes are readable by anyone
+with the URL. Two entries in the Render dashboard. This is the highest-priority
+open item — higher than the addresses.
+
+### 3. Never re-checked against real GPS
+
+Follow mode, turn-by-turn and the side-of-road call have only ever run in
+simulation. One real route before Dave depends on them.
+
+### 4. Deferred by Virginia, not forgotten
+
+- Light/dark theme toggle (dark is done; the toggle was deferred twice).
+- Making the incident buttons editable **by drivers** — they know the nuances,
+  so they should own the wording. Recommended shape: a sheet tab the app reads,
+  not a code change.
+- `REQUESTS_FROM_EMAIL` needs a verified sending domain before customers
+  receive confirmations. The office notification already works.
+
+### 5. Raised but undecided
+
+Driver identity on notes (who did what), persistence of the dispatcher feed
+across days (the `Driver Notes Log` tab exists but nothing writes to it), an
+end-of-day summary, and live truck positions — the last needs a conversation
+about driver privacy before anything is built.
+
 ## Known deviations from portfolio standard
 
 - **Node.js, not Python** — predates the Python backend standard. Working production app; don't rewrite without asking Virginia.
