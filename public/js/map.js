@@ -11,6 +11,29 @@ window.switchView = function(view) {
   }
 };
 
+/* Adding up how long a route takes.
+ *
+ * Google only returns duration_in_traffic where it HAS traffic data. On a
+ * rural county road, and outside the hours it models, the field is simply
+ * absent — and reading .value off the missing object throws, taking the whole
+ * callback with it: no estimate, no reorder, no nudge, and no error anyone
+ * would see.
+ *
+ * This was guarded in one of the three places that did the sum. The error log
+ * caught the other two in production, on Thursday Com/Eagle and Wednesday
+ * Residential. One helper now, so there is no fourth.
+ */
+function legSeconds(leg, preferTraffic) {
+  if (!leg) return 0;
+  const d = (preferTraffic && leg.duration_in_traffic) || leg.duration;
+  return d && typeof d.value === 'number' ? d.value : 0;
+}
+
+function routeMinutes(legs, preferTraffic) {
+  if (!Array.isArray(legs) || !legs.length) return null;
+  return Math.round(legs.reduce((sum, leg) => sum + legSeconds(leg, preferTraffic), 0) / 60);
+}
+
 let gMap = null;
 let markers = [];
 let navStops = [];          // current display order
@@ -370,13 +393,11 @@ function fetchPlannedTime() {
   }, (result, status) => {
     if (status === 'OK') {
       const legs = result.routes[0].legs;
-      // duration_in_traffic only comes back when Google HAS traffic data for a
-      // leg, which on a rural county road it frequently does not. Reading
-      // .value off the missing object threw, and the whole estimate died with
-      // it. demo.html already guarded this; the driver map did not.
-      plannedMins = Math.round(legs.reduce((s, l) => s + (l.duration_in_traffic || l.duration).value, 0) / 60);
-      const freeFlow = Math.round(legs.reduce((s, l) => s + l.duration.value, 0) / 60);
-      trafficDelayMins = Math.max(0, plannedMins - freeFlow);
+      plannedMins = routeMinutes(legs, true);
+      const freeFlow = routeMinutes(legs, false);
+      trafficDelayMins = (plannedMins === null || freeFlow === null)
+        ? 0
+        : Math.max(0, plannedMins - freeFlow);
       plannedFailed = false;
     } else {
       // This used to fall through, leaving plannedMins null and the status bar
@@ -422,10 +443,8 @@ function checkForBetterRoute() {
     drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
   }, (result, status) => {
     if (status !== 'OK') return;
-    const optMins = Math.round(
-      result.routes[0].legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60
-    );
-    if (plannedMins === null) return;
+    const optMins = routeMinutes(result.routes[0].legs, true);
+    if (plannedMins === null || optMins === null) return;
     const saving = plannedMins - optMins;
     if (saving >= REROUTE_MIN_SAVING) showRerouteNudge(saving);
   });
@@ -1031,7 +1050,10 @@ function fetchNextEta(fromLatLng) {
     if (status !== 'OK') return;
     const el = resp.rows[0]?.elements[0];
     if (!el || el.status !== 'OK') return;
-    nextEtaMins = Math.ceil((el.duration_in_traffic || el.duration).value / 60);
+    // Same helper as the route totals, so the last direct .value read is gone.
+    const secs = legSeconds(el, true);
+    if (!secs) return;   // nothing useful to show; keep the previous ETA
+    nextEtaMins = Math.ceil(secs / 60);
     renderNavCard(); // refresh card with updated ETA
   });
 }
@@ -1080,7 +1102,7 @@ window.setRouteMode = function(mode) {
 
       const order = result.routes[0].waypoint_order;
       const reordered = [remaining[0], ...order.map(i => remaining[i + 1]), remaining[remaining.length - 1]];
-      liveMins = Math.round(result.routes[0].legs.reduce((s, l) => s + l.duration_in_traffic.value, 0) / 60);
+      liveMins = routeMinutes(result.routes[0].legs, true);
 
       const done = plannedOrder.filter(s => s.done);
       navStops = [...reordered, ...done];
