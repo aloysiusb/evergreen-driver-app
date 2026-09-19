@@ -117,6 +117,7 @@ export const DEFAULT_STYLES = {
   "--report-btn-height":      "88",
   "--report-btn-min-width":   "104",
   "--report-btn-gap":         "20",
+  "--report-row-space":       "22",
   "--report-btn-icon-size":   "28",
   "--report-btn-font-size":   "13",
   "--report-btn-font-weight": "600",

@@ -608,7 +608,10 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--report-btn-min-width), 1fr));
   gap: var(--report-btn-gap);
-  margin-top: 12px;
+  margin-top: 14px;
+  /* Separate setting from the gap BETWEEN buttons: that one changes how many
+     fit across, this one only pushes the note further down. */
+  margin-bottom: var(--report-row-space);
 }
 .stop-report-btn {
   /* A circle, not a rounded box: aspect-ratio ties the height to whatever
@@ -900,7 +903,7 @@ body.sim-on { padding-bottom: 60px; }
 .stop-note {
   font-size: var(--stop-note-font-size);
   font-weight: var(--stop-note-font-weight);
-  margin-top: 10px;
+  margin-top: 0;
   padding: 12px 14px;
   border-radius: var(--r-card);
   line-height: 1.5;

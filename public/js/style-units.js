@@ -12,6 +12,7 @@ function needsPx(key) {
     (key.endsWith('-height') && key !== '--line-height') ||
     key.endsWith('-min-width') ||
     key.endsWith('-gap') ||
+    key.endsWith('-space') ||
     key.endsWith('-icon-size');
 }
 
