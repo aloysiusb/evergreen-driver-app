@@ -176,7 +176,11 @@
        screen, so a second button on every card was just noise. What it did
        is not lost: the address line itself is the link now, which is where a
        driver would tap anyway. */
+    /* The official Maps URL, not the legacy maps.google.com/?q= form. This one
+       is what hands off to the Google Maps app on a phone instead of opening a
+       cut-down web page. */
     const mapQuery = encodeURIComponent((item.address || '') + (item.city ? ' ' + item.city : ''));
+    const mapHref = 'https://www.google.com/maps/search/?api=1&query=' + mapQuery;
     const mapBtn = '';
 
     /* Incident buttons. Big enough to hit with a glove on, laid out in a grid
@@ -223,8 +227,13 @@
             <div class="stop-account">${esc(nameOrAddr)}</div>
             ${addrLine
               ? (item.address
-                  ? `<a class="stop-address stop-address-link" href="https://maps.google.com/?q=${mapQuery}"
-                        target="_blank" rel="noopener">${esc(addrLine)}</a>`
+                  /* No target="_blank". A new tab is silently refused inside an
+                     in-app browser and in the installed-app mode this supports,
+                     which is exactly how a driver opens it — the link looked
+                     dead. Navigating in place always works, and on a phone the
+                     Maps app takes over anyway, leaving this page behind it. */
+                  ? `<a class="stop-address stop-address-link" href="${mapHref}"
+                        rel="noopener">${esc(addrLine)}</a>`
                   : `<div class="stop-address">${esc(addrLine)}</div>`)
               : ''}
             ${mapBtn ? `<div class="stop-action-row">${mapBtn}</div>` : ''}
