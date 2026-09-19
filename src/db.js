@@ -132,6 +132,7 @@ export const DEFAULT_STYLES = {
   "--dispatch-muted":         "#5e7e63",
   "--dispatch-muted-bg":      "#e8f2ea",
   "--dispatch-accent":        "#16a34a",
+  "--dispatch-card-header-text": "#14241b",
   "--dispatch-warn":          "#d97706",
   "--dispatch-danger":        "#dc2626",
   "--dispatch-dark-bg":       "#0c160e",

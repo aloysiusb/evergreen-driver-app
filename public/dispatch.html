@@ -299,10 +299,6 @@ body {
 .route-card {
   background: var(--d-surface);
   border: 1px solid var(--d-border);
-  /* The route's own colour along the top edge, so a route is recognisable
-     from across the room without reading its name. --route-color is set per
-     card in script; the fallback keeps the card sane if it ever is not. */
-  border-top: 3px solid var(--route-color, var(--d-border));
   border-radius: var(--r-sheet);
   overflow: hidden;
   transition: opacity 0.2s;
@@ -316,18 +312,25 @@ body {
   gap: 12px;
   padding: 14px 16px 12px;
   border-bottom: 1px solid var(--d-border);
-  /* A wash of the route colour rather than the colour itself — it sits behind
-     text that has to stay readable in both themes. Browsers without
-     color-mix simply skip this line and keep the card background. */
-  background: color-mix(in srgb, var(--route-color, transparent) 14%, transparent);
+  /* The route's colour, at full strength, across the whole header — so a
+     route is identifiable from the far side of the room. Text on it is set
+     dark here and inherited by everything inside, rather than each element
+     picking its own colour and some of them missing. */
+  background: var(--route-color, var(--d-surface));
+  color: var(--dispatch-card-header-text, #14241b);
 }
-.route-stripe {
-  width: 4px;
-  align-self: stretch;
-  border-radius: var(--r-chip);
-  flex-shrink: 0;
-  background: var(--route-color, var(--d-accent));
+
+/* Inside the coloured header, chips go translucent-dark rather than keeping
+   their own greens and greys — one rule that reads correctly on any route
+   colour, instead of a per-colour guess. */
+.route-card-top .route-day-chip.today,
+.route-card-top .route-day-chip.off {
+  background: rgb(0 0 0 / 0.13);
+  color: inherit;
 }
+/* Kept in the markup, hidden here: it was a 4px hint of the route colour
+   back when the header was plain. The header is the colour now. */
+.route-stripe { display: none; }
 .route-info { flex: 1; min-width: 0; }
 .route-name {
   font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
