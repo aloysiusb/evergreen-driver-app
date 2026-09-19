@@ -495,3 +495,31 @@ Verified 2 across at 375×812, and 4 at 812×375, 768×1024 and 1024×768.
 a bare ratio that would have become `1.5px`. There is now a check that every
 key `needsPx` claims holds a bare number — run it after touching that
 function. **Suffix rules over a shared namespace catch more than you meant.**
+
+---
+
+## 2026-09-19 — the stop card, settled
+
+**One note field.** The separate "Add a note" button is gone; the note itself
+is the control. Tapping it opens an *empty* textarea and what is typed is
+appended. The existing words are never loaded into that box — that is the whole
+mechanism that keeps them uneditable, and it survives merging the two controls
+into one. Bigger by default (13 → 15) with a "✎ Tap to add" hint.
+
+**No per-stop Map button.** The Map tab lives in the sticky route header, which
+is always on screen, so a second button on every card was noise. The capability
+was kept rather than dropped: the address line is the link now.
+
+**Round, muted, larger buttons.** Each of the four has its own fill
+(`--report-bg-<kind>`) so they read by colour before the word. Height 88, gap
+16, radius 36, icon 28, label 13.
+
+**--report-btn-min-width was deliberately NOT raised.** It is what decides how
+many sit across, and widening it drops an iPad from four to three, stranding
+the fourth on its own row. "Bigger" here means taller and further apart. Counts
+verified: 2 across at 375×812, 4 at 768×1024.
+
+**Defaults in code do not move what is already stored.** All six size keys were
+in the styles table at their old values, so the new defaults changed nothing on
+screen until they were pushed. Any future default change needs the same
+follow-up, or it is invisible.
