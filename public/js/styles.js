@@ -66,7 +66,9 @@
     if (opts && opts.socket) {
       const connect = () => {
         const ws = new WebSocket(
-          (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host
+          // The server mounts its WebSocket at /ws. Without the path the
+          // handshake is refused and this quietly retries forever.
+          (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
         );
         ws.onmessage = (e) => {
           try { window.onStyleMessage(JSON.parse(e.data)); } catch (err) { /* not ours */ }
