@@ -1,7 +1,11 @@
 // Driver route page — runs after routes.js is loaded
 
 (function () {
-  const routeId = window.location.pathname.split('/').pop();
+  /* filter(Boolean) drops the empty segment a trailing slash leaves behind.
+     /driver/tues-dv/?sim=1 — which is what you get if the URL is typed with a
+     slash, or pasted from somewhere that added one — used to read the route id
+     as '' and show 'Route not found' on a route that exists. */
+  const routeId = window.location.pathname.split('/').filter(Boolean).pop();
   const route = ROUTES.find(r => r.id === routeId);
 
   if (!route) {
