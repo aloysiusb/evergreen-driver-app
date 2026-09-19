@@ -435,3 +435,34 @@ back. Grep for the shape before calling it fixed.
 **Also:** the style button came off the route picker and route screen —
 styling is the office's job, not the drivers' — leaving it on the dispatcher
 board only.
+
+---
+
+## 2026-09-18 (late) — the driver's stop card
+
+**Buttons.** 40×34 squares with only an emoji on them — under the size a gloved
+thumb reliably hits, and no way to tell what they did without hovering for a
+tooltip, which a phone does not have. Now `grid-template-columns:
+repeat(auto-fit, minmax(96px, 1fr))`: two across on a 375px phone, four on an
+iPad, each a full 58px touch target with the word on it. No breakpoints beyond
+one guard for very narrow phones.
+
+**The wording is a setting.** `report-<kind>-label` in the styles table drives
+both the button text and what `report.js` writes into Driver Notes, so the
+button cannot promise one thing and the sheet record another. The icon stays
+fixed because `writeNote()` uses it to recognise and replace a previous report
+on the same stop. Verified end to end: changed it in the editor, the driver
+card showed it, restored it.
+
+**Notes are append-only on that screen.** Tapping a note used to open it in a
+textarea pre-filled with the existing text — one careless keystroke from wiping
+what the office wrote. The note is read-only now; "✎ Add a note" opens an
+*empty* box and appends with the same ` · ` separator the incident buttons
+use. Trade-off worth naming: a driver can no longer fix their own typo from the
+truck. The office can, in the sheet.
+
+**A note you could not read.** `.note-info` took `--route-color-light` on
+`--route-color-dark`. Those come from `routes.js` and on several routes sit a
+few shades apart — Valley Route was #1c3a43 text on #2f6473. It has its own
+`--note-bg`/`--note-text` pair now, editable beside urgent and hold. **Lesson:
+deriving two colours that must contrast from one source colour cannot work.**
