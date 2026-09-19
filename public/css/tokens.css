@@ -32,11 +32,11 @@
   --report-btn-text:        #1c2a21;
   --report-btn-border:      #d7e0d9;
   --report-btn-radius:      36px;
-  --report-btn-height:      72px;
+  --report-btn-height:      88px;
   --report-btn-min-width:   104px;
-  --report-btn-gap:         10px;
-  --report-btn-icon-size:   24px;
-  --report-btn-font-size:   12px;
+  --report-btn-gap:         16px;
+  --report-btn-icon-size:   28px;
+  --report-btn-font-size:   13px;
   --report-btn-font-weight: 600;
   --report-btn-font-style:  normal;
 }
