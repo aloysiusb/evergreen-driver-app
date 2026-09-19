@@ -621,7 +621,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0;
-  padding: 10px;
+  padding: 6px;
   font-family: inherit;
   font-size: var(--report-btn-font-size);
   font-weight: var(--report-btn-font-weight);
@@ -643,14 +643,16 @@ body {
 .stop-report-btn[data-report="photo"]         { background: var(--report-bg-photo, var(--report-btn-bg)); }
 .stop-report-btn:active { transform: scale(0.96); }
 
-/* Inside a circle the word has to be allowed to wrap — "Contamination" on one
-   line would either overflow the shape or be cut to nothing. */
+/* Inside a circle a long word has nowhere to go. 'anywhere' split
+   'Contamination' into 'Contaminatio' + 'n', which reads as a bug. Hyphenate
+   at a real syllable instead, and only break mid-word as a last resort. */
 .srb-label {
   display: block;
   max-width: 100%;
   text-align: center;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 /* Very narrow phones: two across still beats four squashed, whatever the
