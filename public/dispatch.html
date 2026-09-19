@@ -299,6 +299,10 @@ body {
 .route-card {
   background: var(--d-surface);
   border: 1px solid var(--d-border);
+  /* The route's own colour along the top edge, so a route is recognisable
+     from across the room without reading its name. --route-color is set per
+     card in script; the fallback keeps the card sane if it ever is not. */
+  border-top: 3px solid var(--route-color, var(--d-border));
   border-radius: var(--r-sheet);
   overflow: hidden;
   transition: opacity 0.2s;
@@ -312,12 +316,17 @@ body {
   gap: 12px;
   padding: 14px 16px 12px;
   border-bottom: 1px solid var(--d-border);
+  /* A wash of the route colour rather than the colour itself — it sits behind
+     text that has to stay readable in both themes. Browsers without
+     color-mix simply skip this line and keep the card background. */
+  background: color-mix(in srgb, var(--route-color, transparent) 14%, transparent);
 }
 .route-stripe {
   width: 4px;
   align-self: stretch;
   border-radius: var(--r-chip);
   flex-shrink: 0;
+  background: var(--route-color, var(--d-accent));
 }
 .route-info { flex: 1; min-width: 0; }
 .route-name {
@@ -369,6 +378,7 @@ body {
   font-size: 20px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: var(--route-color, var(--d-text));
 }
 .progress-pct {
   font-size: 12px;
@@ -385,6 +395,7 @@ body {
   height: 100%;
   border-radius: var(--r-control);
   transition: width 0.5s ease;
+  background: var(--route-color, var(--d-accent));
 }
 
 /* Current stop */
@@ -552,19 +563,22 @@ body {
   <div class="loading-grid"><div class="spinner"></div>Loading routes…</div>
 </div>
 
+<script src="/js/routes.js"></script>
 <script>
-// ── Route definitions (mirrors routes.js) ─────────────────────────────────
-const ROUTES = [
-  { id:'tues-dv',          tabName:'Tues DV',              day:'Tuesday',   name:'Valley Route',      color:'#0ea5e9' },
-  { id:'tues-4wd',         tabName:'TUES 4WD ACTION',      day:'Tuesday',   name:'4WD Action',        color:'#f97316' },
-  { id:'weds-res',         tabName:'Weds DV Res',          day:'Wednesday', name:'Valley Residential', color:'#22c55e' },
-  { id:'weds-commercial',  tabName:'Weds Commercial',      day:'Wednesday', name:'Commercial',         color:'#a855f7' },
-  { id:'thurs-uv',         tabName:'Thurs UV',             day:'Thursday',  name:'Upper Valley',       color:'#06b6d4' },
-  { id:'thurs-comeagle',   tabName:'Thursday COMEAGLE',    day:'Thursday',  name:'Com / Eagle',        color:'#ef4444' },
-  { id:'friday',           tabName:'Friday',               day:'Friday',    name:'Friday Route',       color:'#eab308' },
-  { id:'monday',           tabName:'Monday',               day:'Monday',    name:'Monday Route',       color:'#ec4899' },
-  { id:'max-routes',       tabName:'Max Routes',           day:'Daily',     name:'Max Routes',         color:'#6366f1' },
-];
+/* ROUTES comes from /js/routes.js, loaded above.
+ *
+ * This file used to carry its own copy, and the two had drifted: the route
+ * picker showed Valley Route in muted teal while this board showed it in
+ * bright sky blue. Same route, two colours, depending which screen you were
+ * looking at — which defeats the point of colour-coding them.
+ *
+ * Route colours are editable, so the saved one wins when there is one. That
+ * is the same key the home page reads, so whatever is set there shows up
+ * here without anything further to configure. */
+function routeColor(route) {
+  return (savedStyles && savedStyles['route-' + route.id]) || route.color;
+}
+let savedStyles = null;
 
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const today = DAYS[new Date().getDay()];
@@ -592,6 +606,10 @@ function renderCard(route) {
   const state = routeState[route.tabName];
   const isToday = route.day === today || route.day === 'Daily';
   const card = document.getElementById('card-' + route.id) || makeCardEl(route.id);
+  // One variable per card; the stylesheet does the rest. Cheaper than
+  // threading the colour through every template string, and it means a
+  // colour change is one property write rather than a re-render.
+  card.style.setProperty('--route-color', routeColor(route));
 
   if (!state) {
     card.innerHTML = cardSkeleton(route, isToday);
@@ -627,7 +645,7 @@ function renderCard(route) {
   card.className = 'route-card' + (isToday ? '' : ' off-day');
   card.innerHTML = `
     <div class="route-card-top">
-      <div class="route-stripe" style="background:${route.color};"></div>
+      <div class="route-stripe"></div>
       <div class="route-info">
         <div class="route-name">${esc(route.name)}</div>
         <div class="route-day-chip ${isToday ? 'today' : 'off'}">${esc(route.day)}</div>
@@ -636,11 +654,11 @@ function renderCard(route) {
     </div>
     <div class="route-progress">
       <div class="progress-row">
-        <span class="progress-fraction" style="color:${route.color};">${done}<span style="font-size:13px;font-weight:500;color:var(--d-muted)"> / ${total}</span></span>
+        <span class="progress-fraction">${done}<span style="font-size:13px;font-weight:500;color:var(--d-muted)"> / ${total}</span></span>
         <span class="progress-pct">${pct}%</span>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill" style="width:${pct}%;background:${route.color};"></div>
+        <div class="progress-fill" style="width:${pct}%;"></div>
       </div>
     </div>
     <div class="current-stop">
@@ -654,7 +672,7 @@ function renderCard(route) {
 
 function cardSkeleton(route, isToday) {
   return `<div class="route-card-top">
-      <div class="route-stripe" style="background:${route.color};"></div>
+      <div class="route-stripe"></div>
       <div class="route-info">
         <div class="route-name">${esc(route.name)}</div>
         <div class="route-day-chip ${isToday ? 'today' : 'off'}">${esc(route.day)}</div>
@@ -665,7 +683,7 @@ function cardSkeleton(route, isToday) {
 
 function cardError(route, isToday) {
   return `<div class="route-card-top">
-      <div class="route-stripe" style="background:${route.color};"></div>
+      <div class="route-stripe"></div>
       <div class="route-info">
         <div class="route-name">${esc(route.name)}</div>
         <div class="route-day-chip ${isToday ? 'today' : 'off'}">${esc(route.day)}</div>
@@ -771,7 +789,7 @@ function connectWS() {
         who: stopLabel(s),
         what: msg.done ? 'Marked done' : 'Reopened',
         routeName: route.name,
-        color: route.color,
+        color: routeColor(route),
       });
       renderCard(route);
       updateFleet();
@@ -788,7 +806,7 @@ function connectWS() {
         who: stopLabel(s),
         what: msg.notes,
         routeName: route.name,
-        color: route.color,
+        color: routeColor(route),
       });
       renderCard(route);
       updateFleet();
@@ -883,8 +901,19 @@ setInterval(loadAll, 5 * 60 * 1000);
 <script src="/js/styles.js"></script>
 <script>
   /* No socket of its own — connectWS() above already has one, and it hands
-     style messages over via window.onStyleMessage. */
-  initStyles();
+     style messages over via window.onStyleMessage.
+
+     The callback catches route colours, which are stored per route rather
+     than as CSS variables, so the shared client cannot apply them for us. */
+  initStyles(styles => {
+    savedStyles = styles;
+    if (typeof ROUTES !== 'undefined') {
+      ROUTES.forEach(route => {
+        const card = document.getElementById('card-' + route.id);
+        if (card) card.style.setProperty('--route-color', routeColor(route));
+      });
+    }
+  });
 </script>
 </body>
 </html>
