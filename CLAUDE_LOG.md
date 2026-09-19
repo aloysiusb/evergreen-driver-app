@@ -523,3 +523,32 @@ verified: 2 across at 375×812, 4 at 768×1024.
 in the styles table at their old values, so the new defaults changed nothing on
 screen until they were pushed. Any future default change needs the same
 follow-up, or it is invisible.
+
+---
+
+## 2026-09-19 (cont.) — circles, and a link that did nothing
+
+**The address link was dead.** Removing the 📍 Map button, I made the address
+line the link with `target="_blank"`. A new tab is silently refused inside an
+in-app browser and in the installed-app mode this app supports — which is
+exactly how a driver opens it. No error, no tab, nothing. Reproduced it in the
+browser before touching anything.
+
+Two fixes: no `target`, so it navigates in place (on a phone the Maps app takes
+over and leaves the page behind it), and the documented
+`google.com/maps/search/?api=1&query=` URL instead of the legacy
+`maps.google.com/?q=`, which is the form that actually hands off to the app.
+
+**Buttons are solid circles now**, white type, no icons. `aspect-ratio: 1` with
+a 50% radius ties height to whatever width the column works out to, so they
+stay round at any size with nothing written down. Four muted solids, each
+*measured* against white rather than picked by eye — 5.18, 4.97, 5.34, 6.06 to
+1, all past AA.
+
+`overflow-wrap: anywhere` split "Contamination" into "Contaminatio" + "n",
+which reads as a bug. `hyphens: auto` with `break-word` as the fallback, plus
+4px more room. **A circle is a hostile container for a long word — check the
+longest label, not the shortest.**
+
+The editor dropped corners, height, icon size and edge colour: a circle cannot
+use them, and leaving dead controls in a panel is worse than having fewer.
