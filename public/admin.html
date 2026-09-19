@@ -179,6 +179,19 @@
     background: #232b26;
     color: #e6ece9;
   }
+  .preview-theme { display: inline-flex; gap: 4px; }
+  .preview-theme button {
+    font: inherit;
+    font-size: 11px;
+    padding: 3px 9px;
+    cursor: pointer;
+    border-radius: var(--r-control);
+    border: 1px solid #3a453e;
+    background: #232b26;
+    color: #9fb8a8;
+  }
+  .preview-theme button.on { background: #4a9e3f; border-color: #4a9e3f; color: #fff; }
+
   .preview-bar a { margin-left: auto; color: #9fb8a8; text-decoration: none; }
   .preview-bar a:hover { text-decoration: underline; }
 </style>
@@ -670,8 +683,10 @@
       <h2>Dispatcher board</h2>
       <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
         The screen Alyssa leaves open. It keeps its own light and dark setting,
-        so both are set here and the board uses whichever is switched on.
-        Choose <em>Dispatcher board</em> in the preview above to see it.
+        so both are set here and the board uses whichever is switched on — which
+        means editing <em>Light</em> changes nothing you can see while the board
+        is showing dark. Choose <em>Dispatcher board</em> in the preview above,
+        then use the Light / Dark buttons there to see the set you are editing.
       </p>
 
       <div class="subsection">Light</div>
@@ -776,6 +791,10 @@
         <option value="/driver/tues-dv">Driver — a route</option>
         <option value="/dispatch">Dispatcher board</option>
       </select>
+      <span class="preview-theme" id="preview-theme" hidden>
+        <button type="button" data-preview-theme="light" class="on">Light</button>
+        <button type="button" data-preview-theme="dark">Dark</button>
+      </span>
       <a id="preview-open" href="/" target="_blank" rel="noopener">Open in a tab ↗</a>
     </div>
     <iframe id="preview-frame" src="/"></iframe>
@@ -902,10 +921,34 @@ frame.addEventListener('load', () => applyToPreview(collectStyles()));
 
 const pagePicker = document.getElementById('preview-page');
 const openLink = document.getElementById('preview-open');
+const themeBox = document.getElementById('preview-theme');
+let previewTheme = 'light';
+
 pagePicker.addEventListener('change', () => {
   frame.src = pagePicker.value;
   openLink.href = pagePicker.value;
+  // Only the dispatcher board has light and dark of its own.
+  themeBox.hidden = pagePicker.value !== '/dispatch';
 });
+
+/* The dispatcher keeps its own light/dark setting, so editing the Light rows
+   while the board happens to be showing Dark looks exactly like nothing was
+   saved. This forces the preview into whichever one is being edited. */
+function applyPreviewTheme() {
+  const doc = frame.contentDocument;
+  if (!doc || pagePicker.value !== '/dispatch') return;
+  doc.documentElement.setAttribute('data-theme', previewTheme);
+}
+
+themeBox.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    previewTheme = btn.dataset.previewTheme;
+    themeBox.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+    applyPreviewTheme();
+  });
+});
+
+frame.addEventListener('load', applyPreviewTheme);
 
 document.getElementById('push-btn').addEventListener('click', async () => {
   pushStatus.textContent = 'Saving…';

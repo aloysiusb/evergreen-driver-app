@@ -148,6 +148,20 @@ body {
   flex-shrink: 0;
 }
 .ws-dot.live { background: var(--d-ws-ok); }
+.header-link {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--d-muted);
+  padding: 4px 8px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--d-border);
+  white-space: nowrap;
+}
+.header-link:hover { color: var(--d-text); border-color: var(--d-muted); }
+
 .ws-label {
   font-size: 11px;
   color: var(--d-muted);
@@ -303,8 +317,16 @@ body {
   overflow: hidden;
   transition: opacity 0.2s;
 }
-.route-card.off-day {
-  opacity: 0.45;
+/* Off-day cards are de-emphasised, but NOT by fading the whole card: at 45%
+   the route colour washed out to something that looked broken rather than
+   inactive — and on a Friday that is six cards out of nine. The header keeps
+   its colour at full strength so the route is still identifiable; only the
+   detail below it recedes. */
+.route-card.off-day > *:not(.route-card-top) {
+  opacity: 0.55;
+}
+.route-card.off-day .route-card-top {
+  filter: saturate(0.8);
 }
 .route-card-top {
   display: flex;
@@ -522,6 +544,8 @@ body {
       </div>
     </div>
     <div class="header-meta">
+      <a class="header-link" href="/" title="All routes">⌂ Routes</a>
+      <div class="fleet-divider"></div>
       <div class="today-label" id="today-label"></div>
       <div class="fleet-divider"></div>
       <div class="ws-dot" id="ws-dot"></div>

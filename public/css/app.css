@@ -136,6 +136,17 @@ body {
 }
 .home-btn:hover { background: rgba(255,255,255,0.32); }
 
+/* Two buttons where there was one, kept together so the header's
+   space-between still puts the title in the middle and the date on the end. */
+.route-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.route-nav .home-btn { margin-right: 0; }
+
 /* ── View tabs (Stops / Map) ── */
 .view-tabs {
   display: flex;
