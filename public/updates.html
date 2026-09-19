@@ -152,6 +152,7 @@
 <div class="toc">
   <div class="toc-title">Contents</div>
   <ol>
+    <li><a href="#where">Where everything is</a></li>
     <li><a href="#driver">1 · In the truck</a></li>
     <li><a href="#map">2 · The map</a></li>
     <li><a href="#office">3 · The office</a></li>
@@ -162,6 +163,71 @@
     <li><a href="#links">8 · Every page</a></li>
   </ol>
 </div>
+
+<section id="where">
+  <h2>Where everything is</h2>
+  <p class="lede">
+    Every address in one place, so nothing here has to be hunted for. All of it
+    lives at <strong>evergreen-driver-app.onrender.com</strong> — add the path to the end.
+  </p>
+
+  <div class="links">
+    <div class="link-row">
+      <a href="/">/</a>
+      <span class="what">The driver's home screen. Nine routes; tap one to open the day.</span>
+    </div>
+    <div class="link-row">
+      <a href="/dispatch">/dispatch</a>
+      <span class="what"><strong>The office screen.</strong> Every route live as drivers work. The one to leave open.</span>
+    </div>
+    <div class="link-row">
+      <a href="/approval">/approval</a>
+      <span class="what">Requests from the customer portal, waiting to be approved or declined.</span>
+    </div>
+    <div class="link-row">
+      <a href="/portal">/portal</a>
+      <span class="what">What a customer sees — holds, missed pickups, account changes, payments.</span>
+    </div>
+    <div class="link-row">
+      <a href="/admin">/admin</a>
+      <span class="what">Colours, typefaces and sizes for every screen. Also reachable from the 🎨 button on the dispatcher board.</span>
+    </div>
+    <div class="link-row">
+      <a href="/walkthrough">/walkthrough</a>
+      <span class="what">A two-minute demonstration that plays itself. No login — the link to send someone.</span>
+    </div>
+    <div class="link-row">
+      <a href="/driver/tues-dv?sim=1">/driver/&lt;route&gt;?sim=1</a>
+      <span class="what"><strong>Test drive from a desk.</strong> Any route, with <code>?sim=1</code> on the end. Nothing reaches the sheet.</span>
+    </div>
+    <div class="link-row">
+      <a href="/errors">/errors</a>
+      <span class="what">Anything the app reports about itself, in plain language.</span>
+    </div>
+    <div class="link-row">
+      <a href="/weekly">/weekly</a>
+      <span class="what">Every route plotted by day across a week.</span>
+    </div>
+    <div class="link-row">
+      <a href="/demo">/demo</a>
+      <span class="what">Turn-by-turn across a real route.</span>
+    </div>
+    <div class="link-row">
+      <a href="/streetview">/streetview</a>
+      <span class="what">Walk a route stop by stop in Street View, with each property's notes.</span>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:22px">
+    <h3>Getting between them</h3>
+    <p>
+      Every internal screen now carries the same bar across the top — the
+      Evergreen name on the left, and <strong>Routes</strong> and
+      <strong>Dispatch</strong> on the right. A driver on a route also has a
+      ⌂ home button and a 📡 button straight to the dispatcher board.
+    </p>
+  </div>
+</section>
 
 <!-- ── 1 ─────────────────────────────────────────────────── -->
 <section id="driver">
@@ -180,6 +246,7 @@
         Valley, 4WD Action, Wednesday Residential, Commercial, Upper Valley,
         Com/Eagle, Friday, Monday, Max Routes. Tap one to open the day.
       </p>
+      <div class="how">The home screen at /</div>
     </div>
 
     <div class="row">
@@ -189,6 +256,7 @@
         to about 210 stops and they all load. Order comes from the sheet, so
         whatever the office arranges is what the driver sees.
       </p>
+      <div class="how">A route page</div>
     </div>
 
     <div class="row">
@@ -199,6 +267,7 @@
         and shown as dividers, keeping their colour too. Text switches between
         black and white automatically so it stays readable on any highlight.
       </p>
+      <div class="how">Automatic — taken from the sheet</div>
     </div>
 
     <div class="row">
@@ -208,6 +277,7 @@
         sits, which dog to call about. Urgent notes show red, holds show amber,
         and driving directions appear as a separate key chip.
       </p>
+      <div class="how">On each stop card</div>
     </div>
 
     <div class="row">
@@ -217,6 +287,7 @@
         into a section at the bottom and can be reopened if tapped by mistake.
         The progress bar and count update as the day goes.
       </p>
+      <div class="how">The ✓ on each stop card</div>
     </div>
 
     <div class="row">
@@ -238,15 +309,37 @@
         code, a blocked bin, anything the office should know. Notes are queued
         the same way if there's no signal.
       </p>
+      <div class="how">The note field on any stop card</div>
     </div>
 
     <div class="row">
-      <h3>Report an incident in two taps</h3><span class="chip">Working</span>
+      <h3>Report an incident in one tap</h3><span class="chip">Working</span>
       <p>
-        Four buttons on the map card: <strong>contamination</strong>,
-        <strong>overflow</strong>, <strong>skip</strong>, and
-        <strong>photo</strong>. Filed against the stop, straight into the sheet.
+        Four buttons sit on every stop card — <strong>🚫 contamination</strong>,
+        <strong>📦 overflow</strong>, <strong>⏭ skipped</strong> and
+        <strong>📷 photo</strong>. One press files it against that stop and
+        writes it into the Driver Notes column of the sheet. No typing. A driver
+        who wants to add detail can still type a note as well, and both land
+        together.
       </p>
+      <div class="how">Any stop card, on a route page</div>
+    </div>
+
+    <div class="row">
+      <h3>Photograph a stop</h3><span class="chip">Working</span>
+      <p>
+        The 📷 button opens the phone's rear camera straight to the shutter. The
+        photo is shrunk on the phone before it is sent — a phone photo is three
+        to five megabytes, and these land around <strong>60–120 KB</strong>, so
+        it finishes uploading before the driver has put the phone away even on
+        one bar of signal.
+      </p>
+      <p>
+        Photos go into <strong>EverGreen's own Google Drive folder</strong>, not
+        somewhere belonging to the app, and a link to the photo is added to that
+        stop's note — so it opens straight from the spreadsheet.
+      </p>
+      <div class="how">📷 on any stop card · photos arrive in the shared Drive folder</div>
     </div>
 
     <div class="row">
@@ -258,6 +351,7 @@
         <strong>silent</strong> (buzz only), or <strong>off</strong>. It fires
         once per stop, and re-arms only after the driver has genuinely left.
       </p>
+      <div class="how">Set per phone, on the map tab</div>
     </div>
 
     <div class="row">
@@ -267,6 +361,7 @@
         automatically when the app is put away, so it costs no battery once the
         driver is done.
       </p>
+      <div class="how">Automatic while a route is open</div>
     </div>
 
     <div class="row">
@@ -276,6 +371,7 @@
         there's always an untouched copy. Once per route per day. "View Original"
         shows that copy if anyone needs to check what the day started as.
       </p>
+      <div class="how">Bottom of a route page</div>
     </div>
 
     <div class="row">
@@ -285,6 +381,7 @@
         browser chrome. It's still a website — nothing to install from a store,
         nothing to update.
       </p>
+      <div class="how">The browser's Share or menu → Add to Home Screen</div>
     </div>
   </div>
 </section>
@@ -317,6 +414,7 @@
         Street-level map that follows the truck. Panning by hand steps out of
         follow so it doesn't fight the driver; one tap resumes.
       </p>
+      <div class="how">Map tab → Follow</div>
     </div>
 
     <div class="row">
@@ -326,6 +424,7 @@
         and losing the stop notes. Re-routes within seconds if the driver comes
         off the line.
       </p>
+      <div class="how">Map tab, while following</div>
     </div>
 
     <div class="row">
@@ -336,6 +435,7 @@
         quiet rather than guessing when the truck is stationary and the heading
         is unreliable.
       </p>
+      <div class="how">Map tab, while following</div>
     </div>
 
     <div class="row">
@@ -345,6 +445,7 @@
         pulling up, and Street View to scout an unfamiliar property. The plain
         street map stays the default — it's the clearest to read while moving.
       </p>
+      <div class="how">Map tab</div>
     </div>
 
     <div class="row">
@@ -354,6 +455,7 @@
         traffic and says how many minutes it saves. It never reorders on its own
         — if conditions shift enough to matter it offers, and the driver decides.
       </p>
+      <div class="how">Map tab</div>
     </div>
 
     <div class="row">
@@ -363,6 +465,7 @@
         rural road has no traffic data it falls back to the plain estimate rather
         than failing.
       </p>
+      <div class="how">Map tab</div>
     </div>
 
     <div class="row">
@@ -371,6 +474,7 @@
         On a slow connection the map asks before loading rather than eating the
         driver's data silently.
       </p>
+      <div class="how">Automatic</div>
     </div>
   </div>
 </section>
@@ -389,6 +493,22 @@
         happens. This is the screen to leave open during a run.
       </p>
       <div class="how">evergreen-driver-app.onrender.com/dispatch</div>
+    </div>
+
+    <div class="row">
+      <h3>Each route in its own colour</h3><span class="chip">Working</span>
+      <p>
+        A route's colour is the same everywhere it appears — the driver's home
+        screen and the dispatcher board read the same setting, so a route is
+        recognisable at a glance without reading its name. On the board the
+        colour fills the whole card header. Routes that aren't running today
+        stay visible but step back.
+      </p>
+      <p>
+        Every one of those colours is yours to change, along with the board's
+        own light and dark schemes.
+      </p>
+      <div class="how">/admin → Route cards, and Dispatcher board</div>
     </div>
 
     <div class="row">
@@ -412,10 +532,12 @@
         so it can be handed over without a code change, and it can be switched
         off.
       </p>
+      <div class="how">Automatic — sent to the office</div>
     </div>
 
     <div class="row">
       <h3>Style editor</h3><span class="chip">Working</span>
+      <div class="how">/admin · or the 🎨 button on the dispatcher board</div>
       <p>
         Colours, typefaces, text sizes and corner rounding for the whole driver
         app, with a live preview. Changes save centrally and push to every
@@ -437,6 +559,24 @@
     </div>
 
     <div class="row">
+      <h3>A new sheet can't shift the columns</h3><span class="chip">Working</span>
+      <p>
+        The app reads each tab's own header row to find which column is which,
+        rather than assuming fixed positions. Add a column, remove one, or
+        reorder them, and it follows. If a header can't be read at all it
+        <strong>refuses to write</strong> rather than guessing — the driver's
+        work waits safely on the phone until the sheet is readable again, which
+        is the one behaviour that cannot lose anything.
+      </p>
+      <p>
+        The header words are what matter, not the positions. Renaming
+        <em>Driver Notes</em> to something else will pause writes to that tab
+        until it is put back.
+      </p>
+      <div class="how">Automatic · confirm any new sheet at /api/sheet-check</div>
+    </div>
+
+    <div class="row">
       <h3>Sheet checker</h3><span class="chip">Working</span>
       <p>
         Point it at any spreadsheet and it says whether the app can open it,
@@ -455,6 +595,7 @@
         customer names, addresses and gate codes are readable by anyone with the
         link.</strong>
       </p>
+      <div class="how">Set in the hosting dashboard — not yet switched on</div>
     </div>
   </div>
 </section>
@@ -471,18 +612,22 @@
     <div class="row">
       <h3>Request a hold</h3><span class="chip">Working</span>
       <p>Start and resume dates with a reason. Reaches the office queue.</p>
+      <div class="how">/portal</div>
     </div>
     <div class="row">
       <h3>Report a missed pickup</h3><span class="chip">Working</span>
       <p>Including whether the bin was actually out, which settles most of them.</p>
+      <div class="how">/portal</div>
     </div>
     <div class="row">
       <h3>Update account details</h3><span class="chip">Working</span>
       <p>Address, phone, email, billing, access instructions, or cancellation.</p>
+      <div class="how">/portal</div>
     </div>
     <div class="row">
       <h3>Pay an invoice</h3><span class="chip">Working</span>
       <p>Connected to QuickBooks. Returns a payment link for the open invoice.</p>
+      <div class="how">/portal</div>
     </div>
     <div class="row">
       <h3>Confirmation email to the customer</h3><span class="chip todo">Needs a sending domain</span>
@@ -492,6 +637,7 @@
         on the EverGreen domain, whenever you want it. Until then the office
         follows up by hand, which is what happens today anyway.
       </p>
+      <div class="how">Automatic once a sending domain is set</div>
     </div>
   </div>
 </section>
@@ -516,11 +662,26 @@
     <div class="row">
       <h3>Test drive without a truck</h3><span class="chip">Working</span>
       <p>
-        Adding <code>?sim=1</code> to a route drives the real app from a desk —
-        synthetic GPS along the actual route, with a switch to simulate losing
-        signal so the offline behaviour can be watched. Nothing it does reaches
-        the live sheet.
+        Put <code>?sim=1</code> on the end of any route address and a control bar
+        appears along the bottom. It drives the <em>real</em> app — the same
+        code a driver runs — along the actual route, from a desk.
       </p>
+      <p>
+        <strong>▶ Drive</strong> starts moving and <strong>Speed</strong> sets
+        how fast. Open the <strong>🗺 Map</strong> tab first to watch follow
+        mode, the turn instructions and the arrival alerts.
+        <strong>📶 Signal</strong> switches the connection off and on, which is
+        the quickest way to show what happens in a dead zone: mark a stop done
+        with the signal off and it says <em>"waiting for signal"</em>, then saves
+        itself the moment you switch it back.
+      </p>
+      <p>
+        <strong>Nothing reaches the live sheet.</strong> Every save is
+        intercepted and listed under <strong>Writes</strong> instead, so a test
+        drive cannot mark real stops done. Without <code>?sim=1</code> none of
+        this exists, so drivers never see it.
+      </p>
+      <div class="how">evergreen-driver-app.onrender.com/driver/tues-dv?sim=1 &nbsp;·&nbsp; works on any route</div>
     </div>
 
     <div class="row">
@@ -530,6 +691,7 @@
         real Carbondale route, and a stop-by-stop walk in Street View with each
         property's real notes.
       </p>
+      <div class="how">/demo and /streetview</div>
     </div>
 
     <div class="row">
@@ -538,6 +700,7 @@
         Every route plotted by day, sized by stop count, showing where the trucks
         actually go across a week.
       </p>
+      <div class="how">/weekly</div>
     </div>
   </div>
 </section>
@@ -680,6 +843,10 @@
     <div class="link-row">
       <a href="/admin">Style editor</a>
       <span class="what">Colours, typefaces and sizes, pushed live to every driver.</span>
+    </div>
+    <div class="link-row">
+      <a href="/driver/tues-dv?sim=1">Test drive (?sim=1)</a>
+      <span class="what">Any route with <code>?sim=1</code> on the end. Drives the real app from a desk; nothing reaches the sheet.</span>
     </div>
     <div class="link-row">
       <a href="/errors">Error log</a>
