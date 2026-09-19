@@ -39,13 +39,14 @@ export function photosFolderId() {
 }
 
 /** A name that sorts usefully in Drive and says what it is without opening it. */
-function fileNameFor({ tabName, rowNumber, account }) {
+function fileNameFor({ tabName, rowNumber, account, mimeType }) {
+  const ext = mimeType === "image/webp" ? "webp" : "jpg";
   const stamp = new Date().toISOString().slice(0, 16).replace("T", " ").replace(":", "");
   const who = String(account || "stop " + rowNumber)
     .replace(/[\\/:*?"<>|]/g, "")   // characters Drive and Windows both dislike
     .slice(0, 48)
     .trim();
-  return `${stamp} · ${who} · ${tabName} row ${rowNumber}.jpg`;
+  return `${stamp} · ${who} · ${tabName} row ${rowNumber}.${ext}`;
 }
 
 /**
@@ -69,7 +70,7 @@ export async function uploadPhoto(buffer, meta) {
         `${meta.account || ""} — ${meta.tabName} row ${meta.rowNumber}`.trim(),
     },
     media: {
-      mimeType: "image/jpeg",
+      mimeType: meta.mimeType || "image/jpeg",
       body: Readable.from(buffer),
     },
     fields: "id, name, webViewLink",

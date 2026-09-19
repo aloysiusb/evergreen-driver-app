@@ -282,3 +282,42 @@ various points).
 - Verify style editor works on live Render deploy (env vars need to be set first)
 - Consider adding a Render persistent disk for SQLite so style settings survive redeployments
 - The driver UI (`driver.html`) and index page (`index.html`) may benefit from integrating the style variables — currently the existing CSS may not use the custom properties set by the style system
+
+---
+
+## 2026-09-18 — smaller photos, and no more guessing at columns
+
+**Photos.** Capture now encodes WebP at 1280px instead of JPEG at 1600px,
+dropping a typical stop photo from 200-400 KB to roughly 60-120 KB. WebP is
+requested first and the returned blob's type is *checked*: a browser that
+cannot encode WebP does not error, it silently hands back a PNG, which is
+larger than the JPEG it replaced. If the blob is not WebP it is re-encoded as
+JPEG at 0.72 (~110-180 KB). The upload sends the real Content-Type, the server
+accepts both types, and Drive stores the file with the matching extension.
+
+**Columns — the fallback is gone.** `columnsFor()` no longer falls back to the
+fixed letters in `config.js` when a tab's header cannot be read. That fallback
+is what destroyed three addresses on Tues DV: the live sheet had a column
+config did not know about, every letter was off by one, and driver notes were
+written into Address. It now throws a 409 with a readable message instead.
+
+Refusing costs the driver nothing — the write parks in the phone's offline
+queue and goes through by itself once the header is readable, so no work is
+lost. Writing to a guessed cell, by contrast, is silent and destroys data.
+
+Also fixed in the same pass: approving a customer from the portal queue was
+still composing its new row from `ROUTE_COLUMNS`, so a sheet with a different
+shape would have filed the new customer's address in the wrong column. It now
+uses the detected columns like every other write. **No write path in
+`server.js` uses fixed column letters any more** — the only remaining
+references are the diagnostic display in `/api/sheet-check`.
+
+Added a startup audit that reads every route tab's header once and logs
+`done→C notes→E address→D` per tab, so a sheet swapped in overnight shows up
+as shifted or unreadable in the Render log *before* a driver taps anything.
+It warms the column cache as a side effect.
+
+**Still open:** the three damaged addresses on Tues DV rows 6, 7 and 16 have
+not been restored — the originals are in the `Tues DV backup 2026-07-06` tab.
+`ACCESS_CODE` and `ADMIN_CODE` are still unset, so the route pages remain
+publicly readable by anyone with the URL.

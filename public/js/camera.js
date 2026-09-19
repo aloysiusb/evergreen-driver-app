@@ -4,14 +4,19 @@
  * on the phone, uploaded, and a link appended to the stop's note so it is
  * reachable from the spreadsheet.
  *
- * Shrinking first is the whole trick. A modern phone photo is 3-5 MB; at
- * 1600px and quality 0.8 it lands around 200-400 KB. On rural cell service
- * that is the difference between a driver waiting at the bin and not
- * noticing. The detail lost is irrelevant for showing a contaminated bin.
+ * Shrinking first is the whole trick. A modern phone photo is 3-5 MB. At
+ * 1280px WebP it lands around 60-120 KB — small enough that the upload
+ * finishes before the driver has put the phone away, even on one bar. Where
+ * WebP is not available it falls back to JPEG at roughly double that, which
+ * is still well under what it was.
+ *
+ * 1280px is a deliberate floor, not a minimum-viable guess: it is wide enough
+ * to read a label or show what is wrong with a bin, which is the entire job.
  */
 (function () {
-  const MAX_EDGE = 1600;
-  const QUALITY = 0.8;
+  const MAX_EDGE = 1280;
+  const QUALITY_WEBP = 0.7;
+  const QUALITY_JPEG = 0.72;   // JPEG needs more to look the same
 
   /* Hidden input, created once. capture="environment" opens the rear camera
      directly rather than a file browser — that is what makes it one tap. */
@@ -39,10 +44,22 @@
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        /* Ask for WebP first — roughly 30% smaller than JPEG at the same
+           visible quality. A browser that cannot encode it does NOT error:
+           toBlob quietly hands back a PNG, which is far LARGER than the JPEG
+           we were sending before. So check what actually came back rather
+           than trusting the request, and re-encode as JPEG if it is not WebP. */
         canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject(new Error('Could not process the photo'))),
-          'image/jpeg',
-          QUALITY
+          (webp) => {
+            if (webp && webp.type === 'image/webp') return resolve(webp);
+            canvas.toBlob(
+              (jpeg) => (jpeg ? resolve(jpeg) : reject(new Error('Could not process the photo'))),
+              'image/jpeg',
+              QUALITY_JPEG
+            );
+          },
+          'image/webp',
+          QUALITY_WEBP
         );
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read the photo')); };
@@ -88,7 +105,11 @@
           '/api/photo?tab=' + encodeURIComponent(tabName) +
           '&row=' + encodeURIComponent(rowNumber) +
           '&account=' + encodeURIComponent(accountName || ''),
-          { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob }
+          {
+            method: 'POST',
+            headers: { 'Content-Type': blob.type || 'image/jpeg' },
+            body: blob,
+          }
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));

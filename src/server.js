@@ -372,7 +372,7 @@ app.get("/api/backup/:tabName", async (req, res) => {
 
 app.post(
   "/api/photo",
-  express.raw({ type: "image/jpeg", limit: "6mb" }),
+  express.raw({ type: ["image/jpeg", "image/webp"], limit: "6mb" }),
   async (req, res) => {
     const tabName = String(req.query.tab || "").trim();
     const rowNumber = Number(req.query.row);
@@ -396,7 +396,8 @@ app.post(
     }
 
     try {
-      const saved = await uploadPhoto(req.body, { tabName, rowNumber, account });
+      const mimeType = req.is("image/webp") ? "image/webp" : "image/jpeg";
+      const saved = await uploadPhoto(req.body, { tabName, rowNumber, account, mimeType });
       console.log(`[photo] ${saved.name} (${Math.round(req.body.length / 1024)} KB)`);
       res.json({ ok: true, ...saved });
     } catch (err) {
@@ -418,22 +419,64 @@ app.post(
 const columnCache = new Map();
 const COLUMN_TTL_MS = 10 * 60 * 1000;
 
+function columnFault(message) {
+  const err = new Error(message);
+  err.status = 409;
+  return err;
+}
+
 async function columnsFor(tabName) {
   const hit = columnCache.get(tabName);
   if (hit && Date.now() - hit.at < COLUMN_TTL_MS) return hit.cols;
 
+  let rows;
   try {
-    const rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:J6`);
-    const cols = detectColumns(rows);
-    if (cols) {
-      columnCache.set(tabName, { cols, at: Date.now() });
-      return cols;
-    }
-    console.warn(`[sheet] no header found on '${tabName}' — falling back to config`);
+    rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:J6`);
   } catch (err) {
     console.warn(`[sheet] could not read header of '${tabName}':`, err.message);
+    throw columnFault("Could not read the sheet's header row, so there is no safe place to write. Nothing was changed.");
   }
-  return ROUTE_COLUMNS;   // better than refusing to write at all
+
+  const cols = detectColumns(rows);
+
+  // This used to fall back to the fixed letters in config.js when the header
+  // could not be read. That fallback is exactly what destroyed three addresses
+  // on Tues DV: the sheet had a column config did not know about, every letter
+  // was off by one, and notes landed in Address. A guess that is usually right
+  // is worse than a refusal, because a refusal is visible and reversible.
+  //
+  // Refusing is cheap for the driver: the write parks in the phone's queue and
+  // goes through by itself once the header is readable again. Nothing is lost.
+  if (!cols) {
+    console.error(`[sheet] '${tabName}' has no recognisable header row — refusing to write`);
+    throw columnFault(`The header row on '${tabName}' does not look right, so writes are paused for that tab. Your work is saved on the phone and will go through once it is fixed.`);
+  }
+
+  // Belt and braces for the one mistake that actually happened.
+  if (cols.addressCol && (cols.notesCol === cols.addressCol || cols.doneCol === cols.addressCol)) {
+    console.error(`[sheet] '${tabName}' resolved a write column onto Address — refusing`, cols);
+    throw columnFault("The sheet's columns resolved onto the Address column, which would overwrite an address. Nothing was changed.");
+  }
+
+  console.log(`[sheet] '${tabName}' columns: done→${cols.doneCol} notes→${cols.notesCol} address→${cols.addressCol}`);
+  columnCache.set(tabName, { cols, at: Date.now() });
+  return cols;
+}
+
+/* Read every route tab's header once at startup and say what was found.
+ *
+ * So that a sheet swapped in overnight shows up in the log as a shifted or
+ * unreadable header before a driver taps anything, rather than after. Purely
+ * informational — it changes nothing and cannot stop the app booting. */
+async function auditColumns() {
+  if (!SPREADSHEET_ID) return;
+  for (const tab of ROUTE_DAY_TABS) {
+    try {
+      await columnsFor(tab);
+    } catch (err) {
+      console.warn(`[sheet] startup check — '${tab}': ${err.message}`);
+    }
+  }
 }
 
 // --- Sheet check ----------------------------------------------------------
@@ -619,7 +662,7 @@ app.post("/api/requests/:id/approve", async (req, res) => {
   // silently missing from the route, which is the same class of bug as the
   // driver's vanishing checkmark.
   try {
-    const cols = ROUTE_COLUMNS;
+    const cols = await columnsFor(tabName);
     const rowValues = [];
     const put = (col, val) => { rowValues[col.charCodeAt(0) - 65] = val; };
     put(cols.addressCol, row.address);
@@ -883,4 +926,5 @@ wss.on("connection", (ws) => {
 
 server.listen(PORT, () => {
   console.log(`Evergreen driver app backend listening on port ${PORT}`);
+  auditColumns();
 });
