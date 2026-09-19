@@ -466,3 +466,32 @@ truck. The office can, in the sheet.
 few shades apart — Valley Route was #1c3a43 text on #2f6473. It has its own
 `--note-bg`/`--note-text` pair now, editable beside urgent and hold. **Lesson:
 deriving two colours that must contrast from one source colour cannot work.**
+
+---
+
+## 2026-09-18 (last) — the bar everywhere, and buttons you can shape
+
+**The top bar is editable on every page.** Its colours only reached pages that
+load the style system; the error log and notes page deliberately do not, since
+the editor's inline `:root` values would override their own palettes. The
+server now writes just the bar's own settings into every page's `<head>` from
+`stampAssets`' sibling — four colours plus the name and mark, the latter drawn
+through `content: var(--appbar-name)` so they are editable on a page running
+no script at all. Values are typed by a person, so `cssSafe()` strips anything
+that could close the element or open a declaration. Cached; dropped on save.
+
+**approval.html has no `</head>`** — never did. The first version of that
+injection silently skipped the page because it looked for a closing tag that
+was not there. Head closed, body opened.
+
+**Incident buttons are fully style-driven**: fill, text, edge, corners,
+height, icon size, text size, weight, style, gap, and `--report-btn-min-width`.
+That last one is the interesting one — `repeat(auto-fit, minmax(var(...), 1fr))`
+means the number across is a *consequence* of the width, not a breakpoint.
+Verified 2 across at 375×812, and 4 at 812×375, 768×1024 and 1024×768.
+
+**`needsPx()` nearly broke line spacing everywhere.** Adding
+`endsWith('-height')` for `--report-btn-height` also captures `--line-height`,
+a bare ratio that would have become `1.5px`. There is now a check that every
+key `needsPx` claims holds a bare number — run it after touching that
+function. **Suffix rules over a shared namespace catch more than you meant.**
