@@ -121,6 +121,29 @@ export const DEFAULT_STYLES = {
   "--primary-btn-font-size":   "14",
   "--primary-btn-font-weight": "600",
 
+  // ── Dispatcher board ─────────────────────────────────────
+  // Inputs, not the live variables. dispatch.html reads these through
+  // var(--dispatch-*, fallback) so its light/dark toggle keeps working —
+  // see the comment at the top of that file's stylesheet.
+  "--dispatch-bg":            "#f2f7f3",
+  "--dispatch-surface":       "#ffffff",
+  "--dispatch-border":        "#d4e8d8",
+  "--dispatch-text":          "#1a2b1d",
+  "--dispatch-muted":         "#5e7e63",
+  "--dispatch-muted-bg":      "#e8f2ea",
+  "--dispatch-accent":        "#16a34a",
+  "--dispatch-warn":          "#d97706",
+  "--dispatch-danger":        "#dc2626",
+  "--dispatch-dark-bg":       "#0c160e",
+  "--dispatch-dark-surface":  "#141f16",
+  "--dispatch-dark-border":   "#1e3022",
+  "--dispatch-dark-text":     "#e2ede4",
+  "--dispatch-dark-muted":    "#6b9070",
+  "--dispatch-dark-muted-bg": "#1a2e1d",
+  "--dispatch-dark-accent":   "#4ade80",
+  "--dispatch-dark-warn":     "#fbbf24",
+  "--dispatch-dark-danger":   "#f87171",
+
   // ── Toast notification ───────────────────────────────────
   "--toast-bg":          "#e5ece7",
   "--toast-text":        "#14241b",

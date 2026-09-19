@@ -142,7 +142,28 @@
 
   /* ── PREVIEW ── */
   .preview { flex: 1; overflow: hidden; }
-  .preview iframe { width: 100%; height: 100%; border: none; }
+  .preview { display: flex; flex-direction: column; }
+  .preview iframe { width: 100%; flex: 1; border: none; }
+  .preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    background: #1b211d;
+    color: #cbd5d0;
+    border-bottom: 1px solid #2a332d;
+  }
+  .preview-bar select {
+    font: inherit;
+    padding: 4px 8px;
+    border-radius: var(--r-control);
+    border: 1px solid #3a453e;
+    background: #232b26;
+    color: #e6ece9;
+  }
+  .preview-bar a { margin-left: auto; color: #9fb8a8; text-decoration: none; }
+  .preview-bar a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -627,6 +648,94 @@
       </div>
     </div>
 
+    <!-- ── DISPATCHER BOARD ── -->
+    <div class="panel-section">
+      <h2>Dispatcher board</h2>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        The screen Alyssa leaves open. It keeps its own light and dark setting,
+        so both are set here and the board uses whichever is switched on.
+        Choose <em>Dispatcher board</em> in the preview above to see it.
+      </p>
+
+      <div class="subsection">Light</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-bg" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Cards</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-surface" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Lines and edges</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-border" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Text</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-text" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Secondary text</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-muted" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Quiet background<br><small style="opacity:.6">Chips and inactive areas</small></label>
+        <div class="inputs"><input type="color" data-var="--dispatch-muted-bg" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Accent<br><small style="opacity:.6">Progress and done counts</small></label>
+        <div class="inputs"><input type="color" data-var="--dispatch-accent" value="#000000"></div>
+      </div>
+
+      <div class="subsection">Dark</div>
+      <div class="control-row">
+        <label>Background</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-bg" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Cards</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-surface" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Lines and edges</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-border" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Text</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-text" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Secondary text</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-muted" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Quiet background</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-muted-bg" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Accent</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-accent" value="#000000"></div>
+      </div>
+
+      <div class="subsection">Alerts</div>
+      <div class="control-row">
+        <label>Needs attention (light)</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-warn" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Needs attention (dark)</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-warn" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Problem (light)</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-danger" value="#000000"></div>
+      </div>
+      <div class="control-row">
+        <label>Problem (dark)</label>
+        <div class="inputs"><input type="color" data-var="--dispatch-dark-danger" value="#000000"></div>
+      </div>
+    </div>
+
     <!-- ── ACTIONS ── -->
     <div class="panel-section">
       <div id="push-status"></div>
@@ -638,6 +747,15 @@
   </div><!-- /panel -->
 
   <div class="preview">
+    <div class="preview-bar">
+      <label for="preview-page">Previewing</label>
+      <select id="preview-page">
+        <option value="/">Home — route picker</option>
+        <option value="/driver/tues-dv">Driver — a route</option>
+        <option value="/dispatch">Dispatcher board</option>
+      </select>
+      <a id="preview-open" href="/" target="_blank" rel="noopener">Open in a tab ↗</a>
+    </div>
     <iframe id="preview-frame" src="/"></iframe>
   </div>
 </div>
@@ -707,7 +825,8 @@ function applyToPreview(styles) {
     }
   }
 
-  // Re-render route cards with updated colors
+  // Re-render route cards with updated colors. Only the home page has them,
+  // so everything from here down is skipped on the other previews.
   const grid = iframeDoc.getElementById('route-grid');
   const ROUTES = frame.contentWindow.ROUTES;
   if (grid && ROUTES) {
@@ -757,6 +876,13 @@ async function loadStyles() {
 }
 
 frame.addEventListener('load', () => applyToPreview(collectStyles()));
+
+const pagePicker = document.getElementById('preview-page');
+const openLink = document.getElementById('preview-open');
+pagePicker.addEventListener('change', () => {
+  frame.src = pagePicker.value;
+  openLink.href = pagePicker.value;
+});
 
 document.getElementById('push-btn').addEventListener('click', async () => {
   pushStatus.textContent = 'Saving…';

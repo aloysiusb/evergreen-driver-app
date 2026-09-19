@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-radius="tight">
+<html lang="en" data-radius="tight" data-style-button>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,56 +9,72 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
+<script>
+  /* Inline and first, so the board does not flash the system theme before
+     the remembered one is applied. */
+  try {
+    var savedTheme = localStorage.getItem('dispatch_theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+  } catch (err) { /* private mode — fall back to the system preference */ }
+</script>
 <style>
 /* ── Tokens ── */
+/* Each colour reads from a --dispatch-* input the style editor can set,
+   falling back to the value written here when nothing is saved.
+
+   The indirection is the point. The editor pushes its values as INLINE styles
+   on :root, and an inline style beats any selector — so if it set --bg
+   directly it would override both the dark-mode block below and the theme
+   toggle, and this page would be stuck in one theme forever. Setting the
+   inputs instead leaves the theme selectors free to choose between them. */
 :root {
-  --bg:       #f2f7f3;
-  --surface:  #ffffff;
-  --border:   #d4e8d8;
-  --accent:   #16a34a;
-  --text:     #1a2b1d;
-  --muted:    #5e7e63;
-  --muted-bg: #e8f2ea;
-  --done:     #16a34a;
-  --warn:     #d97706;
-  --danger:   #dc2626;
-  --ws-ok:    #22c55e;
-  --ws-bad:   #ef4444;
+  --d-bg:       var(--dispatch-bg, #f2f7f3);
+  --d-surface:  var(--dispatch-surface, #ffffff);
+  --d-border:   var(--dispatch-border, #d4e8d8);
+  --d-accent:   var(--dispatch-accent, #16a34a);
+  --d-text:     var(--dispatch-text, #1a2b1d);
+  --d-muted:    var(--dispatch-muted, #5e7e63);
+  --d-muted-bg: var(--dispatch-muted-bg, #e8f2ea);
+  --d-done:     var(--d-accent);
+  --d-warn:     var(--dispatch-warn, #d97706);
+  --d-danger:   var(--dispatch-danger, #dc2626);
+  --d-ws-ok:    #22c55e;
+  --d-ws-bad:   #ef4444;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:       #0c160e;
-    --surface:  #141f16;
-    --border:   #1e3022;
-    --accent:   #4ade80;
-    --text:     #e2ede4;
-    --muted:    #6b9070;
-    --muted-bg: #1a2e1d;
-    --done:     #4ade80;
-    --warn:     #fbbf24;
-    --danger:   #f87171;
+    --d-bg:       var(--dispatch-dark-bg, #0c160e);
+    --d-surface:  var(--dispatch-dark-surface, #141f16);
+    --d-border:   var(--dispatch-dark-border, #1e3022);
+    --d-accent:   var(--dispatch-dark-accent, #4ade80);
+    --d-text:     var(--dispatch-dark-text, #e2ede4);
+    --d-muted:    var(--dispatch-dark-muted, #6b9070);
+    --d-muted-bg: var(--dispatch-dark-muted-bg, #1a2e1d);
+    --d-done:     var(--d-accent);
+    --d-warn:     var(--dispatch-dark-warn, #fbbf24);
+    --d-danger:   var(--dispatch-dark-danger, #f87171);
   }
 }
 :root[data-theme="dark"] {
-  --bg:       #0c160e;
-  --surface:  #141f16;
-  --border:   #1e3022;
-  --accent:   #4ade80;
-  --text:     #e2ede4;
-  --muted:    #6b9070;
-  --muted-bg: #1a2e1d;
-  --done:     #4ade80;
-  --warn:     #fbbf24;
-  --danger:   #f87171;
+  --d-bg:       var(--dispatch-dark-bg, #0c160e);
+  --d-surface:  var(--dispatch-dark-surface, #141f16);
+  --d-border:   var(--dispatch-dark-border, #1e3022);
+  --d-accent:   var(--dispatch-dark-accent, #4ade80);
+  --d-text:     var(--dispatch-dark-text, #e2ede4);
+  --d-muted:    var(--dispatch-dark-muted, #6b9070);
+  --d-muted-bg: var(--dispatch-dark-muted-bg, #1a2e1d);
+  --d-done:     var(--d-accent);
+  --d-warn:     var(--dispatch-dark-warn, #fbbf24);
+  --d-danger:   var(--dispatch-dark-danger, #f87171);
 }
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: var(--font, 'DM Sans', system-ui, sans-serif);
+  background: var(--d-bg);
+  color: var(--d-text);
   min-height: 100vh;
   font-size: 14px;
   line-height: 1.5;
@@ -69,8 +85,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--d-surface);
+  border-bottom: 1px solid var(--d-border);
   padding: 14px 20px;
 }
 .header-top {
@@ -88,7 +104,7 @@ body {
 .brand-mark {
   width: 32px;
   height: 32px;
-  background: var(--accent);
+  background: var(--d-accent);
   border-radius: var(--r-panel);
   display: flex;
   align-items: center;
@@ -97,7 +113,7 @@ body {
   flex-shrink: 0;
 }
 .brand-name {
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -105,7 +121,7 @@ body {
 }
 .brand-sub {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--d-muted);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -116,10 +132,10 @@ body {
   gap: 12px;
 }
 .today-label {
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
   font-size: 15px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--d-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -127,14 +143,14 @@ body {
   width: 8px;
   height: 8px;
   border-radius: var(--r-circle);
-  background: var(--ws-bad);
+  background: var(--d-ws-bad);
   transition: background 0.4s;
   flex-shrink: 0;
 }
-.ws-dot.live { background: var(--ws-ok); }
+.ws-dot.live { background: var(--d-ws-ok); }
 .ws-label {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--d-muted);
   letter-spacing: 0.05em;
   font-weight: 500;
 }
@@ -152,16 +168,16 @@ body {
   gap: 5px;
 }
 .fleet-num {
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
   font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.fleet-num.accent { color: var(--accent); }
+.fleet-num.accent { color: var(--d-accent); }
 .fleet-label {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--d-muted);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -170,20 +186,20 @@ body {
   flex: 1;
   min-width: 120px;
   height: 6px;
-  background: var(--border);
+  background: var(--d-border);
   border-radius: var(--r-chip);
   overflow: hidden;
 }
 .fleet-progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--d-accent);
   border-radius: var(--r-chip);
   transition: width 0.5s ease;
 }
 .fleet-divider {
   width: 1px;
   height: 20px;
-  background: var(--border);
+  background: var(--d-border);
   flex-shrink: 0;
 }
 
@@ -204,21 +220,21 @@ body {
   margin-bottom: 10px;
 }
 .feed-title {
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
   font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
-.feed-count { font-size: 12.5px; color: var(--muted); }
+.feed-count { font-size: 12.5px; color: var(--d-muted); }
 
 .feed {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--d-surface);
+  border: 1px solid var(--d-border);
   border-radius: var(--r-card);
   max-height: 310px;
   overflow-y: auto;
 }
-.feed-empty { padding: 20px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+.feed-empty { padding: 20px; color: var(--d-muted); font-size: 13.5px; line-height: 1.55; }
 
 .feed-item {
   display: grid;
@@ -226,22 +242,22 @@ body {
   gap: 3px 12px;
   align-items: baseline;
   padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--d-border);
 }
 .feed-item:last-child { border-bottom: 0; }
 
 /* A stripe carries the kind, so a wall of text is scannable at a glance. */
-.feed-item.done   { border-left: 3px solid var(--done); }
-.feed-item.note   { border-left: 3px solid var(--accent); }
-.feed-item.issue  { border-left: 3px solid var(--warn); }
-.feed-item.undone { border-left: 3px solid var(--muted); }
+.feed-item.done   { border-left: 3px solid var(--d-done); }
+.feed-item.note   { border-left: 3px solid var(--d-accent); }
+.feed-item.issue  { border-left: 3px solid var(--d-warn); }
+.feed-item.undone { border-left: 3px solid var(--d-muted); }
 .feed-item.photo  { border-left: 3px solid var(--blue, #1e4e79); }
 .feed-photo {
   display: inline-block;
   margin-top: 4px;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--d-accent);
 }
 
 .feed-icon { font-size: 14px; line-height: 1.4; }
@@ -252,12 +268,12 @@ body {
 }
 .feed-what {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--d-muted);
   word-break: break-word;
 }
 .feed-time {
   font-size: 11.5px;
-  color: var(--muted);
+  color: var(--d-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -281,8 +297,8 @@ body {
 
 /* ── Route card ── */
 .route-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--d-surface);
+  border: 1px solid var(--d-border);
   border-radius: var(--r-sheet);
   overflow: hidden;
   transition: opacity 0.2s;
@@ -295,7 +311,7 @@ body {
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--d-border);
 }
 .route-stripe {
   width: 4px;
@@ -305,7 +321,7 @@ body {
 }
 .route-info { flex: 1; min-width: 0; }
 .route-name {
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -324,12 +340,12 @@ body {
   margin-top: 3px;
 }
 .route-day-chip.today {
-  background: var(--accent);
+  background: var(--d-accent);
   color: #fff;
 }
 .route-day-chip.off {
-  background: var(--muted-bg);
-  color: var(--muted);
+  background: var(--d-muted-bg);
+  color: var(--d-muted);
 }
 .route-status-icon {
   font-size: 20px;
@@ -340,7 +356,7 @@ body {
 /* Progress */
 .route-progress {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--d-border);
 }
 .progress-row {
   display: flex;
@@ -349,19 +365,19 @@ body {
   margin-bottom: 7px;
 }
 .progress-fraction {
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-display, 'Barlow Semi Condensed', sans-serif);
   font-size: 20px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .progress-pct {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--d-muted);
   font-weight: 500;
 }
 .progress-bar {
   height: 8px;
-  background: var(--border);
+  background: var(--d-border);
   border-radius: var(--r-control);
   overflow: hidden;
 }
@@ -374,7 +390,7 @@ body {
 /* Current stop */
 .current-stop {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--d-border);
   min-height: 64px;
 }
 .current-label {
@@ -382,7 +398,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--d-muted);
   margin-bottom: 4px;
 }
 .current-name {
@@ -394,14 +410,14 @@ body {
 }
 .current-addr {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--d-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .current-empty {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--d-muted);
   font-style: italic;
 }
 
@@ -425,7 +441,7 @@ body {
 }
 .incident-chip.contamination { background: #fee2e2; color: #dc2626; }
 .incident-chip.overflow      { background: #fef3c7; color: #d97706; }
-.incident-chip.skip          { background: var(--muted-bg); color: var(--muted); }
+.incident-chip.skip          { background: var(--d-muted-bg); color: var(--d-muted); }
 .incident-chip.photo         { background: #dbeafe; color: #1d4ed8; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .incident-chip.contamination { background: #450a0a; color: #fca5a5; }
@@ -438,7 +454,7 @@ body {
 
 .no-incidents {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--d-muted);
   font-style: italic;
   align-self: center;
 }
@@ -447,14 +463,14 @@ body {
 .loading-grid {
   padding: 60px 20px;
   text-align: center;
-  color: var(--muted);
+  color: var(--d-muted);
   font-size: 14px;
 }
 .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
+  border: 3px solid var(--d-border);
+  border-top-color: var(--d-accent);
   border-radius: var(--r-circle);
   animation: spin 0.7s linear infinite;
   margin: 0 auto 14px;
@@ -467,17 +483,17 @@ body {
 
 /* Theme toggle */
 .theme-toggle {
-  background: var(--muted-bg);
+  background: var(--d-muted-bg);
   border: none;
   border-radius: var(--r-card);
   padding: 5px 10px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--d-muted);
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
 }
-.theme-toggle:hover { color: var(--text); }
+.theme-toggle:hover { color: var(--d-text); }
 </style>
 </head>
 <body>
@@ -513,7 +529,7 @@ body {
       <div class="fleet-progress-fill" id="fleet-fill" style="width:0%"></div>
     </div>
     <div class="fleet-stat">
-      <div class="fleet-num" id="fleet-incidents" style="color:var(--warn)">0</div>
+      <div class="fleet-num" id="fleet-incidents" style="color:var(--d-warn)">0</div>
       <div class="fleet-label">incidents today</div>
     </div>
   </div>
@@ -620,7 +636,7 @@ function renderCard(route) {
     </div>
     <div class="route-progress">
       <div class="progress-row">
-        <span class="progress-fraction" style="color:${route.color};">${done}<span style="font-size:13px;font-weight:500;color:var(--muted)"> / ${total}</span></span>
+        <span class="progress-fraction" style="color:${route.color};">${done}<span style="font-size:13px;font-weight:500;color:var(--d-muted)"> / ${total}</span></span>
         <span class="progress-pct">${pct}%</span>
       </div>
       <div class="progress-bar">
@@ -644,7 +660,7 @@ function cardSkeleton(route, isToday) {
         <div class="route-day-chip ${isToday ? 'today' : 'off'}">${esc(route.day)}</div>
       </div>
     </div>
-    <div style="padding:20px 16px;color:var(--muted);font-size:13px;">Loading…</div>`;
+    <div style="padding:20px 16px;color:var(--d-muted);font-size:13px;">Loading…</div>`;
 }
 
 function cardError(route, isToday) {
@@ -655,7 +671,7 @@ function cardError(route, isToday) {
         <div class="route-day-chip ${isToday ? 'today' : 'off'}">${esc(route.day)}</div>
       </div>
     </div>
-    <div style="padding:16px;font-size:12px;color:var(--danger);">Could not load route</div>`;
+    <div style="padding:16px;font-size:12px;color:var(--d-danger);">Could not load route</div>`;
 }
 
 function makeCardEl(id) {
@@ -733,6 +749,14 @@ function connectWS() {
   };
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
+
+    // Before the route lookup: a style change carries no tabName, so the
+    // guard below would drop it.
+    if (msg.type === 'style-updated' && window.onStyleMessage) {
+      window.onStyleMessage(msg);
+      return;
+    }
+
     const route = ROUTES.find(r => r.tabName === msg.tabName);
     if (!route) return;
     const state = routeState[route.tabName];
@@ -830,8 +854,13 @@ function renderFeed() {
 function toggleTheme() {
   const root = document.documentElement;
   const cur = root.getAttribute('data-theme');
-  root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  // It is a screen someone leaves open all day; re-picking the theme after
+  // every refresh would be a small daily annoyance.
+  try { localStorage.setItem('dispatch_theme', next); } catch (err) { /* private mode */ }
 }
+
 
 // ── Esc util ──────────────────────────────────────────────────────────────
 function esc(str) {
@@ -843,6 +872,15 @@ loadAll();
 connectWS();
 // Refresh every 5 min in case WebSocket misses something
 setInterval(loadAll, 5 * 60 * 1000);
+</script>
+
+<script src="/js/style-units.js"></script>
+<script src="/js/fonts.js"></script>
+<script src="/js/styles.js"></script>
+<script>
+  /* No socket of its own — connectWS() above already has one, and it hands
+     style messages over via window.onStyleMessage. */
+  initStyles();
 </script>
 </body>
 </html>

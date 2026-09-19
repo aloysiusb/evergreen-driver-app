@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html data-style-button lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,40 +29,41 @@
 <script src="/js/report-errors.js"></script>
 <script src="/js/fonts.js"></script>
 <script src="/js/style-units.js"></script>
+<script src="/js/styles.js"></script>
 <script src="/js/routes.js"></script>
 <script>
 const grid = document.getElementById('route-grid');
 
-fetch('/api/styles').then(r => r.json()).then(styles => {
-  // Apply global CSS vars
-  const root = document.documentElement;
-  for (const [key, val] of Object.entries(styles)) {
-    if (key.startsWith('--') && shouldApplyStyleVar(key)) {
-      if (isFontVar(key)) applyFont(key, val);
-      else root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
-    }
-  }
-  // Apply editable home page content (empty string → element hidden via CSS :empty)
-  document.getElementById('site-logo').textContent    = styles['site-logo']    ?? '';
-  document.getElementById('site-heading').textContent = styles['site-heading'] ?? 'Evergreen Compost';
-  document.getElementById('site-subhead').textContent = styles['site-subhead'] ?? '';
-  // Render route cards using stored colors
-  const cardText = styles['route-card-text'] || '#ffffff';
+/* The variable loop lives in styles.js now; everything below is the part
+   that is specific to this page. { socket: true } because the home page has
+   no WebSocket of its own, so a style change would otherwise not reach it
+   until the next reload. */
+/* Draw the cards straight away from the colours built into routes.js, then
+   redraw when the saved ones arrive. A driver opening this on a bad
+   connection sees their routes immediately rather than an empty screen, and
+   there is no separate failure path to get wrong. */
+function renderRoutes(styles) {
+  const cardText = (styles && styles['route-card-text']) || '#ffffff';
   grid.innerHTML = ROUTES.map(r => {
-    const bg = styles['route-' + r.id] || r.color;
+    const bg = (styles && styles['route-' + r.id]) || r.color;
     return `<a class="route-card" href="/driver/${r.id}" style="background:${bg};color:${cardText};">
       <div class="route-card-day">${r.day}</div>
       <div class="route-card-name">${r.name}</div>
     </a>`;
   }).join('');
-}).catch(() => {
-  // Fallback to hardcoded colors if API fails
-  grid.innerHTML = ROUTES.map(r => `
-    <a class="route-card" href="/driver/${r.id}" style="background:${r.color};">
-      <div class="route-card-day">${r.day}</div>
-      <div class="route-card-name">${r.name}</div>
-    </a>`).join('');
-});
+}
+
+renderRoutes(null);
+
+/* { socket: true } because this page has no WebSocket of its own, so a style
+   change would otherwise not reach it until the next reload. */
+initStyles(styles => {
+  // Editable home page content (empty string → element hidden via CSS :empty)
+  document.getElementById('site-logo').textContent    = styles['site-logo']    ?? '';
+  document.getElementById('site-heading').textContent = styles['site-heading'] ?? 'Evergreen Compost';
+  document.getElementById('site-subhead').textContent = styles['site-subhead'] ?? '';
+  renderRoutes(styles);
+}, { socket: true });
 </script>
 </body>
 </html>

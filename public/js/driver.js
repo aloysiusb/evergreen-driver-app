@@ -13,23 +13,21 @@
   const root = document.documentElement;
 
   // Load and apply server-side style settings (includes per-route color)
-  function applyStyles(styles) {
-    for (const [key, val] of Object.entries(styles)) {
-      if (key.startsWith('--') && shouldApplyStyleVar(key)) {
-        if (typeof isFontVar === 'function' && isFontVar(key)) applyFont(key, val);
-        else root.style.setProperty(key, needsPx(key) ? val + 'px' : val);
-      }
-    }
-    // Use stored route color if available, else fall back to routes.js value
-    const routeColor = styles['route-' + route.id] || route.color;
+  /* The variable loop lives in styles.js. The route colour is the exception:
+     it is stored under a per-route key rather than as a CSS variable, so it
+     has to be picked out by hand.
+
+     No socket option — this page already has one, and hands style messages to
+     window.onStyleMessage from its own handler. */
+  initStyles(styles => {
+    const routeColor = (styles && styles['route-' + route.id]) || route.color;
     root.style.setProperty('--route-color', routeColor);
-  }
-  fetch('/api/styles').then(r => r.json()).then(applyStyles).catch(() => {
-    // Fallback to hardcoded colors
-    root.style.setProperty('--route-color', route.color);
-    root.style.setProperty('--route-color-dark', route.colorDark);
-    root.style.setProperty('--route-color-light', route.colorLight);
   });
+
+  // Whatever happens to the request, the route must still have its colour.
+  root.style.setProperty('--route-color', route.color);
+  root.style.setProperty('--route-color-dark', route.colorDark);
+  root.style.setProperty('--route-color-light', route.colorLight);
   document.title = route.name + ' — Evergreen';
   document.getElementById('route-name').textContent = route.name;
   document.getElementById('route-day').textContent = route.day;
@@ -498,8 +496,8 @@
         const s = allStops.find(s => s.rowNumber === msg.rowNumber);
         if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; render(); if (window.notifyStopsUpdated) window.notifyStopsUpdated(); }
       }
-      if (msg.type === 'style-updated') {
-        applyStyles(msg.styles);
+      if (msg.type === 'style-updated' && window.onStyleMessage) {
+        window.onStyleMessage(msg);
       }
     };
   }
