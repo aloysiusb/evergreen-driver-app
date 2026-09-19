@@ -365,6 +365,43 @@ app.get("/api/backup/:tabName", async (req, res) => {
   }
 });
 
+// --- Simulated activity (demo only) ---------------------------------------
+//
+// A test drive intercepts its own writes so the route sheet cannot be touched,
+// which also means the dispatcher board saw nothing at all — the one screen
+// you most want to show someone while demonstrating.
+//
+// This broadcasts an event and NOTHING ELSE. It never opens the spreadsheet.
+// Every message is stamped sim:true, and the board puts those in the feed
+// without letting them move the real stop counts, so a demo running next to a
+// real shift cannot make the numbers lie.
+
+app.post("/api/sim-event", (req, res) => {
+  const { type, tabName, rowNumber, done, notes, accountName } = req.body || {};
+
+  if (type !== "stop-updated" && type !== "note-updated") {
+    return res.status(400).json({ error: "Not an event this accepts." });
+  }
+  try {
+    assertAllowedTab(tabName);
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+
+  broadcast({
+    type,
+    tabName,
+    rowNumber: Number(rowNumber),
+    done: Boolean(done),
+    notes: typeof notes === "string" ? notes.slice(0, 500) : undefined,
+    noteUrgency: typeof notes === "string" ? classifyNote(notes) : undefined,
+    accountName: typeof accountName === "string" ? accountName.slice(0, 80) : undefined,
+    sim: true,
+  });
+
+  res.json({ ok: true });
+});
+
 // --- Photos ---------------------------------------------------------------
 //
 // The phone shrinks the image before sending — a raw phone photo is 3-5 MB and

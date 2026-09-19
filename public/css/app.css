@@ -1084,10 +1084,10 @@ textarea.note-edit {
   border: 2px solid var(--route-color);
   border-radius: var(--r-card);
   background: var(--note-edit-bg);
-  color: var(--text);
+  color: var(--note-edit-text);
   resize: none;
   margin-top: 8px;
-  min-height: 64px;
+  min-height: var(--note-edit-height);
   outline: none;
   display: block;
 }

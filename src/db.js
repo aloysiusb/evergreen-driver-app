@@ -137,9 +137,13 @@ export const DEFAULT_STYLES = {
   "--stop-note-font-weight": "400",
 
   // ── Note textarea ────────────────────────────────────────
+  // The text colour was inherited from --text, which on a pale card is a
+  // muted grey — too faint to read what you are typing in a moving truck.
   "--note-edit-bg":          "#ffffff",
-  "--note-edit-font-size":   "13",
-  "--note-edit-font-weight": "400",
+  "--note-edit-text":        "#14241b",
+  "--note-edit-font-size":   "16",
+  "--note-edit-font-weight": "500",
+  "--note-edit-height":      "96",
 
   // ── Done button ──────────────────────────────────────────
   "--done-btn-bg":      "#2d7d4f",

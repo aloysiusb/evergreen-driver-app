@@ -258,6 +258,20 @@ body {
   color: var(--d-muted);
   word-break: break-word;
 }
+.feed-sim {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--d-warn);
+  color: #1a1206;
+  vertical-align: middle;
+}
+.feed-item.is-sim { opacity: 0.88; }
+
 .feed-time {
   font-size: 11.5px;
   color: var(--d-muted);
@@ -773,6 +787,24 @@ function connectWS() {
       return;
     }
 
+    /* A test drive. It shows in the feed so a demo is visible here, but it
+       deliberately does NOT touch routeState — the stop counts and progress
+       bars keep reporting what the sheet actually says, so a demo running
+       next to a real shift cannot make the numbers lie. */
+    if (msg.sim) {
+      const simRoute = ROUTES.find(r => r.tabName === msg.tabName);
+      addFeed({
+        kind: msg.type === 'note-updated' ? 'note' : (msg.done ? 'done' : 'undone'),
+        icon: msg.type === 'note-updated' ? '📝' : (msg.done ? '✅' : '↩️'),
+        who: 'Stop ' + msg.rowNumber,
+        what: msg.type === 'note-updated' ? (msg.notes || '') : (msg.done ? 'Marked done' : 'Reopened'),
+        routeName: simRoute ? simRoute.name : msg.tabName,
+        color: simRoute ? routeColor(simRoute) : 'var(--d-muted)',
+        sim: true,
+      });
+      return;
+    }
+
     const route = ROUTES.find(r => r.tabName === msg.tabName);
     if (!route) return;
     const state = routeState[route.tabName];
@@ -854,10 +886,13 @@ function renderFeed() {
       ? '<span class="feed-route" style="background:' + f.color + '22;color:' + f.color + '">'
         + esc(f.routeName) + '</span>'
       : '';
-    return '<div class="feed-item ' + f.kind + '">' +
+    /* A test drive is marked, every time. Someone glancing at this screen
+       during a demo must never take a simulated stop for a real one. */
+    const simTag = f.sim ? '<span class="feed-sim">Test drive</span>' : '';
+    return '<div class="feed-item ' + f.kind + (f.sim ? ' is-sim' : '') + '">' +
       '<span class="feed-icon">' + f.icon + '</span>' +
       '<div class="feed-body">' +
-        '<div class="feed-who">' + esc(f.who) + routeChip + '</div>' +
+        '<div class="feed-who">' + esc(f.who) + routeChip + simTag + '</div>' +
         (f.what ? '<div class="feed-what">' + esc(f.what) + '</div>' : '') +
         (f.link ? '<a class="feed-photo" href="' + esc(f.link) + '" target="_blank" rel="noopener">📷 Open photo</a>' : '') +
       '</div>' +

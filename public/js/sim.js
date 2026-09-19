@@ -53,6 +53,7 @@
       return Promise.reject(new TypeError('sim: no signal'));
     }
     logWrite('accepted (not sent)', u, opts);
+    announce(u, opts);
     return Promise.resolve({
       ok: true,
       status: 200,
@@ -72,6 +73,34 @@
     });
     if (writeLog.length > 40) writeLog.length = 40;
     renderLog();
+  }
+
+  /* The write never leaves the browser — but the dispatcher board is the
+     screen you most want to show someone while demonstrating, and it was
+     seeing nothing at all.
+
+     So say what happened, to a route that only broadcasts and never opens the
+     spreadsheet. Fire and forget: if it fails the test drive carries on
+     exactly as before, because nothing depends on it. */
+  function announce(url, opts) {
+    if (!hasSignal) return;                       // a dead zone is a dead zone
+    const m = String(url).match(/\/api\/routes\/([^/]+)\/stops\/(\d+)(\/notes)?/);
+    if (!m) return;
+
+    let body = {};
+    try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) { return; }
+
+    realFetch('/api/sim-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: m[3] ? 'note-updated' : 'stop-updated',
+        tabName: decodeURIComponent(m[1]),
+        rowNumber: Number(m[2]),
+        done: body.done,
+        notes: body.notes,
+      }),
+    }).catch(() => {});
   }
 
   // ── Synthetic GPS ───────────────────────────────────────────────────────
