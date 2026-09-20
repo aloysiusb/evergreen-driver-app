@@ -678,3 +678,40 @@ the file itself in one step, and left only the `<img>`. My first test fixture
 was a hand-made "JPEG" that was structurally complete but would not decode;
 generating one through `canvas.toBlob` — the same path the camera uses — was
 both a valid fixture and a truer test.
+
+---
+
+## 2026-09-20 — the "Photos per Notes" column, and a write that went wrong
+
+**What it does.** The column is added to a tab the first time a photo is taken
+on it, and the link is written into it as the photo lands. Links accumulate in
+the cell — several photos of one stop is normal.
+
+**I wrote into the wrong column, on the live sheet.** The first version worked
+out where to put the heading by re-reading the header row and counting used
+cells. That read came back empty, so column A — the blank leading cell these
+sheets keep — looked like "the first free column". It wrote the heading into
+**A1**, then links into **A6** and **A9** on Tues DV.
+
+Three things came out of it:
+
+1. **Placement no longer does its own read.** It uses `headerWidth` from the
+   header the rest of the app already trusts, floored at one past the rightmost
+   known data column, so it cannot land on or before the data whatever a read
+   returns.
+2. **It heals.** A heading found to the LEFT of the data is not a photos
+   column: it is cleared and a proper one placed.
+3. **`POST /api/photos/tidy`** clears stray links precisely — only cells whose
+   ENTIRE contents are links of the exact shape this app generates, never the
+   real photos column. Ran it: `cleared: ["A6","A9"]`.
+
+**The diagnostic was blind.** `/api/sheet-check` read **A to H**. The column
+this app adds lands at **I**, so the one tool meant for checking columns could
+not show it — and I spent a cycle hunting a failed write that had succeeded.
+It reads to N now. **A checking tool whose range is narrower than the thing it
+checks is worse than no tool: it reports absence as fact.**
+
+**Also added** `?debug=1` on `/api/photo`, which waits for the sheet write and
+returns its outcome. The write is fire-and-forget so a slow spreadsheet never
+leaves a driver waiting — the cost is that failures only reach the server log,
+where I cannot see them.
