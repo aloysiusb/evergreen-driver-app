@@ -727,7 +727,10 @@ app.get("/api/sheet-check", async (req, res) => {
         const span = String(req.query.rows || "1:3");
         const safe = /^[0-9]+:[0-9]+$/.test(span) ? span : "1:3";
         const [a,b]=safe.split(":");
-        const rows = await readRange(sheetId, `'${tab}'!A${a}:H${b}`);
+        // Out to N, not H. Stopping at H meant a column this app ADDS —
+        // "Photos per Notes", which lands at I on these sheets — was invisible
+        // to the one tool meant for checking the columns.
+        const rows = await readRange(sheetId, `'${tab}'!A${a}:N${b}`);
         out.columnCheck.push({ tab, firstRows: rows, detected: detectColumns(rows) });
       } catch (err) {
         out.columnCheck.push({ tab, error: err.message });
