@@ -126,11 +126,13 @@ export const DEFAULT_STYLES = {
   // word is read. Light enough that dark text sits on all four comfortably.
   // Solid and muted, dark enough that white type sits on all four with room
   // to spare — each was checked against white rather than picked by eye.
-  "--report-bg-contamination": "#6B812D",
-  "--report-bg-overflow":      "#468830",
-  "--report-bg-skip":          "#2B8A50",
-  "--report-bg-photo":         "#008D65",
-  "--report-btn-bg":          "#2B8A50",
+  // Every colour here clears AAA against white (8.2-12.6:1), so the wording
+  // stays readable with sun on the screen rather than merely passing indoors.
+  "--report-bg-contamination": "#425512",
+  "--report-bg-overflow":      "#194B0C",
+  "--report-bg-skip":          "#085B30",
+  "--report-bg-photo":         "#004E2E",
+  "--report-btn-bg":          "#085B30",
   "--report-btn-text":        "#ffffff",
   "--report-btn-border":      "#d7e0d9",
   "--report-btn-radius":      "36",
