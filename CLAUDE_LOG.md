@@ -777,3 +777,41 @@ the sheet was switched: **two tabs still unresolved, worth chasing.**
 **The presentation was years behind the app** and listed built features as
 future opportunities. Corrected, and made public — a presentation that needs an
 access code is not one you can show anybody.
+
+---
+
+## 2026-09-20 — all nine routes read
+
+Two tabs were unreadable after the sheet switch, which meant writes to them
+were refused — silently from the office's side.
+
+**Thursday COM/EAGLE** — the sheet spells it with a slash; config did not.
+Fixed in config rather than by renaming the tab: renaming risks whatever
+formulas the office already points at it, and the app is the thing that should
+bend.
+
+**Friday** — its address column had **no heading**. The addresses were sitting
+there in plain sight, and the app refused the whole tab because it finds
+columns by name on purpose. Guessing by position is what destroyed three
+addresses in July.
+
+So `/api/sheet-heading` names an unlabelled column and **refuses to overwrite**
+one that already has text. Named Friday's C1 "Address"; the tab went from
+unreadable to 80 stops immediately.
+
+**Now 9 of 9, 1,476 stops, every one with an address.**
+
+Two diagnostics earned their place on the way:
+
+- The sheet checker was sampling **three tabs of nine**, so the one tool meant
+  for diagnosing this could not see either broken tab. It covers all of them
+  now and takes `?tab=`.
+- `/health` names the failing tabs and which heading is missing, rather than
+  reporting "7 of 9". **A count tells you something is wrong and nothing about
+  what.**
+
+The dispatcher board now shows a banner naming any route it cannot write to,
+rechecked every ten minutes — the failure was otherwise invisible until a
+driver said their work had vanished.
+
+**ACCESS_CODE is currently OFF** for testing and must go back on.
