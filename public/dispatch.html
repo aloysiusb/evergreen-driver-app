@@ -253,10 +253,18 @@ body {
   font-weight: 600;
   font-size: 13.5px;
 }
+/* Where the stop is. Quieter than the name above it, louder than nothing —
+   this is what someone reads before deciding to drive out. */
+.feed-where {
+  font-size: 12px;
+  color: var(--d-muted);
+  margin-top: 1px;
+}
 .feed-what {
   font-size: 13px;
-  color: var(--d-muted);
+  color: var(--d-text);
   word-break: break-word;
+  margin-top: 3px;
 }
 .feed-photo { display: block; }
 .feed-thumb {
@@ -814,7 +822,8 @@ function connectWS() {
         kind: simPhoto ? 'photo' : (msg.type === 'note-updated' ? 'note' : (msg.done ? 'done' : 'undone')),
         icon: simPhoto ? '📷' : (msg.type === 'note-updated' ? '📝' : (msg.done ? '✅' : '↩️')),
         link: simPhoto ? simPhoto[0] : null,
-        who: 'Stop ' + msg.rowNumber,
+        who: stopLabel(stopFor(msg.tabName, msg.rowNumber)) || ('Stop ' + msg.rowNumber),
+        where: stopWhere(stopFor(msg.tabName, msg.rowNumber)),
         what: msg.type === 'note-updated' ? (msg.notes || '') : (msg.done ? 'Marked done' : 'Reopened'),
         routeName: simRoute ? simRoute.name : msg.tabName,
         color: simRoute ? routeColor(simRoute) : 'var(--d-muted)',
@@ -835,6 +844,7 @@ function connectWS() {
         kind: msg.done ? 'done' : 'undone',
         icon: msg.done ? '✅' : '↩️',
         who: stopLabel(s),
+        where: stopWhere(s),
         what: msg.done ? 'Marked done' : 'Reopened',
         routeName: route.name,
         color: routeColor(route),
@@ -854,6 +864,7 @@ function connectWS() {
         icon: photo ? '📷' : incident ? '⚠️' : '📝',
         link: photo ? photo[0] : null,
         who: stopLabel(s),
+        where: stopWhere(s),
         what: msg.notes,
         routeName: route.name,
         color: routeColor(route),
@@ -877,6 +888,26 @@ const FEED_MAX = 120;   // a day's worth; the oldest fall off rather than growin
 function stopLabel(item) {
   if (!item) return 'a stop';
   return item.accountName || item.address || 'a stop';
+}
+
+/* The address, when the line above is already showing the customer's name.
+   Reading "Contamination at Carbondale Community School" tells the office
+   who; it does not tell them where to send anyone. */
+function stopWhere(item) {
+  if (!item) return '';
+  const parts = [];
+  if (item.accountName && item.address) parts.push(item.address);
+  if (item.city) parts.push(item.city);
+  return parts.join(', ');
+}
+
+/* The stop a message refers to, looked up in what this board already has
+   loaded. Works for a real driver and for a test drive alike, so neither ends
+   up with less detail than the other. */
+function stopFor(tabName, rowNumber) {
+  const state = routeState[tabName];
+  if (!state || !state.items) return null;
+  return state.items.find(x => x.rowNumber === Number(rowNumber)) || null;
 }
 
 /* Incidents are notes that start with one of the report marks, so they can be
@@ -943,6 +974,7 @@ function renderFeed() {
       '<span class="feed-icon">' + f.icon + '</span>' +
       '<div class="feed-body">' +
         '<div class="feed-who">' + esc(f.who) + routeChip + simTag + '</div>' +
+        (f.where ? '<div class="feed-where">' + esc(f.where) + '</div>' : '') +
         (f.what ? '<div class="feed-what">' + esc(f.what) + '</div>' : '') +
         (f.link ? photoHtml(f.link) : '') +
       '</div>' +
