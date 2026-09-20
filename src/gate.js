@@ -81,23 +81,55 @@ function suppliedCode(req, jar) {
   );
 }
 
+/* The page someone sees without a code.
+ *
+ * It used to only explain that the link should end in ?c=… , which is true and
+ * useless to anyone holding the code but not the link — the office on a
+ * laptop, or a driver whose text has scrolled away. There is a box now. It
+ * does exactly what the link does: puts the code in the URL, where the gate
+ * above already knows how to read it and swap it for a cookie.
+ *
+ * No code is checked here. This page is served BECAUSE the code was wrong or
+ * missing, so it cannot tell a good one from a bad one — it just retries, and
+ * a wrong code lands back on this page. */
 const DENIED_PAGE = `<!doctype html>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Evergreen — access needed</title>
+<title>EverGreen — access needed</title>
 <style>
   body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
        display:grid;place-items:center;min-height:100vh;margin:0;
        background:#f4f6f4;color:#1d2a24;text-align:center;padding:1.5rem}
-  main{max-width:22rem}
+  main{max-width:23rem;width:100%}
   h1{font-size:1.2rem;margin:0 0 .6rem;font-weight:600}
-  p{margin:0 0 .5rem;line-height:1.5;color:#4c5a52}
-  code{background:#e6ebe7;padding:.15em .4em;border-radius:4px;font-size:.9em}
+  p{margin:0 0 1rem;line-height:1.5;color:#4c5a52;font-size:.95rem}
+  form{display:flex;gap:.5rem;margin:0 0 1rem}
+  input{flex:1;min-width:0;font:inherit;padding:.7rem .8rem;border:1px solid #c8d3c9;
+        border-radius:8px;background:#fff;color:inherit}
+  input:focus{outline:none;border-color:#2B8A50;box-shadow:0 0 0 3px #2b8a5022}
+  button{font:inherit;font-weight:600;padding:.7rem 1.1rem;border:none;border-radius:8px;
+         background:#2B8A50;color:#fff;cursor:pointer}
+  small{color:#6b7a70;font-size:.82rem;line-height:1.5;display:block}
 </style>
 <main>
-  <h1>Open the app from the link you were sent</h1>
-  <p>The full link ends with <code>?c=…</code> — that part is what lets you in.</p>
-  <p>Tap it once and the app will keep working afterwards.</p>
-</main>`;
+  <h1>Access code needed</h1>
+  <p>Enter the code, or open the app from the link you were sent.</p>
+  <form onsubmit="go(event)">
+    <input id="c" type="password" placeholder="Access code" autocomplete="current-password"
+           autocapitalize="off" autocorrect="off" spellcheck="false" autofocus>
+    <button type="submit">Enter</button>
+  </form>
+  <small>Once it is accepted this device stays signed in, so you only do this once.</small>
+</main>
+<script>
+  function go(e){
+    e.preventDefault();
+    var v = document.getElementById('c').value.trim();
+    if (!v) return;
+    // Same path the texted link uses: the gate reads ?c= and swaps it for a
+    // cookie, then strips it from the address bar.
+    location.href = location.pathname + '?c=' + encodeURIComponent(v);
+  }
+</script>`;
 
 /**
  * Mount the access gate.
