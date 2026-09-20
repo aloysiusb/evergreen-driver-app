@@ -97,6 +97,26 @@ export const DEFAULT_STYLES = {
   "report-skip-label":          "Skipped",
   "report-photo-label":         "Photo",
 
+  // The buttons that appear when one of the four is tapped, and then the
+  // ones after those. Comma separated; blank means that level is skipped and
+  // the report is filed there. Keep them short — they are read off a circle.
+  "report-contamination-l2": "1 bag, 2 bags, 3+ bags, Recycling, Non-compost, Other",
+  "report-contamination-l3": "",
+  "report-overflow-l2":      "Slight, Moderate, Severe, Left behind",
+  "report-overflow-l3":      "",
+  "report-skip-l2":          "Not at curb, Gate locked, Customer, On hold",
+  "report-skip-l3":          "",
+  "report-photo-l2":         "",
+  "report-photo-l3":         "",
+
+  // Open the camera by itself once one of these is filed, so the office can
+  // see the stop rather than read about it. Off until Drive uploads are
+  // switched on in Google Cloud — a camera that cannot save is worse than
+  // no camera.
+  "report-contamination-photo": "no",
+  "report-overflow-photo":      "no",
+  "report-skip-photo":          "no",
+
   // ── Incident button appearance ───────────────────────────
   // Size and spacing are unitless; style-units.js puts the px back.
   // --report-btn-min-width is what decides how many fit across: the row packs

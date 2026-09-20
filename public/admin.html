@@ -105,6 +105,7 @@
     color: #e6ece9;
   }
 
+  .inputs input[type=text].wide { width: 190px; }
   .inputs input[type=text] {
     width: 150px;
     font: inherit;
@@ -715,28 +716,91 @@
     <div class="panel-section">
       <h2>Incident buttons</h2>
       <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
-        Choose <em>Driver — a route</em> in the preview above to watch these
-        change. The four buttons on every stop card. What you type here is what appears
-        on the button <em>and</em> what gets written into the Driver Notes
-        column — they cannot say different things. Keep them short; long wording
-        is trimmed on a narrow phone.
+        The four buttons on every stop card. What you type is what appears on
+        the button <em>and</em> what is written into Driver Notes, so the two
+        can never say different things.
       </p>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        Tapping one files the report immediately and then offers the
+        <strong>second level</strong> — and a <strong>third</strong> after that
+        if you fill one in. Leave a level blank and it is skipped. Keep the
+        words short: they are read off a circle.
+      </p>
+
+      <div class="subsection">🚫 Contamination</div>
       <div class="control-row">
-        <label>🚫 Button 1</label>
+        <label>Button text</label>
         <div class="inputs"><input type="text" data-text="report-contamination-label" maxlength="22" placeholder="Contamination"></div>
       </div>
       <div class="control-row">
-        <label>📦 Button 2</label>
+        <label>Second level<br><small style="opacity:.6">Commas between. Blank = none</small></label>
+        <div class="inputs"><input type="text" data-text="report-contamination-l2" class="wide" placeholder="1 bag, 2 bags, 3+ bags, Recycling, Non-compost, Other"></div>
+      </div>
+      <div class="control-row">
+        <label>Third level<br><small style="opacity:.6">Asked after the second. Blank = none</small></label>
+        <div class="inputs"><input type="text" data-text="report-contamination-l3" class="wide" placeholder="(none)"></div>
+      </div>
+      <div class="control-row">
+        <label>Camera<br><small style="opacity:.6">Open it once this is filed</small></label>
+        <div class="inputs">
+          <select data-text="report-contamination-photo">
+            <option value="no">No</option>
+            <option value="yes">Yes — open the camera</option>
+          </select>
+        </div>
+      </div>
+      <div class="subsection">📦 Overflow</div>
+      <div class="control-row">
+        <label>Button text</label>
         <div class="inputs"><input type="text" data-text="report-overflow-label" maxlength="22" placeholder="Overflow"></div>
       </div>
       <div class="control-row">
-        <label>⏭ Button 3</label>
+        <label>Second level<br><small style="opacity:.6">Commas between. Blank = none</small></label>
+        <div class="inputs"><input type="text" data-text="report-overflow-l2" class="wide" placeholder="Slight, Moderate, Severe, Left behind"></div>
+      </div>
+      <div class="control-row">
+        <label>Third level<br><small style="opacity:.6">Asked after the second. Blank = none</small></label>
+        <div class="inputs"><input type="text" data-text="report-overflow-l3" class="wide" placeholder="(none)"></div>
+      </div>
+      <div class="control-row">
+        <label>Camera<br><small style="opacity:.6">Open it once this is filed</small></label>
+        <div class="inputs">
+          <select data-text="report-overflow-photo">
+            <option value="no">No</option>
+            <option value="yes">Yes — open the camera</option>
+          </select>
+        </div>
+      </div>
+      <div class="subsection">⏭ Skipped</div>
+      <div class="control-row">
+        <label>Button text</label>
         <div class="inputs"><input type="text" data-text="report-skip-label" maxlength="22" placeholder="Skipped"></div>
       </div>
       <div class="control-row">
-        <label>📷 Button 4</label>
+        <label>Second level<br><small style="opacity:.6">Commas between. Blank = none</small></label>
+        <div class="inputs"><input type="text" data-text="report-skip-l2" class="wide" placeholder="Not at curb, Gate locked, Customer, On hold"></div>
+      </div>
+      <div class="control-row">
+        <label>Third level<br><small style="opacity:.6">Asked after the second. Blank = none</small></label>
+        <div class="inputs"><input type="text" data-text="report-skip-l3" class="wide" placeholder="(none)"></div>
+      </div>
+      <div class="control-row">
+        <label>Camera<br><small style="opacity:.6">Open it once this is filed</small></label>
+        <div class="inputs">
+          <select data-text="report-skip-photo">
+            <option value="no">No</option>
+            <option value="yes">Yes — open the camera</option>
+          </select>
+        </div>
+      </div>
+      <div class="subsection">📷 Photo</div>
+      <div class="control-row">
+        <label>Button text</label>
         <div class="inputs"><input type="text" data-text="report-photo-label" maxlength="22" placeholder="Photo"></div>
       </div>
+      <p style="margin:6px 0 0;font-size:11.5px;opacity:.6;line-height:1.5">
+        This one opens the camera straight away, so it has no levels of its own.
+      </p>
 
       <div class="subsection">Appearance</div>
       <div class="control-row">

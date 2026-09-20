@@ -23,7 +23,8 @@
   /* Which stop has its second array of buttons open, if any. One at a time:
      opening another closes this one, so a card never shows sub-choices for a
      report the driver has moved on from. */
-  let drill = { row: null, type: null };
+  let drill = { row: null, type: null, level: 2, picked: [] };
+  const clearDrill = () => { drill = { row: null, type: null, level: 2, picked: [] }; };
 
   let siteStyles = {};
   function reportLabel(kind, fallback) {
@@ -215,7 +216,7 @@
 
     const isDrilled = !isCompleted && drill.row === item.rowNumber && drill.type;
     const quick = isDrilled && typeof reportQuickOptions === 'function'
-      ? reportQuickOptions(drill.type)
+      ? reportQuickOptions(drill.type, drill.level)
       : [];
 
     const reportBtns = isCompleted ? '' : (
@@ -277,6 +278,15 @@
       </div>`;
   }
 
+  /* Some reports are worth a picture without anyone having to remember to
+     take one. Switched on per report in the editor; silent when it is off. */
+  function maybeAutoPhoto(type, row) {
+    if (typeof reportAutoPhoto !== 'function' || !reportAutoPhoto(type)) return;
+    if (typeof capturePhoto !== 'function') return;
+    const stop = allStops.find(s => s.rowNumber === row);
+    capturePhoto(row, route.tabName, stop && stop.accountName);
+  }
+
   function attachReportListeners(container) {
     container.querySelectorAll('.stop-report-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -285,17 +295,19 @@
 
         // Back out of the second array without filing anything further.
         if (btn.dataset.drillBack) {
-          drill = { row: null, type: null };
+          clearDrill();
           render();
           return;
         }
 
-        // A choice from the second array: refine the report already filed.
+        // A choice from the open array: refine the report already filed.
         if (btn.dataset.drillValue) {
           const type = drill.type;
-          drill = { row: null, type: null };
-          if (btn.dataset.drillValue === 'Other') {
+          const value = btn.dataset.drillValue;
+
+          if (value === 'Other') {
             // The typing box, and only because Other was the one tapped.
+            clearDrill();
             render();
             const el = document.querySelector(
               `.stop-card[data-row="${row}"] .stop-note-open`
@@ -303,10 +315,25 @@
             if (el) editNote(row, el);
             return;
           }
+
+          const picked = drill.picked.concat(value);
+
+          // Is there another level after this one? Only then does it show.
+          const next = drill.level === 2 && typeof reportQuickOptions === 'function'
+            ? reportQuickOptions(type, 3)
+            : [];
+          if (next.length) {
+            drill = { row, type, level: 3, picked };
+            render();
+            return;
+          }
+
+          clearDrill();
           if (typeof reportFileDetail === 'function') {
-            reportFileDetail(type, row, route.tabName, btn.dataset.drillValue);
+            reportFileDetail(type, row, route.tabName, picked);
           }
           render();
+          maybeAutoPhoto(type, row);
           return;
         }
 
@@ -320,11 +347,20 @@
         /* One tap files it. The second array then opens on this card so the
            driver CAN say how much — and walking away without touching it
            leaves a perfectly good report behind. */
+        const type = btn.dataset.report;
         if (typeof reportFile === 'function') {
-          reportFile(btn.dataset.report, row, route.tabName);
+          reportFile(type, row, route.tabName);
         }
-        drill = { row, type: btn.dataset.report };
-        render();
+
+        const opts = typeof reportQuickOptions === 'function' ? reportQuickOptions(type, 2) : [];
+        if (opts.length) {
+          drill = { row, type, level: 2, picked: [] };
+          render();
+        } else {
+          clearDrill();
+          render();
+          maybeAutoPhoto(type, row);   // nothing to ask, so go straight to it
+        }
       });
     });
   }

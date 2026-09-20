@@ -258,6 +258,18 @@ body {
   color: var(--d-muted);
   word-break: break-word;
 }
+.feed-photo { display: block; }
+.feed-thumb {
+  display: block;
+  max-width: 260px;
+  width: 100%;
+  height: auto;
+  margin: 8px 0 4px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--d-border);
+  background: var(--d-muted-bg);
+}
+
 .feed-sim {
   margin-left: 6px;
   padding: 1px 7px;
@@ -871,6 +883,24 @@ function addFeed(entry) {
   renderFeed();
 }
 
+/* A driver's photo, shown rather than linked.
+ *
+ * Drive's webViewLink opens a viewer page, which is no use inside a feed. The
+ * thumbnail endpoint serves the image itself, and it honours the same
+ * permissions as the folder — so it loads for anyone already signed in who can
+ * see the folder, and quietly fails for anyone who cannot. The link stays
+ * underneath, so a thumbnail that does not load is still one click from the
+ * real thing. */
+function photoHtml(link) {
+  const id = String(link).match(/\/d\/([A-Za-z0-9_-]{10,})/);
+  const thumb = id
+    ? '<img class="feed-thumb" loading="lazy" alt="Photo of this stop" ' +
+      'src="https://drive.google.com/thumbnail?id=' + id[1] + '&sz=w400">'
+    : '';
+  return '<a class="feed-photo" href="' + esc(link) + '" target="_blank" rel="noopener">' +
+    thumb + '<span>📷 Open photo</span></a>';
+}
+
 function renderFeed() {
   const el = document.getElementById('feed');
   const count = document.getElementById('feed-count');
@@ -894,7 +924,7 @@ function renderFeed() {
       '<div class="feed-body">' +
         '<div class="feed-who">' + esc(f.who) + routeChip + simTag + '</div>' +
         (f.what ? '<div class="feed-what">' + esc(f.what) + '</div>' : '') +
-        (f.link ? '<a class="feed-photo" href="' + esc(f.link) + '" target="_blank" rel="noopener">📷 Open photo</a>' : '') +
+        (f.link ? photoHtml(f.link) : '') +
       '</div>' +
       '<span class="feed-time">' + time + '</span>' +
     '</div>';

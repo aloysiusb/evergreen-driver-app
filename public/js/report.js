@@ -179,6 +179,16 @@
     for (const kind of Object.keys(FALLBACK)) {
       const v = styles && styles['report-' + kind + '-label'];
       LABELS[kind] = (typeof v === 'string' && v.trim()) ? v.trim() : FALLBACK[kind];
+
+      const l2 = styles && styles['report-' + kind + '-l2'];
+      const l3 = styles && styles['report-' + kind + '-l3'];
+      QUICK[kind] = {
+        // A saved BLANK is a real choice — it means "no second level" — so
+        // only fall back when the setting is absent altogether.
+        l2: typeof l2 === 'string' ? splitOptions(l2) : QUICK_FALLBACK[kind].l2,
+        l3: typeof l3 === 'string' ? splitOptions(l3) : QUICK_FALLBACK[kind].l3,
+      };
+      AUTO_PHOTO[kind] = String(styles && styles['report-' + kind + '-photo']) === 'yes';
     }
   };
 
@@ -188,16 +198,36 @@
 
      One level, not two. A driver standing at a bin in the rain will take two
      taps; asking for three is how a report stops being filed at all. */
-  const QUICK = {
-    // 'Recyclables' broke across two lines as 'Recyclable' + 's' inside the
-    // circle. A shorter word that means the same thing fits on one.
-    contamination: ['1 bag', '2 bags', '3+ bags', 'Recycling', 'Non-compost', 'Other'],
-    overflow:      ['Slight', 'Moderate', 'Severe', 'Left behind'],
-    skip:          ['Not at curb', 'Gate locked', 'Customer', 'On hold'],
-    photo:         [],
+  /* What shows if the settings have not loaded, or were never saved.
+     'Recyclables' is deliberately 'Recycling': the longer word broke across
+     two lines inside the circle as 'Recyclable' + 's'. */
+  const QUICK_FALLBACK = {
+    contamination: { l2: ['1 bag', '2 bags', '3+ bags', 'Recycling', 'Non-compost', 'Other'], l3: [] },
+    overflow:      { l2: ['Slight', 'Moderate', 'Severe', 'Left behind'], l3: [] },
+    skip:          { l2: ['Not at curb', 'Gate locked', 'Customer', 'On hold'], l3: [] },
+    photo:         { l2: [], l3: [] },
   };
-  window.reportQuickOptions = function (type) {
-    return QUICK[type] || [];
+  let QUICK = JSON.parse(JSON.stringify(QUICK_FALLBACK));
+  const AUTO_PHOTO = {};
+
+  function splitOptions(text) {
+    return String(text || '')
+      .split(',')
+      .map(x => x.trim())
+      .filter(Boolean)
+      .slice(0, 8);           // more than eight circles is not a quick choice
+  }
+
+  /* @param level 2 or 3. An empty level means the report is filed at the one
+     before it, so a route that needs no third step never shows one. */
+  window.reportQuickOptions = function (type, level) {
+    const set = QUICK[type];
+    if (!set) return [];
+    return (level === 3 ? set.l3 : set.l2) || [];
+  };
+
+  window.reportAutoPhoto = function (type) {
+    return AUTO_PHOTO[type] === true;
   };
 
   /* Refine a report already filed by the first tap. Goes through the same
@@ -208,7 +238,8 @@
     if (!headline) return;
     activeRowNumber = rowNumber;
     activeTabName = tabName;
-    return writeNote(rowNumber, headline + ': ' + detail);
+    const text = Array.isArray(detail) ? detail.filter(Boolean).join(' · ') : detail;
+    return writeNote(rowNumber, text ? headline + ': ' + text : headline);
   };
 
   function headlineFor(type) {
