@@ -262,6 +262,9 @@ app.get("/health", (req, res) => {
       configured: Boolean(SPREADSHEET_ID),
       tabsExpected: ROUTE_DAY_TABS.length,
       tabsReadable: columnCache.size,
+      // Route names and a reason. No customer data, and it is the difference
+      // between knowing something is wrong and knowing what to do about it.
+      problems: Object.fromEntries(columnProblems),
     },
   });
 });
@@ -722,16 +725,45 @@ async function columnsFor(tabName) {
  * So that a sheet swapped in overnight shows up in the log as a shifted or
  * unreadable header before a driver taps anything, rather than after. Purely
  * informational — it changes nothing and cannot stop the app booting. */
+/* Which tabs could not be read, and why.
+ *
+ * "7 of 9 readable" tells you something is wrong and nothing about what. These
+ * are route names — the same labels already printed on the public walkthrough
+ * — not customer data, so naming them costs nothing and saves opening the
+ * spreadsheet to guess. */
+const columnProblems = new Map();
+
 async function auditColumns() {
   if (!SPREADSHEET_ID) return;
+  columnProblems.clear();
   for (const tab of ROUTE_DAY_TABS) {
     try {
       await columnsFor(tab);
+      columnProblems.delete(tab);
     } catch (err) {
+      /* Distinguish "the tab is not in this spreadsheet" from "it is there but
+         its header row is not recognised". They need completely different
+         fixes: one is a name, the other is a heading. */
+      const missing = /unable to parse range|not found/i.test(err.message);
+      columnProblems.set(tab, missing
+        ? "No tab with this name in the spreadsheet"
+        : "Header row not recognised — needs Address, Account Name, Yay and Driver Notes");
       console.warn(`[sheet] startup check — '${tab}': ${err.message}`);
     }
   }
 }
+
+/* Re-run the audit on demand. The startup one is a snapshot; after someone
+   fixes a heading they should not have to wait for a deploy to find out. */
+app.post("/api/sheet-recheck", async (req, res) => {
+  columnCache.clear();
+  await auditColumns();
+  res.json({
+    tabsExpected: ROUTE_DAY_TABS.length,
+    tabsReadable: columnCache.size,
+    problems: Object.fromEntries(columnProblems),
+  });
+});
 
 // --- Sheet check ----------------------------------------------------------
 //
