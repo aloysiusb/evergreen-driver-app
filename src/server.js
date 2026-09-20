@@ -567,12 +567,25 @@ app.post(
 
       /* Into its own column, now rather than later. The answer does not wait
          on it: the photo is already saved, and a driver should not be held up
-         by a spreadsheet write. A failure here is logged, not thrown. */
-      recordPhotoLink(tabName, rowNumber, link)
+         by a spreadsheet write. A failure here is logged, not thrown.
+
+         ?debug=1 waits for it and reports what happened, because a failure
+         that only ever reaches the server log is a failure you cannot see
+         from outside. */
+      const record = recordPhotoLink(tabName, rowNumber, link)
         .then((col) => {
           if (col) broadcast({ type: "photo-added", tabName, rowNumber, link, account });
+          return { column: col };
         })
-        .catch((err) => console.warn("[photos] could not record the link:", err.message));
+        .catch((err) => {
+          console.warn("[photos] could not record the link:", err.message);
+          return { error: err.message };
+        });
+
+      if (req.query.debug) {
+        const sheet = await record;
+        return res.json({ ok: true, ...saved, link, sheet });
+      }
 
       res.json({ ok: true, ...saved, link });
     } catch (err) {
