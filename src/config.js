@@ -13,7 +13,7 @@ export const ROUTE_DAY_TABS = [
   "Weds DV Res",
   "Weds Commercial",
   "Thurs UV",
-  "Thursday COMEAGLE",
+  "Thursday COM/EAGLE",
   "Friday",
   "Monday",
   "Max Routes",

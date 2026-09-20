@@ -46,7 +46,7 @@ const ROUTES = [
   },
   {
     id: 'thurs-comeagle',
-    tabName: 'Thursday COMEAGLE',
+    tabName: 'Thursday COM/EAGLE',
     day: 'Thursday',
     name: 'Com / Eagle',
     color: '#9a5b52',

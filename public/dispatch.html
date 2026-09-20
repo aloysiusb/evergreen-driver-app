@@ -121,6 +121,29 @@ body {
   flex-shrink: 0;
 }
 .ws-dot.live { background: var(--d-ws-ok); }
+/* A route the app cannot write to.
+ *
+ * Without this the failure is silent from the office's side: the tab simply
+ * never updates, and the first anyone knows is a driver saying their work did
+ * not save. It is stated here, on the screen that is already open all day. */
+.sheet-alert {
+  margin: 10px 0 0;
+  padding: 11px 14px;
+  border-radius: var(--r-card);
+  background: var(--d-warn);
+  color: #1a1206;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.sheet-alert b { font-weight: 800; }
+.sheet-alert .sa-detail {
+  display: block;
+  margin-top: 3px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
 .header-link {
   font-size: 11px;
   letter-spacing: 0.05em;
@@ -560,6 +583,7 @@ body {
       <button class="theme-toggle" onclick="toggleTheme()">☀ / ☾</button>
     </div>
   </div>
+  <div class="sheet-alert" id="sheet-alert" hidden></div>
   <div class="fleet-bar" id="fleet-bar">
     <div class="fleet-stat">
       <div class="fleet-num accent" id="fleet-done">—</div>
@@ -1053,6 +1077,34 @@ function esc(str) {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 loadAll();
+/* Ask the app whether it can actually write to every route.
+ *
+ * /health is outside the access gate and reports names and reasons only — no
+ * customer data — so this works whether or not the board has been unlocked. */
+async function checkSheet() {
+  const el = document.getElementById('sheet-alert');
+  if (!el) return;
+  try {
+    const h = await (await fetch('/health')).json();
+    const problems = (h.sheet && h.sheet.problems) || {};
+    const tabs = Object.keys(problems);
+    if (!tabs.length) { el.hidden = true; return; }
+
+    el.innerHTML =
+      '<b>⚠ ' + tabs.length + ' route' + (tabs.length > 1 ? 's' : '') +
+      ' cannot be saved to.</b> Work done on ' +
+      (tabs.length > 1 ? 'these routes' : 'this route') +
+      ' will wait on the driver\'s phone instead of reaching the sheet.' +
+      tabs.map(t => '<span class="sa-detail">' + esc(t) + ' — ' + esc(problems[t]) + '</span>').join('');
+    el.hidden = false;
+  } catch {
+    // A failed check is not itself worth shouting about.
+  }
+}
+
+checkSheet();
+setInterval(checkSheet, 10 * 60 * 1000);
+
 connectWS();
 // Refresh every 5 min in case WebSocket misses something
 setInterval(loadAll, 5 * 60 * 1000);
