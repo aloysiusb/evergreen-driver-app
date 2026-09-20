@@ -251,6 +251,18 @@ app.get("/health", (req, res) => {
       store: photosFolderId() ? "drive, disk as fallback" : "disk",
       ...photoUsage(),
     },
+    /* Enough to tell whether the spreadsheet is configured and being read,
+       and nothing more. No id, no title, no tab names, no customer data —
+       this endpoint is deliberately outside the access gate, so it reports
+       only that the wiring works.
+
+       Counts come from the column cache the startup audit already filled, so
+       asking costs no extra call to Google. */
+    sheet: {
+      configured: Boolean(SPREADSHEET_ID),
+      tabsExpected: ROUTE_DAY_TABS.length,
+      tabsReadable: columnCache.size,
+    },
   });
 });
 
