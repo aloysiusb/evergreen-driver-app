@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" data-radius="tight" data-palette="report">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EverGreen Driver App — Start Here</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/chrome.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap { max-width: 50rem; margin: 0 auto; padding: 38px 22px 90px; }
+
+  header.doc { margin-bottom: 36px; }
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(27px, 5vw, 38px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--forest);
+  }
+  .standfirst { color: var(--muted); font-size: 16.5px; margin-top: 11px; max-width: 60ch; }
+  .byline {
+    display: flex; flex-wrap: wrap; gap: 6px 18px;
+    margin-top: 18px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  section { margin-bottom: 42px; }
+  h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 23px; font-weight: 700; color: var(--forest);
+    padding-bottom: 9px; margin-bottom: 16px;
+    border-bottom: 2px solid var(--accent);
+  }
+  h3 { font-size: 16px; font-weight: 600; margin: 20px 0 6px; }
+  p { margin-bottom: 12px; max-width: 70ch; }
+  ul { margin: 0 0 14px 20px; }
+  li { margin-bottom: 7px; max-width: 68ch; }
+  strong { font-weight: 600; color: var(--forest); }
+  em { color: var(--muted); }
+
+  a { color: var(--accent); }
+
+  .lede { color: var(--muted); font-size: 15px; margin-bottom: 18px; max-width: 66ch; }
+
+  .callout {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-card); padding: 15px 18px; margin: 18px 0;
+  }
+  .callout.warn { border-left-color: #b4791f; }
+  .callout h3 { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .step {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card); padding: 16px 18px; margin-bottom: 14px;
+  }
+  .step h3 { margin-top: 0; display: flex; align-items: baseline; gap: 10px; }
+  .step .mins {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); font-weight: 400;
+  }
+
+  .links { border-top: 1px solid var(--border); }
+  .link-row {
+    display: flex; flex-wrap: wrap; gap: 4px 14px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .link-row a { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 15rem; }
+  .link-row .what { color: var(--muted); font-size: 14px; flex: 1; }
+
+  .try {
+    display: block; margin: 14px 0;
+    font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card); padding: 12px 15px;
+    word-break: break-all;
+  }
+
+  footer { margin-top: 46px; padding-top: 18px; border-top: 1px solid var(--border);
+           color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <h1><span class="app-mark"></span><span class="app-name"></span> <span class="app-page">Start here</span></h1>
+  <nav><a href="/">Routes</a><a href="/dispatch">Dispatch</a></nav>
+</header>
+
+<div class="wrap">
+
+<header class="doc">
+  <h1>The driver app — ready for you to try</h1>
+  <p class="standfirst">
+    What it does, what you can change yourselves, and how to test it properly
+    before anyone depends on it.
+  </p>
+  <div class="byline">
+    <span>Prepared by Virginia Payson</span>
+    <span>For Alyssa &amp; Dave</span>
+    <span>20 September 2026</span>
+  </div>
+</header>
+
+<section>
+  <h2>In the truck</h2>
+  <ul>
+    <li>Every stop for the day on the phone, in sheet order, with the sheet's own colours and section headers</li>
+    <li>One tap marks a stop done and writes it straight back to the sheet</li>
+    <li><strong>Work survives a dead zone.</strong> Marking a stop done with no signal used to quietly undo itself a few seconds later. It now waits on the phone and saves the moment signal returns — nothing lost, nothing to remember.</li>
+    <li><strong>One tap reports a problem</strong> — contamination, overflow, skipped, photo. A second tap says how much: <em>1 bag, 2 bags, 3+ bags</em>. No typing at all.</li>
+    <li><strong>Photos from the kerb.</strong> A driver photographs the bin, and a link lands in a new <strong>Photos per Notes</strong> column in the route sheet.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Dave — the buttons are yours to set</h2>
+  <p class="lede">
+    This is the part I'd most like your opinion on. The words on those buttons
+    are the words that end up in the sheet, and you know what actually goes
+    wrong on a route better than I do.
+  </p>
+  <p>In the style editor, under <strong>Incident buttons</strong>:</p>
+  <ul>
+    <li><strong>The wording on each of the four buttons.</strong> Whatever you type appears on the button <em>and</em> is what gets written into Driver Notes — they can't say different things. "Wrong stuff in bin" instead of "Contamination", if that's what the crew actually says.</li>
+    <li><strong>The second row of choices</strong> that appears after a button is pressed. Contamination is currently <em>1 bag, 2 bags, 3+ bags, Recycling, Non-compost, Other</em>. Type your own list, separated by commas.</li>
+    <li><strong>A third row</strong>, if a route needs more detail. Leave it blank and it's skipped — one tap still files a complete report.</li>
+    <li><strong>The colours</strong>, and how big the buttons are.</li>
+    <li><strong>Whether the camera button lights up</strong> after a report, as a reminder. It doesn't open the camera on its own.</li>
+  </ul>
+  <p>
+    Nothing needs a developer. Change it, press <strong>Save &amp; Push</strong>,
+    and every driver's phone updates within seconds — no reinstalling, no
+    reloading. <strong>"Other" opens a typing box</strong>, for the days the
+    lists don't fit.
+  </p>
+</section>
+
+<section>
+  <h2>Alyssa — the dispatcher board</h2>
+  <p class="lede">
+    The screen to leave open. It's meant to replace ringing round to ask how
+    things are going.
+  </p>
+
+  <h3>From the trucks</h3>
+  <ul>
+    <li><strong>Every route at once</strong> — stops done, total stops, and a progress bar for each, updating as drivers tap</li>
+    <li><strong>The current stop</strong> on each route, by customer name</li>
+    <li><strong>A live feed</strong> of every incident, note and photo as it happens, each with <strong>the customer's name and address</strong></li>
+    <li><strong>Photos appear as pictures</strong>, not links — you can see what's at the kerb from your desk</li>
+  </ul>
+
+  <h3>And from the website, on the same screen</h3>
+  <ul>
+    <li><strong>A new customer request appears the moment someone submits it</strong> — their name, their address, and that it's waiting in the queue</li>
+    <li><strong>Holds, missed pickups and account changes</strong> come through the same way</li>
+    <li>Approving or declining one <strong>updates that entry in place</strong> rather than adding another line</li>
+  </ul>
+
+  <h3>And it remembers the day</h3>
+  <ul>
+    <li>The feed <strong>survives a reload</strong> — refresh at three in the afternoon and the morning is still there</li>
+    <li>A <strong>day picker</strong> shows any of the last seven days, so "what happened on Tuesday" no longer means opening the spreadsheet</li>
+    <li>A past day is clearly labelled, and today's events don't quietly slide into it</li>
+  </ul>
+
+  <h3>Also</h3>
+  <ul>
+    <li>A <strong>light/dark switch</strong>, top right — it remembers which you chose</li>
+    <li>If a route ever <strong>can't be saved to</strong>, a warning names that route. That failure used to be invisible until a driver said their work had vanished.</li>
+    <li>Anything done in test mode is labelled <strong>"Test drive"</strong> and never moves the real stop counts — so showing someone the app can't make your numbers wrong</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Try it without a truck</h2>
+  <a class="try" href="https://evergreen-driver-app.onrender.com/driver/tues-dv/?sim=1">https://evergreen-driver-app.onrender.com/driver/tues-dv/?sim=1</a>
+  <ul>
+    <li>Tap <strong>🗺 Map</strong>, then <strong>▶ Drive</strong>. The truck follows the real route.</li>
+    <li>Back on <strong>Stops</strong>, tap <strong>Contamination</strong> on any stop, then <strong>2 bags</strong>.</li>
+    <li>Tap <strong>📶 Signal</strong> to switch it off, mark a stop done, and watch it say <em>waiting for signal</em>. Switch it back on and it saves itself. <strong>That's the one worth seeing.</strong></li>
+  </ul>
+  <p>
+    Open the dispatcher board in a second window and you'll see everything
+    arrive there as you go. <strong>Nothing you do in test mode touches the
+    real route sheet.</strong>
+  </p>
+</section>
+
+<section>
+  <h2>Testing it for real — three stages</h2>
+  <p class="lede">
+    The desk test proves the app works. It can't prove it works <em>in a
+    truck</em>, because everything it does with GPS, signal and a camera is
+    simulated there. Please treat the first real run as a test, not as the new
+    way of working.
+  </p>
+
+  <div class="step">
+    <h3>1 · At a desk <span class="mins">15 minutes, either of you</span></h3>
+    <p>The test drive above. Nothing to lose, and nothing reaches the sheet.</p>
+  </div>
+
+  <div class="step">
+    <h3>2 · On a phone, parked <span class="mins">15 minutes, Dave</span></h3>
+    <p>This is the part a computer can't check. On an actual phone:</p>
+    <ul>
+      <li><strong>Take a photo of something.</strong> Does the camera open, and does the picture appear on the dispatcher board?</li>
+      <li><strong>Tap the buttons wearing whatever you normally wear.</strong> Are they big enough with gloves on?</li>
+      <li><strong>Add it to your home screen</strong> (browser menu → Add to Home Screen) and open it from there.</li>
+      <li>Mark a stop done and undo it, and check the sheet agrees.</li>
+    </ul>
+    <p>Anything awkward here is worth saying — the wording, sizes and colours are all adjustable.</p>
+  </div>
+
+  <div class="step">
+    <h3>3 · One real route, one day <span class="mins">the real test</span></h3>
+    <p><strong>Please don't let the app be the only record on the first day.</strong> Keep whatever you'd normally do running alongside it.</p>
+    <p>Pick one route, ideally a shorter one, and watch three things:</p>
+    <ul>
+      <li><strong>The arrival alert</strong> — does it fire <em>once</em> per stop as you pull up, or repeatedly? It used to repeat every twelve seconds. That's fixed, but it has never run at real driving speed.</li>
+      <li><strong>A dead zone</strong> — when signal drops, does the banner say work is waiting, and does it clear when signal returns? This is the most important one: it's been tested by simulating a clean cut, never by a real hole in coverage.</li>
+      <li><strong>The camera</strong> — do photos reach the board and the sheet from out on the route?</li>
+    </ul>
+    <p><strong>Alyssa — watch the dispatcher board while that route runs.</strong> If it goes quiet while the driver says they're working, that is exactly what we need to know.</p>
+  </div>
+
+  <div class="callout warn">
+    <h3>What's worth reporting</h3>
+    <p>
+      Anything slow, wrong, awkward or surprising — and above all, anything that
+      <strong>looked like it saved but didn't</strong>. That matters more than
+      any missing feature.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Customers through the website — where this is heading</h2>
+  <p class="lede">The other half of the project, and closer than it looks.</p>
+
+  <h3>What already works</h3>
+  <ul>
+    <li>A customer submits a request on the website → it lands in a queue, and the office gets an email</li>
+    <li>It appears on the dispatcher board at the same moment</li>
+    <li>You approve it, and the customer is <strong>written straight onto the route sheet</strong> — right tab, right columns, no retyping</li>
+    <li>If that write fails, the request is <em>not</em> marked approved, so nobody can be quietly lost between the two</li>
+  </ul>
+
+  <h3>The one missing piece</h3>
+  <p>
+    The website has forms for <em>hold</em>, <em>missed pickup</em>, <em>update
+    details</em> and <em>pay an invoice</em> — but no <strong>"start
+    service"</strong> form. So the new-customer path above is built and tested,
+    and nothing ever reaches it.
+  </p>
+  <p>
+    <strong>That one form is the whole remaining gap</strong> between someone
+    finding you online and their bin appearing on a driver's screen.
+  </p>
+
+  <h3>After that, in rough order</h3>
+  <ul>
+    <li><strong>Suggest the collection day</strong> from the address, since the app already knows where every route goes — still your decision, just not worked out by hand</li>
+    <li><strong>Warn on duplicate addresses</strong>, so one property can't quietly end up on two routes</li>
+    <li><strong>Confirmation emails to customers</strong> — needs a verified sending domain first, a one-time setup. The office notification already works.</li>
+    <li><strong>Pay online</strong> — the QuickBooks groundwork is in place; finishing it would let a customer settle an invoice from the portal instead of being chased</li>
+  </ul>
+
+  <div class="callout">
+    <p>
+      Every one of those removes a retyping step, not a decision. You'd still
+      approve each customer.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Every page</h2>
+  <div class="links">
+    <div class="link-row"><a href="/dispatch">/dispatch</a><span class="what">The dispatcher board — the screen to leave open</span></div>
+    <div class="link-row"><a href="/">/</a><span class="what">The driver's home screen — pick a route</span></div>
+    <div class="link-row"><a href="/admin">/admin</a><span class="what">Style editor — colours, wording, the incident buttons</span></div>
+    <div class="link-row"><a href="/approval">/approval</a><span class="what">Requests waiting to be approved or declined</span></div>
+    <div class="link-row"><a href="/updates">/updates</a><span class="what">The full written detail — every feature, and where to find it</span></div>
+    <div class="link-row"><a href="/walkthrough">/walkthrough</a><span class="what">A two-minute demonstration. No code needed — send it to anyone.</span></div>
+  </div>
+</section>
+
+<footer>
+  The route sheet remains the source of truth. The app reads from it and writes
+  back to it, and nothing described here replaces it.
+</footer>
+
+</div>
+</body>
+</html>
