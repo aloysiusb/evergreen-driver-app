@@ -579,6 +579,73 @@ function isOurPhotoCell(text) {
   );
 }
 
+/* Name a column that has no heading.
+ *
+ * These sheets are kept by people, and a column whose heading was never typed
+ * is common — Friday's address column was blank, which made the whole tab
+ * unreadable and unwritable while the addresses themselves sat there in plain
+ * sight. The app finds columns BY NAME on purpose, so an unnamed one cannot be
+ * used no matter how obvious it looks.
+ *
+ * The one thing this will not do is overwrite. If the heading cell already has
+ * text it refuses and says what is there — so a wrong guess costs nothing, and
+ * no existing heading can be clobbered by a typo in a request.
+ */
+app.post("/api/sheet-heading", async (req, res) => {
+  const tabName = String(req.body?.tabName || "").trim();
+  const column = String(req.body?.column || "").trim().toUpperCase();
+  const heading = String(req.body?.heading || "").trim().slice(0, 60);
+
+  try {
+    assertAllowedTab(tabName);
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+  if (!/^[A-N]$/.test(column)) {
+    return res.status(400).json({ error: "Column must be a single letter A-N." });
+  }
+  if (!heading) {
+    return res.status(400).json({ error: "No heading given." });
+  }
+
+  try {
+    /* Which row the headings are on. Read from the sheet rather than assumed:
+       some of these tabs carry blank rows above the header. */
+    const top = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:N12`);
+    const headerIdx = (top || []).findIndex(
+      r => (r || []).filter(v => String(v || "").trim()).length > 2
+    );
+    if (headerIdx < 0) {
+      return res.status(409).json({ error: "Could not find a header row in the first 12 rows." });
+    }
+    const rowNumber = headerIdx + 1;
+
+    const existing = String((top[headerIdx] || [])[column.charCodeAt(0) - 65] || "").trim();
+    if (existing) {
+      return res.status(409).json({
+        error: `${column}${rowNumber} already reads "${existing}". Nothing was changed.`,
+      });
+    }
+
+    await writeRange(SPREADSHEET_ID, `'${tabName}'!${column}${rowNumber}`, [[heading]]);
+    columnCache.delete(tabName);
+    await auditColumns();
+
+    console.log(`[sheet] named ${column}${rowNumber} on '${tabName}' as "${heading}"`);
+    res.json({
+      ok: true,
+      tab: tabName,
+      cell: column + rowNumber,
+      heading,
+      tabsReadable: columnCache.size,
+      problems: Object.fromEntries(columnProblems),
+    });
+  } catch (err) {
+    console.error("[sheet] could not name the column:", err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
 // --- Photos ---------------------------------------------------------------
 //
 // The phone shrinks the image before sending — a raw phone photo is 3-5 MB and
