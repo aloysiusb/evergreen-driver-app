@@ -808,6 +808,25 @@ function connectWS() {
       return;
     }
 
+    /* A photo, announced by the server the moment it lands. The link used to
+       be dug out of the note text; it is in its own column now, so the note
+       just says a photo was taken and this carries the picture. */
+    if (msg.type === 'photo-added') {
+      const photoRoute = ROUTES.find(r => r.tabName === msg.tabName);
+      const stop = stopFor(msg.tabName, msg.rowNumber);
+      addFeed({
+        kind: 'photo',
+        icon: '📷',
+        link: msg.link,
+        who: stopLabel(stop) || msg.account || ('Stop ' + msg.rowNumber),
+        where: stopWhere(stop),
+        what: 'Photo taken',
+        routeName: photoRoute ? photoRoute.name : msg.tabName,
+        color: photoRoute ? routeColor(photoRoute) : 'var(--d-muted)',
+      });
+      return;
+    }
+
     /* A test drive. It shows in the feed so a demo is visible here, but it
        deliberately does NOT touch routeState — the stop counts and progress
        bars keep reporting what the sheet actually says, so a demo running

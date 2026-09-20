@@ -122,7 +122,10 @@
           .filter(part => !/^📷 Photo/.test(part.trim()))
           .join(' · ')
           .trim();
-        const note = (stripped ? stripped + ' · ' : '') + '📷 Photo: ' + data.link;
+        /* Just the fact, not the address. The link goes into the "Photos per
+           Notes" column, which is where someone reading the sheet expects to
+           find it — and a note stays a sentence rather than a wall of URL. */
+        const note = (stripped ? stripped + ' · ' : '') + '📷 Photo';
 
         if (typeof queueNoteWrite === 'function') await queueNoteWrite(rowNumber, note);
         // So the app does not ask for a second photo of a stop that has one.

@@ -624,11 +624,13 @@ app.post(
          ?debug=1 waits for it and reports what happened, because a failure
          that only ever reaches the server log is a failure you cannot see
          from outside. */
+      /* The board is told the moment the photo exists, not once the
+         spreadsheet has caught up. The picture is real either way, and a
+         failed column write should not also cost the office the photo. */
+      broadcast({ type: "photo-added", tabName, rowNumber, link, account });
+
       const record = recordPhotoLink(tabName, rowNumber, link)
-        .then((col) => {
-          if (col) broadcast({ type: "photo-added", tabName, rowNumber, link, account });
-          return { column: col };
-        })
+        .then((col) => ({ column: col }))
         .catch((err) => {
           console.warn("[photos] could not record the link:", err.message);
           return { error: err.message };
