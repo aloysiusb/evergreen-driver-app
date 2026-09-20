@@ -743,3 +743,37 @@ whole remaining gap between the website and a driver's screen.
 
 Also corrected in the notes: they claimed photos go to EverGreen's Drive
 folder. Google refused that arrangement; they are on the app's disk.
+
+---
+
+## 2026-09-20 — access code on, and the demo material caught up
+
+**The gate is live** and behaves correctly: `/`, `/dispatch`, `/admin` and the
+route API all 401; `/walkthrough`, `/portal`, `/pay`, `/updates` and now
+`/pitch` stay open. Drivers enter a code once per device.
+
+**The denied page had no input.** It explained that the link should end in
+`?c=…`, which is useless to anyone holding the code but not the link. It has a
+box now; it just puts the code in the URL where the gate already knows how to
+read it. Nothing is validated there — that page is served *because* the code
+was wrong, so it cannot tell a good one from a bad one.
+
+**`/photos/` is public, deliberately.** A link written into the route sheet
+answered 401, which made the column decorative. Reading a photo needs no code;
+uploading still does. There is no listing endpoint and names are a millisecond
+timestamp plus six random characters, so a link must be deliberately passed on
+before it reaches anyone.
+
+**The board showed every draft of a note** — "Contamination", then
+"Contamination: 3+ bags", then the same plus a photo — five entries for one
+bin. Entries now merge on stop + kind within fifteen minutes. Marking a stop
+done stays separate on purpose: it is not an edit of the incident report.
+
+**`/health` reports `sheet: {configured, tabsExpected, tabsReadable}`** —
+counts only, no id or names — because with the gate on there was otherwise no
+way to check the wiring without unlocking the whole app. It read 7 of 9 after
+the sheet was switched: **two tabs still unresolved, worth chasing.**
+
+**The presentation was years behind the app** and listed built features as
+future opportunities. Corrected, and made public — a presentation that needs an
+access code is not one you can show anybody.
