@@ -199,8 +199,14 @@
 
        The label is read from settings, so the wording can be changed without
        a code change, and the same wording is what gets written to the sheet. */
+    /* The camera button is marked after a report that is worth a picture,
+       until one is taken. A reminder, not an instruction. */
+    const nudged = photoNudgeRow === item.rowNumber &&
+      !(window.photoTakenFor && window.photoTakenFor[item.rowNumber]);
+
     const rbtn = (kind, icon, fallback, aria) =>
-      `<button class="stop-report-btn" data-report="${kind}" data-row="${item.rowNumber}"
+      `<button class="stop-report-btn${kind === 'photo' && nudged ? ' srb-nudge' : ''}"
+                data-report="${kind}" data-row="${item.rowNumber}"
                 aria-label="${aria}">
           <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
         </button>`;
@@ -223,7 +229,8 @@
       isDrilled && quick.length
         ? `<div class="stop-report-row is-sub">
              ${quick.map(subBtn).join('')}
-             <button class="stop-report-btn srb-sub" data-report="photo"
+             <button class="stop-report-btn srb-sub${nudged ? ' srb-nudge' : ''}"
+                     data-report="photo"
                      data-drill-photo="1" data-row="${item.rowNumber}"
                      aria-label="Take a photo of this stop">
                <span class="srb-label">📷 Photo</span>
@@ -283,17 +290,21 @@
       </div>`;
   }
 
-  /* Some reports are worth a picture without anyone having to remember to
-     take one. Switched on per report in the editor; silent when it is off. */
+  /* Which stop's camera button is currently being nudged. */
+  let photoNudgeRow = null;
+
+  /* Some reports are worth a picture. The camera used to open by itself, which
+     put a driver in a full-screen camera before they had decided anything —
+     the phone took over the moment a button was pressed.
+
+     It marks the camera button instead. The reminder is there, the choice
+     stays with the driver, and nothing is seized. */
   function maybeAutoPhoto(type, row) {
     if (typeof reportAutoPhoto !== 'function' || !reportAutoPhoto(type)) return;
-    if (typeof capturePhoto !== 'function') return;
-    // Offered at both levels, but a stop that already has a photo is not
-    // asked again — the second offer is there for the driver who dismissed
-    // the first one, not to collect two pictures of the same bin.
+    // A stop that already has a photo is not nagged for another.
     if (window.photoTakenFor && window.photoTakenFor[row]) return;
-    const stop = allStops.find(s => s.rowNumber === row);
-    capturePhoto(row, route.tabName, stop && stop.accountName);
+    photoNudgeRow = row;
+    render();
   }
 
   function attachReportListeners(container) {
@@ -315,6 +326,7 @@
            through. */
         if (btn.dataset.drillPhoto) {
           const stop = allStops.find(s => s.rowNumber === row);
+          photoNudgeRow = null;
           if (typeof capturePhoto === 'function') {
             capturePhoto(row, route.tabName, stop && stop.accountName);
           }
@@ -362,6 +374,7 @@
         if (btn.dataset.report === 'photo') {
           // 📷 means take one, not note that one was taken.
           const stop = allStops.find(s => s.rowNumber === row);
+          photoNudgeRow = null;
           if (typeof capturePhoto === 'function') capturePhoto(row, route.tabName, stop && stop.accountName);
           return;
         }

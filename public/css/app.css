@@ -691,6 +691,26 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(calc(var(--report-btn-min-width) * 0.7), 1fr));
   gap: calc(var(--report-btn-gap) * 0.7);
 }
+/* A report has been filed that is worth a picture. The camera button is
+   ringed and breathes gently — noticeable at a glance, ignorable if the driver
+   has decided otherwise. It is a reminder, not a demand: nothing is blocked
+   and nothing opens by itself. */
+.srb-nudge {
+  box-shadow: 0 0 0 3px var(--report-btn-text, #fff),
+              0 0 0 6px var(--report-bg-photo, #004E2E);
+  animation: srb-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes srb-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* Someone who has asked for less movement still gets the ring. */
+@media (prefers-reduced-motion: reduce) {
+  .srb-nudge { animation: none; }
+}
+
 .srb-sub {
   font-size: calc(var(--report-btn-font-size) * 0.92);
 }
