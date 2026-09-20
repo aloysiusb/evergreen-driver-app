@@ -419,7 +419,18 @@ app.get("/photos/:name", (req, res) => {
    Returns the raw broadcasts; the board replays them through the same code
    path that handles live ones. */
 app.get("/api/activity", (req, res) => {
-  res.json({ events: todaysActivity() });
+  /* ?date=YYYY-MM-DD, interpreted in the server's own timezone so it lines up
+     with the day a driver actually worked. Anything unparseable falls back to
+     today rather than erroring — a bad date should show the usual screen, not
+     a broken one. */
+  const raw = String(req.query.date || "").trim();
+  let day = null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split("-").map(Number);
+    const candidate = new Date(y, m - 1, d);
+    if (!Number.isNaN(candidate.getTime())) day = candidate;
+  }
+  res.json({ date: raw || null, events: todaysActivity(300, day) });
 });
 
 // --- Simulated activity (demo only) ---------------------------------------

@@ -236,6 +236,24 @@ body {
   letter-spacing: 0.01em;
 }
 .feed-count { font-size: 12.5px; color: var(--d-muted); }
+.feed-day {
+  margin-left: auto;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--d-border);
+  background: var(--d-surface);
+  color: var(--d-text);
+}
+/* Looking at a past day: say so, so nobody reads yesterday as now. */
+.feed-wrap.past .feed-title::after {
+  content: " — past day";
+  color: var(--d-warn);
+  font-size: 0.7em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 .feed {
   background: var(--d-surface);
@@ -607,6 +625,7 @@ body {
   <div class="feed-head">
     <h2 class="feed-title">As it happens</h2>
     <span class="feed-count" id="feed-count">nothing yet today</span>
+    <select class="feed-day" id="feed-day" aria-label="Which day to show"></select>
   </div>
   <div class="feed" id="feed">
     <div class="feed-empty">
@@ -1065,6 +1084,10 @@ const FEED_MERGE_MS = 15 * 60 * 1000;
    marking a stop done is not an edit of the contamination report, and should
    not swallow it. */
 function addFeed(entry) {
+  // Showing a past day: a live event belongs to today, not to what is on
+  // screen. The route cards still update; only this list is held still.
+  if (viewingDay && !entry.at) return;
+
   // A replayed entry carries the time it actually happened, not the time the
   // page was opened — otherwise the whole morning would read as "just now".
   const at = entry.at ? new Date(entry.at) : new Date();
@@ -1174,10 +1197,47 @@ function esc(str) {
    of anonymous row numbers. */
 loadAll().then(replayToday);
 
+/* Which day the feed is showing. While it is not today, live messages are
+   kept out of it — the route cards go on updating, but yesterday's list must
+   not quietly gain today's events. */
+let viewingDay = null;          // null = today
+
+function buildDayPicker() {
+  const sel = document.getElementById('feed-day');
+  if (!sel) return;
+  const fmt = (d) => d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+  const iso = (d) => d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+
+  const opts = ['<option value="">Today</option>'];
+  for (let i = 1; i <= 6; i++) {            // kept for seven days
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    opts.push('<option value="' + iso(d) + '">' + fmt(d) + '</option>');
+  }
+  sel.innerHTML = opts.join('');
+
+  sel.addEventListener('change', () => {
+    viewingDay = sel.value || null;
+    document.querySelector('.feed-wrap').classList.toggle('past', Boolean(viewingDay));
+    feed.length = 0;
+    const el = document.getElementById('feed');
+    if (el) el.innerHTML = '<div class="feed-empty">Loading…</div>';
+    replayToday();
+  });
+}
+
+buildDayPicker();
+
 async function replayToday() {
   try {
-    const r = await fetch("/api/activity");
+    const r = await fetch("/api/activity" + (viewingDay ? "?date=" + viewingDay : ""));
     const { events } = await r.json();
+    const el = document.getElementById('feed');
+    if (el && !(events || []).length) {
+      el.innerHTML = '<div class="feed-empty">Nothing recorded for this day.</div>';
+    }
     (events || []).forEach(handleMessage);
   } catch {
     // A board without the morning behind it is still a working board.

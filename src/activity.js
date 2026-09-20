@@ -58,14 +58,19 @@ export function recordActivity(msg) {
   }
 }
 
-/** Today's events, oldest first so the board can replay them in order. */
-export function todaysActivity(limit = 300) {
-  const start = new Date();
+/**
+ * One day's events, oldest first so the board can replay them in order.
+ * @param dayStart a Date at the beginning of the day wanted; defaults to today.
+ */
+export function todaysActivity(limit = 300, dayStart = null) {
+  const start = dayStart ? new Date(dayStart) : new Date();
   start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
   try {
     const rows = db.prepare(
-      "SELECT at, payload FROM activity WHERE at >= ? ORDER BY id ASC LIMIT ?"
-    ).all(start.toISOString(), limit);
+      "SELECT at, payload FROM activity WHERE at >= ? AND at < ? ORDER BY id ASC LIMIT ?"
+    ).all(start.toISOString(), end.toISOString(), limit);
     return rows.map(r => {
       try {
         return { ...JSON.parse(r.payload), at: r.at };
