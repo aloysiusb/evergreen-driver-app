@@ -232,7 +232,16 @@ export function mountGate(app) {
           (secure ? "; Secure" : "")
       );
       if (req.method === "GET" && !req.path.startsWith("/api/")) {
-        return res.redirect(302, req.path);
+        /* Strip the code out of the address bar, but keep everything else.
+           This used to redirect to the bare path, which threw away every other
+           parameter — so ?c=CODE&view=map lost the map, and ?c=CODE&sim=1 lost
+           the test drive. Any link that combined the code with anything else
+           quietly did the wrong thing. */
+        const rest = { ...req.query };
+        delete rest.c;
+        delete rest.code;
+        const qs = new URLSearchParams(rest).toString();
+        return res.redirect(302, req.path + (qs ? "?" + qs : ""));
       }
     }
 
