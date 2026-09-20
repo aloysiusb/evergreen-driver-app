@@ -13,6 +13,7 @@ import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./confi
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
 import { uploadPhoto, photosFolderId } from "./drive.js";
+import { savePhoto, pathFor, usage as photoUsage } from "./photoStore.js";
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
@@ -240,7 +241,10 @@ app.get("/health", (req, res) => {
       // disk is not attached and data does not survive a deploy.
       survivesDeploy: onPersistentDisk && writable,
     },
-    photos: { configured: Boolean(photosFolderId()) },
+    photos: {
+      store: photosFolderId() ? "drive, disk as fallback" : "disk",
+      ...photoUsage(),
+    },
   });
 });
 
@@ -365,6 +369,18 @@ app.get("/api/backup/:tabName", async (req, res) => {
   }
 });
 
+/* Photos kept on the disk are served from here, so the link written into the
+   sheet opens the picture like any other link. The name is checked against the
+   shape this app generates rather than trusted, so no path can be talked into
+   pointing somewhere else. */
+app.get("/photos/:name", (req, res) => {
+  const file = pathFor(req.params.name);
+  if (!file) return res.sendStatus(400);
+  res.sendFile(file, { maxAge: "7d", immutable: true }, (err) => {
+    if (err) res.sendStatus(404);
+  });
+});
+
 // --- Simulated activity (demo only) ---------------------------------------
 //
 // A test drive intercepts its own writes so the route sheet cannot be touched,
@@ -417,11 +433,6 @@ app.post(
     const rowNumber = Number(req.query.row);
     const account = String(req.query.account || "").slice(0, 80);
 
-    if (!photosFolderId()) {
-      return res.status(503).json({
-        error: "Photos are not configured yet — PHOTOS_FOLDER_ID is not set.",
-      });
-    }
     if (!tabName || !Number.isFinite(rowNumber)) {
       return res.status(400).json({ error: "Which stop is this photo of?" });
     }
@@ -434,13 +445,33 @@ app.post(
       return res.status(400).json({ error: "No image received." });
     }
 
+    const mimeType = req.is("image/webp") ? "image/webp" : "image/jpeg";
+    const kb = Math.round(req.body.length / 1024);
+
+    /* Drive first, where it is set up. Google will not let a service account
+       own a file inside a personal Drive folder — "Service Accounts do not
+       have storage quota" — so unless the folder is a Shared Drive this fails
+       every time, and a driver standing at a bin cannot wait for an
+       administrator. The disk underneath always works. */
+    if (photosFolderId()) {
+      try {
+        const saved = await uploadPhoto(req.body, { tabName, rowNumber, account, mimeType });
+        console.log(`[photo] drive: ${saved.name} (${kb} KB)`);
+        return res.json({ ok: true, store: "drive", ...saved });
+      } catch (err) {
+        console.warn("[photo] drive refused it, keeping it on disk instead:", err.message);
+      }
+    }
+
     try {
-      const mimeType = req.is("image/webp") ? "image/webp" : "image/jpeg";
-      const saved = await uploadPhoto(req.body, { tabName, rowNumber, account, mimeType });
-      console.log(`[photo] ${saved.name} (${Math.round(req.body.length / 1024)} KB)`);
-      res.json({ ok: true, ...saved });
+      const saved = savePhoto(req.body, mimeType);
+      console.log(`[photo] disk: ${saved.name} (${kb} KB)`);
+      /* A relative path is no use once it is sitting in a spreadsheet cell —
+         it has to be a link someone can click from anywhere. */
+      const origin = `${req.protocol}://${req.get("host")}`;
+      res.json({ ok: true, ...saved, link: origin + saved.link });
     } catch (err) {
-      console.error("[photo] upload failed:", err.message);
+      console.error("[photo] could not be saved at all:", err.message);
       // Never answer ok for a photo that did not land — a driver would walk
       // away believing it saved.
       res.status(502).json({ error: "Could not save the photo. " + err.message });

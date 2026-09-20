@@ -607,3 +607,36 @@ Verified end to end in sim:
 
 **Uncommitted-on-purpose note:** this entry is held back to ride along with the
 next code commit rather than triggering a redeploy of its own.
+
+---
+
+## 2026-09-19 (cont.) — levels, and why photos fail
+
+**Photo uploads are refused by Google, not by the app.** Tested the endpoint
+directly with a 160-byte JPEG:
+
+```
+502 {"error":"Could not save the photo. Google Drive API has not been used in
+project 404757106796 before or it is disabled."}
+```
+
+The Drive API is simply not enabled on the Cloud project. Code path is fine and
+the failure surfaces correctly rather than claiming success. **If enabling it
+reveals a second error about service-account storage quota, the fix is a Shared
+Drive** — a file created by a service account inside a personal My Drive folder
+is owned by that account, which has no quota of its own.
+
+**Second and third levels are settings now.** `report-<kind>-l2` and `-l3`,
+comma separated. A saved BLANK is honoured as "no level" — only an *absent*
+setting falls back to the built-in list, otherwise clearing a level would
+silently restore it. Verified live: set a third level for Overflow, walked
+Severe → Left behind → `📦 Overflow: Severe · Left behind`, then cleared it.
+
+**Per-report camera switch** (`report-<kind>-photo`): opens the camera once
+that report is filed. Left OFF everywhere until Drive works — a camera that
+cannot save is worse than no camera.
+
+**The dispatcher shows the photo, not a link.** `webViewLink` opens a viewer
+page, useless in a feed; `drive.google.com/thumbnail?id=…` serves the image and
+honours the same folder permissions, so it loads for anyone who can see the
+folder and quietly fails for anyone who cannot. Link kept underneath.

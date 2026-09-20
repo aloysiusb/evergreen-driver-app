@@ -74,6 +74,11 @@ export async function uploadPhoto(buffer, meta) {
       body: Readable.from(buffer),
     },
     fields: "id, name, webViewLink",
+    // Required for a Shared Drive. Without it the call is rejected even when
+    // the folder is one — and a Shared Drive is the only arrangement where a
+    // service account can create a file at all, because files there are owned
+    // by the drive rather than by the account uploading them.
+    supportsAllDrives: true,
   });
 
   return {

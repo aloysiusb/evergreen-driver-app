@@ -839,7 +839,9 @@ function connectWS() {
     if (msg.type === 'note-updated') {
       const s = state.items.find(x => x.rowNumber === msg.rowNumber);
       if (s) { s.notes = msg.notes; s.noteUrgency = msg.noteUrgency; }
-      const photo = String(msg.notes || '').match(/https:\/\/drive\.google\.com\/\S+/);
+      // Drive, or this app's own /photos/ path when Drive would not take it.
+      const photo = String(msg.notes || '')
+        .match(/https?:\/\/\S*?(?:drive\.google\.com|\/photos\/)\S+/);
       const incident = isIncident(msg.notes);
       addFeed({
         kind: photo ? 'photo' : incident ? 'issue' : 'note',
@@ -892,10 +894,18 @@ function addFeed(entry) {
  * underneath, so a thumbnail that does not load is still one click from the
  * real thing. */
 function photoHtml(link) {
-  const id = String(link).match(/\/d\/([A-Za-z0-9_-]{10,})/);
-  const thumb = id
-    ? '<img class="feed-thumb" loading="lazy" alt="Photo of this stop" ' +
-      'src="https://drive.google.com/thumbnail?id=' + id[1] + '&sz=w400">'
+  const url = String(link);
+  const id = url.match(/\/d\/([A-Za-z0-9_-]{10,})/);
+
+  /* Two kinds of link end up in a note. One from Drive, which needs its
+     thumbnail endpoint because webViewLink is a viewer page; one from this
+     app's own disk, which is already the image and can be shown directly. */
+  const src = id
+    ? 'https://drive.google.com/thumbnail?id=' + id[1] + '&sz=w400'
+    : (/\/photos\/[0-9]{13}-[a-z0-9]{6}\.(jpg|webp)$/.test(url) ? url : null);
+
+  const thumb = src
+    ? '<img class="feed-thumb" loading="lazy" alt="Photo of this stop" src="' + esc(src) + '">'
     : '';
   return '<a class="feed-photo" href="' + esc(link) + '" target="_blank" rel="noopener">' +
     thumb + '<span>📷 Open photo</span></a>';
