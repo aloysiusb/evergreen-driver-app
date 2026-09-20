@@ -640,3 +640,41 @@ cannot save is worse than no camera.
 page, useless in a feed; `drive.google.com/thumbnail?id=…` serves the image and
 honours the same folder permissions, so it loads for anyone who can see the
 folder and quietly fails for anyone who cannot. Link kept underneath.
+
+---
+
+## 2026-09-19 — photos actually work now
+
+Enabling the Drive API revealed the real wall: **"Service Accounts do not have
+storage quota."** A service account cannot own a file inside a person's Drive
+folder. The documented ways round it — a Shared Drive, or domain-wide
+delegation — both need Workspace and an administrator.
+
+So photos go to the app's own 1 GB persistent disk (`/data/photos`) and are
+served back by `GET /photos/:name`. Nothing to configure. Drive is still tried
+first where `PHOTOS_FOLDER_ID` is set, and `drive.js` gained
+**`supportsAllDrives: true`** — without which a Shared Drive would have been
+refused too, even after someone went to the trouble of creating one.
+
+Guards: served names must match the exact shape this app generates
+(`<13 digits>-<6 chars>.jpg|webp`), so no path can be talked into pointing
+elsewhere; oldest photos are pruned past 700 MB rather than letting a full disk
+take the database down with it.
+
+**Three failures found by testing, in order — each one hid the next:**
+
+1. The link came back `http://`. Render terminates TLS, so `req.protocol` lies
+   without `app.set("trust proxy", 1)`. An http image in an https page is mixed
+   content and would have been blocked outright.
+2. The sim branch on the dispatcher built its feed entry by hand and never
+   extracted the photo link, so demonstrating the camera showed text and
+   nothing to look at.
+3. `loading="lazy"` never triggered inside the feed's own scrolling area — the
+   image laid out as a 2px sliver and was never fetched.
+
+**Worth keeping:** before blaming the renderer I fetched the URL by hand and
+decoded it — 200, `image/jpeg`, 480×320. That ruled out storage, serving and
+the file itself in one step, and left only the `<img>`. My first test fixture
+was a hand-made "JPEG" that was structurally complete but would not decode;
+generating one through `canvas.toBlob` — the same path the camera uses — was
+both a valid fixture and a truer test.
