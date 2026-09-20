@@ -333,7 +333,6 @@
             reportFileDetail(type, row, route.tabName, picked);
           }
           render();
-          maybeAutoPhoto(type, row);
           return;
         }
 
@@ -359,8 +358,14 @@
         } else {
           clearDrill();
           render();
-          maybeAutoPhoto(type, row);   // nothing to ask, so go straight to it
         }
+
+        /* On the button, not at the end of the drill-down.
+           Waiting until a sub-choice was made meant a driver who tapped
+           Contamination and walked away — which is the whole point of one-tap
+           filing — got no photo at all. The camera opens now; the second array
+           is still underneath it afterwards if they want to say how much. */
+        maybeAutoPhoto(type, row);
       });
     });
   }
