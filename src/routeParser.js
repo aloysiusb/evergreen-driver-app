@@ -67,6 +67,13 @@ export function detectColumns(rawRows) {
     directionsCol:  letter(fi("Direction")),
     accountNameCol: letter(fi("Account Name")),
     cityCol:        letter(fi("City")),
+    // Added by this app the first time a photo is taken on a tab, rather than
+    // assumed to exist. Matched loosely so a human tidying the wording later
+    // does not detach it from the column it names.
+    photosCol:      letter(fi("Photos per Notes")),
+    // Where a new column would go: one past the last header that has text.
+    headerWidth:    headerRow.length,
+    headerRowNumber: headerIdx + 1,
   };
 
   // Only trust it if the two we actually write to were both found.

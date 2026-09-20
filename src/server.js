@@ -436,6 +436,67 @@ app.post("/api/sim-event", (req, res) => {
   res.json({ ok: true });
 });
 
+/* The "Photos per Notes" column.
+ *
+ * Not assumed to exist. The first time a photo is taken on a tab, the heading
+ * is written one past the last header that has text, and the cached column map
+ * for that tab is dropped so the new column is picked up immediately.
+ *
+ * It is never written over an existing heading: if every column is occupied up
+ * to the edge of what we read, we stop rather than overwrite someone's data.
+ */
+const PHOTOS_HEADING = "Photos per Notes";
+
+async function photosColumnFor(tabName) {
+  const cols = await columnsFor(tabName);
+  if (cols.photosCol) return cols.photosCol;
+
+  const headerRow = cols.headerRowNumber || 1;
+  let rows;
+  try {
+    rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A${headerRow}:Z${headerRow}`);
+  } catch (err) {
+    console.warn(`[photos] could not read the header of '${tabName}':`, err.message);
+    return null;
+  }
+
+  const values = (rows && rows[0] && (rows[0].values || rows[0])) || [];
+  let lastUsed = -1;
+  for (let i = 0; i < values.length; i++) {
+    if (String(values[i] || "").trim()) lastUsed = i;
+  }
+  const target = lastUsed + 1;
+  if (target > 25) {                      // past Z, and we only read to Z
+    console.warn(`[photos] no free column on '${tabName}' to add the heading`);
+    return null;
+  }
+
+  const letter = String.fromCharCode(65 + target);
+  await writeRange(SPREADSHEET_ID, `'${tabName}'!${letter}${headerRow}`, [[PHOTOS_HEADING]]);
+  columnCache.delete(tabName);            // so the next read sees the new column
+  console.log(`[photos] added "${PHOTOS_HEADING}" to '${tabName}' at column ${letter}`);
+  return letter;
+}
+
+/* Put the link in that column for this stop, alongside any already there.
+   Several photos of one stop is normal — a bin, then the label, then the
+   street — so they accumulate rather than replacing each other. */
+async function recordPhotoLink(tabName, rowNumber, link) {
+  const col = await photosColumnFor(tabName);
+  if (!col) return null;
+
+  const cell = `'${tabName}'!${col}${rowNumber}`;
+  let existing = "";
+  try {
+    const rows = await readRange(SPREADSHEET_ID, cell);
+    existing = String((rows && rows[0] && (rows[0].values ? rows[0].values[0] : rows[0][0])) || "").trim();
+  } catch { /* an empty cell reads as nothing; carry on */ }
+
+  const combined = existing ? existing + "\n" + link : link;
+  await writeRange(SPREADSHEET_ID, cell, [[combined]]);
+  return col;
+}
+
 // --- Photos ---------------------------------------------------------------
 //
 // The phone shrinks the image before sending — a raw phone photo is 3-5 MB and
@@ -487,7 +548,18 @@ app.post(
       /* A relative path is no use once it is sitting in a spreadsheet cell —
          it has to be a link someone can click from anywhere. */
       const origin = `${req.protocol}://${req.get("host")}`;
-      res.json({ ok: true, ...saved, link: origin + saved.link });
+      const link = origin + saved.link;
+
+      /* Into its own column, now rather than later. The answer does not wait
+         on it: the photo is already saved, and a driver should not be held up
+         by a spreadsheet write. A failure here is logged, not thrown. */
+      recordPhotoLink(tabName, rowNumber, link)
+        .then((col) => {
+          if (col) broadcast({ type: "photo-added", tabName, rowNumber, link, account });
+        })
+        .catch((err) => console.warn("[photos] could not record the link:", err.message));
+
+      res.json({ ok: true, ...saved, link });
     } catch (err) {
       console.error("[photo] could not be saved at all:", err.message);
       // Never answer ok for a photo that did not land — a driver would walk
