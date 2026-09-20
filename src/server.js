@@ -512,6 +512,58 @@ async function recordPhotoLink(tabName, rowNumber, link) {
   return col;
 }
 
+/* Tidy up photo links this app wrote into the wrong column.
+ *
+ * The first version of the column placement put the heading — and then a link —
+ * into column A, the blank leading cell these sheets keep. This clears that up
+ * precisely: a cell is only emptied when its ENTIRE contents are links to this
+ * app own /photos/ path, and never in the real photos column. It cannot touch
+ * an address, a note, or anything a person typed.
+ */
+app.post("/api/photos/tidy", async (req, res) => {
+  const tabName = String(req.body?.tabName || "").trim();
+  try {
+    assertAllowedTab(tabName);
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+
+  try {
+    const cols = await columnsFor(tabName);
+    const keep = cols.photosCol;
+    const rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:N400`);
+
+    const cleared = [];
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const letter = String.fromCharCode(65 + c);
+        if (letter === keep) continue;              // the real column, leave alone
+        if (!isOurPhotoCell(row[c])) continue;
+        await writeRange(SPREADSHEET_ID, `'${tabName}'!${letter}${r + 1}`, [[""]]);
+        cleared.push(letter + (r + 1));
+      }
+    }
+
+    console.log(`[photos] tidied ${cleared.length} stray link cell(s) on '${tabName}'`);
+    res.json({ ok: true, tab: tabName, photosColumn: keep, cleared });
+  } catch (err) {
+    console.error("[photos] tidy failed:", err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+/* True only when a cell holds nothing but links this app generated. A note
+   that MENTIONS a photo link is not such a cell, so it is left alone. */
+function isOurPhotoCell(text) {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  const parts = t.split(/\s+/).filter(Boolean);
+  return parts.length > 0 && parts.every(
+    (u) => /^https?:\/\/\S+\/photos\/[0-9]{13}-[a-z0-9]{6}\.(jpg|webp)$/.test(u)
+  );
+}
+
 // --- Photos ---------------------------------------------------------------
 //
 // The phone shrinks the image before sending — a raw phone photo is 3-5 MB and
