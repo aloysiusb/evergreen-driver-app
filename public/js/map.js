@@ -1,5 +1,19 @@
 // Map tab — navigation mode, planned vs live route modes
 
+/* Open a route straight onto its map with ?view=map.
+ *
+ * The dispatcher board links here: the office wants to see where a route goes
+ * without first landing on a list of stops and hunting for the tab. The map
+ * only builds itself when it is actually shown, so this waits for the page to
+ * be ready rather than racing it. */
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  if (params.get('view') === 'map') {
+    // A moment for the route data to arrive, or the map draws an empty route.
+    setTimeout(() => window.switchView('map'), 400);
+  }
+});
+
 window.switchView = function(view) {
   document.getElementById('view-stops').style.display = view === 'stops' ? 'block' : 'none';
   document.getElementById('view-map').style.display   = view === 'map'   ? 'block' : 'none';

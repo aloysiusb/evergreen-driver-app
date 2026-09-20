@@ -430,6 +430,21 @@ body {
   background: var(--d-muted-bg);
   color: var(--d-muted);
 }
+/* Opens the route's own map in a new tab. On the card rather than buried,
+   because "where does this route actually go" is a question asked while
+   looking at the card. */
+.route-map-link {
+  font-size: 17px;
+  text-decoration: none;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: var(--r-control);
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+.route-map-link:hover { opacity: 1; background: var(--d-muted-bg); }
+
 .route-status-icon {
   font-size: 20px;
   flex-shrink: 0;
@@ -756,6 +771,8 @@ function renderCard(route) {
         <div class="route-name">${esc(route.name)}</div>
         <div class="route-day-chip ${isToday ? 'today' : 'off'}">${esc(route.day)}</div>
       </div>
+      <a class="route-map-link" href="/driver/${route.id}?view=map" target="_blank"
+         rel="noopener" title="See this route on a map">🗺</a>
       <div class="route-status-icon">${statusIcon}</div>
     </div>
     <div class="route-progress">
