@@ -236,6 +236,36 @@ simulation. One real route before Dave depends on them.
 - `REQUESTS_FROM_EMAIL` needs a verified sending domain before customers
   receive confirmations. The office notification already works.
 
+### 5. Deferred on purpose — notes into the New Customers tab
+
+Alyssa traditionally writes route notes (contamination and so on) in the
+**New Customers** tab, column C, "Driver Notes and Special Instructions".
+Virginia asked about writing the app's notes there too, alongside hers.
+
+**Decided against for now (2026-09-20):** the app already writes every incident
+to the Driver Notes column of the route tab, on the right row, with no matching
+needed. Writing into New Customers means matching a route stop to one of ~176
+rows in a separately maintained list, by address. Getting that wrong puts a
+contamination note against the wrong customer, on a tab that also holds
+billing.
+
+**What was already established, so it need not be redone:**
+
+- Header row is row 1. B Address · C Driver Notes · E Customer Name · F City ·
+  G Email · H Phone · I Autopay · J Rate/Accounting Notes.
+- **Column D has no heading but holds data in 11 rows — it is NOT free.**
+  "No heading" is not "empty"; that distinction is the July bug.
+- **Column K is genuinely free** and is where such a column should go.
+-  (admin code) reports headings and a count of
+  non-empty cells per column, for any tab including excluded ones. Counts, never
+  contents.
+
+**If it is picked up again, measure first:** how many route stops find exactly
+one address match in New Customers. High, and it is safe with unmatched ones
+flagged. Low, and it needs a different key — do not build it on a guess.
+
+Virginia's own preference if revisited: *append* rather than write in place.
+
 ### 5. Raised but undecided
 
 Driver identity on notes (who did what), persistence of the dispatcher feed
