@@ -49,8 +49,22 @@ export function detectColumns(rawRows) {
   const normalized = (rawRows || []).map(r =>
     Array.isArray(r) ? { values: r } : r
   );
+  /* Finding the header row.
+   *
+   * It used to require the exact strings "Address" AND "Account Name". Two
+   * tabs in the current sheet have a header row that is plainly a header row
+   * and were rejected, which stops writes to them entirely.
+   *
+   * A row counts as the header if it names an address and names the customer
+   * in any of the ways a person would write it. Nothing is guessed from
+   * position — a row still has to say what it is. */
+  const has = (row, words) =>
+    row.some(h => h && words.some(w => String(h).trim().toLowerCase().includes(w)));
+
+  const CUSTOMER_WORDS = ["account name", "account", "customer", "business", "name"];
+
   const headerIdx = normalized.findIndex(
-    ({ values: row }) => row && row.includes("Address") && row.includes("Account Name")
+    ({ values: row }) => row && has(row, ["address"]) && has(row, CUSTOMER_WORDS)
   );
   if (headerIdx < 0) return null;
 
@@ -60,12 +74,24 @@ export function detectColumns(rawRows) {
 
   const letter = (i) => (i < 0 ? null : String.fromCharCode(65 + i));
 
+  /* Try the exact wording first and only fall back to alternatives if it is
+     absent. Strict-then-loose matters: on a sheet that has both "Driver Notes"
+     and some other notes column, the exact one must win. Writing to the wrong
+     column is how three addresses were destroyed. */
+  const firstOf = (...keywords) => {
+    for (const k of keywords) {
+      const i = fi(k);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+
   const cols = {
-    doneCol:        letter(fi("Yay")),
+    doneCol:        letter(firstOf("Yay", "Done", "Complete", "Collected", "Picked")),
     addressCol:     letter(fi("Address")),
-    notesCol:       letter(fi("Driver Notes")),
+    notesCol:       letter(firstOf("Driver Notes", "Notes", "Special Instruction", "Instruction")),
     directionsCol:  letter(fi("Direction")),
-    accountNameCol: letter(fi("Account Name")),
+    accountNameCol: letter(firstOf("Account Name", "Account", "Customer", "Business", "Name")),
     cityCol:        letter(fi("City")),
     // Added by this app the first time a photo is taken on a tab, rather than
     // assumed to exist. Matched loosely so a human tidying the wording later
@@ -78,6 +104,15 @@ export function detectColumns(rawRows) {
 
   // Only trust it if the two we actually write to were both found.
   if (!cols.doneCol || !cols.notesCol) return null;
+
+  /* The looser matching above must never resolve a column we WRITE to onto the
+     address. "Name" could in principle match an address heading on some sheet;
+     this is the guard that makes the loosening safe rather than clever. */
+  if (cols.addressCol &&
+      (cols.notesCol === cols.addressCol || cols.doneCol === cols.addressCol)) {
+    return null;
+  }
+
   return cols;
 }
 

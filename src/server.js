@@ -745,9 +745,23 @@ async function auditColumns() {
          its header row is not recognised". They need completely different
          fixes: one is a name, the other is a heading. */
       const missing = /unable to parse range|not found/i.test(err.message);
-      columnProblems.set(tab, missing
+      let detail = missing
         ? "No tab with this name in the spreadsheet"
-        : "Header row not recognised — needs Address, Account Name, Yay and Driver Notes");
+        : "Header row not recognised — needs an address, a customer name, a done column and a notes column";
+
+      /* Column HEADINGS of a tab that will not parse. Not the rows beneath
+         them — no customer data — just the words that need correcting. */
+      if (!missing) {
+        try {
+          const rows = await readRange(SPREADSHEET_ID, `'${tab}'!A1:N4`);
+          const headings = (rows || [])
+            .map(r => (r || []).map(v => String(v || "").trim()).filter(Boolean))
+            .find(r => r.length > 2);
+          if (headings) detail += " · found: " + headings.join(" | ");
+        } catch { /* the reason above is enough */ }
+      }
+
+      columnProblems.set(tab, detail);
       console.warn(`[sheet] startup check — '${tab}': ${err.message}`);
     }
   }
