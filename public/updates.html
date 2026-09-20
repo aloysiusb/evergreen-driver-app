@@ -159,6 +159,7 @@
     <li><a href="#customer">4 · The customer</a></li>
     <li><a href="#demo">5 · Showing people</a></li>
     <li><a href="#testing">Trying it yourself</a></li>
+    <li><a href="#realtest">Testing it for real</a></li>
     <li><a href="#fixed">6 · What was wrong</a></li>
     <li><a href="#open">7 · Still open</a></li>
     <li><a href="#next">What's next — customers through the website</a></li>
@@ -831,6 +832,87 @@
       </p>
       <div class="how">Writes, on the bottom bar</div>
     </div>
+  </div>
+</section>
+
+<section id="realtest">
+  <h2>Testing it for real</h2>
+  <p class="lede">
+    The desk test proves the app works. It cannot prove it works <em>in a
+    truck</em> — everything it does with GPS, signal and a camera is simulated
+    there. So the first real run should be treated as a test, not as the new
+    way of working.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <h3>1 · At a desk</h3><span class="chip">15 minutes</span>
+      <p>
+        The test drive above. Nothing to lose and nothing reaches the sheet.
+        Either of you, on a laptop.
+      </p>
+      <div class="how">/driver/&lt;route&gt;?sim=1, with /dispatch open alongside</div>
+    </div>
+
+    <div class="row">
+      <h3>2 · On a phone, parked</h3><span class="chip">15 minutes</span>
+      <p>
+        This is the part a computer cannot check. On an actual phone:
+        <strong>take a photo</strong> and see whether it reaches the dispatcher
+        board; <strong>tap the buttons wearing work gloves</strong>;
+        <strong>add it to the home screen</strong> and open it from there; mark
+        a stop done and undo it, and check the sheet agrees.
+      </p>
+      <p>
+        Anything awkward here is worth saying — the button wording, sizes and
+        colours are all adjustable without a code change.
+      </p>
+      <div class="how">A real phone, not a browser pretending to be one</div>
+    </div>
+
+    <div class="row">
+      <h3>3 · One real route, one day</h3><span class="chip untested">The real test</span>
+      <p>
+        <strong>Keep the normal process running alongside it.</strong> The app
+        should not be the only record on the first day.
+      </p>
+      <p>Pick one route, ideally a shorter one, and watch three things:</p>
+      <p>
+        <strong>The arrival alert</strong> — does it fire <em>once</em> as you
+        pull up, or repeatedly? It used to repeat every twelve seconds. That is
+        fixed, but it has never run at real driving speed.
+      </p>
+      <p>
+        <strong>A dead zone</strong> — when signal drops, does the banner say
+        work is waiting, and does it clear when signal returns? This is the most
+        important one: it has been tested by simulating a clean cut, never by a
+        real hole in coverage, which is messier.
+      </p>
+      <p>
+        <strong>The camera</strong> — do photos reach the board and the sheet
+        from out on the route, rather than from a desk?
+      </p>
+      <div class="how">Someone reachable, and the usual paperwork still running</div>
+    </div>
+
+    <div class="row">
+      <h3>Watch the board while that route runs</h3><span class="chip">Working</span>
+      <p>
+        Stops should complete, and incidents and photos should arrive, without
+        anyone asking for them. <strong>If the board goes quiet while the driver
+        says they are working, that is exactly the thing worth reporting.</strong>
+      </p>
+      <div class="how">/dispatch</div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:22px">
+    <h3>What is worth reporting</h3>
+    <p>
+      Anything slow, wrong, awkward or surprising — and above all, anything that
+      <strong>looked like it saved but didn't</strong>. That one matters more
+      than any missing feature.
+    </p>
   </div>
 </section>
 
