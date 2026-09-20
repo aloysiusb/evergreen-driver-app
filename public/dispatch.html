@@ -261,6 +261,7 @@ body {
 .feed-photo { display: block; }
 .feed-thumb {
   display: block;
+  min-height: 60px;          /* never collapse to a sliver while loading */
   max-width: 260px;
   width: 100%;
   height: auto;
@@ -909,8 +910,12 @@ function photoHtml(link) {
     ? 'https://drive.google.com/thumbnail?id=' + id[1] + '&sz=w400'
     : (/\/photos\/[0-9]{13}-[a-z0-9]{6}\.(jpg|webp)$/.test(url) ? url : null);
 
+  /* No loading="lazy". The feed is a short list inside its own scrolling
+     area, and the browser never decided these were near enough the viewport
+     to fetch — the photo stayed a 2px sliver while the same URL fetched fine
+     by hand. A handful of small images is nothing to defer. */
   const thumb = src
-    ? '<img class="feed-thumb" loading="lazy" alt="Photo of this stop" src="' + esc(src) + '">'
+    ? '<img class="feed-thumb" alt="Photo of this stop" src="' + esc(src) + '">'
     : '';
   return '<a class="feed-photo" href="' + esc(link) + '" target="_blank" rel="noopener">' +
     thumb + '<span>📷 Open photo</span></a>';
