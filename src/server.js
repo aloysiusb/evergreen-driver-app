@@ -681,7 +681,11 @@ app.get("/api/sheet-headings", async (req, res) => {
   if (!tabName) return res.status(400).json({ error: "Which tab?" });
 
   try {
-    const rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:T8`);
+    // Read further down so each column can be reported as empty or not.
+    // A heading can be missing while the column below it is full, and writing
+    // into that would destroy data — the count is what makes it safe to say
+    // "this column is free".
+    const rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:T300`);
 
     /* The header row is the first with more than two non-empty cells. These
        sheets keep blank rows and date banners above it. */
@@ -692,10 +696,19 @@ app.get("/api/sheet-headings", async (req, res) => {
       return res.json({ tab: tabName, headerRow: null, headings: [] });
     }
 
-    const headings = (rows[idx] || []).map((v, i) => ({
-      column: String.fromCharCode(65 + i),
-      heading: String(v || "").trim(),
-    }));
+    const width = Math.max(...(rows || []).map(r => (r || []).length), 0);
+    const headings = [];
+    for (let i = 0; i < width; i++) {
+      let filled = 0;
+      for (let r = idx + 1; r < rows.length; r++) {
+        if (String((rows[r] || [])[i] || "").trim()) filled++;
+      }
+      headings.push({
+        column: String.fromCharCode(65 + i),
+        heading: String((rows[idx] || [])[i] || "").trim(),
+        cellsWithSomethingIn: filled,     // a count, never the contents
+      });
+    }
 
     res.json({
       tab: tabName,
