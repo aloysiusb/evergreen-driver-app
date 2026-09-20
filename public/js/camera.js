@@ -125,6 +125,9 @@
         const note = (stripped ? stripped + ' · ' : '') + '📷 Photo: ' + data.link;
 
         if (typeof queueNoteWrite === 'function') await queueNoteWrite(rowNumber, note);
+        // So the app does not ask for a second photo of a stop that has one.
+        window.photoTakenFor = window.photoTakenFor || {};
+        window.photoTakenFor[rowNumber] = true;
         say('Photo saved');
       } catch (err) {
         say('Photo not saved — ' + err.message, true);

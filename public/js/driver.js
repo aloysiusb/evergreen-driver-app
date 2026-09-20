@@ -283,6 +283,10 @@
   function maybeAutoPhoto(type, row) {
     if (typeof reportAutoPhoto !== 'function' || !reportAutoPhoto(type)) return;
     if (typeof capturePhoto !== 'function') return;
+    // Offered at both levels, but a stop that already has a photo is not
+    // asked again — the second offer is there for the driver who dismissed
+    // the first one, not to collect two pictures of the same bin.
+    if (window.photoTakenFor && window.photoTakenFor[row]) return;
     const stop = allStops.find(s => s.rowNumber === row);
     capturePhoto(row, route.tabName, stop && stop.accountName);
   }
@@ -325,6 +329,7 @@
           if (next.length) {
             drill = { row, type, level: 3, picked };
             render();
+            maybeAutoPhoto(type, row);   // skipped if one was already taken
             return;
           }
 
@@ -333,6 +338,7 @@
             reportFileDetail(type, row, route.tabName, picked);
           }
           render();
+          maybeAutoPhoto(type, row);   // skipped if one was already taken
           return;
         }
 
