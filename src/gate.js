@@ -42,7 +42,22 @@ const PUBLIC_PAGES = new Set(["/portal.html", "/pay.html", "/walkthrough.html", 
 // Stylesheets, client scripts and the manifest. No secrets live in these — the
 // sensitive thing is the route API, not the CSS — and leaving them gated would
 // render the public pages unstyled and inert.
-const PUBLIC_PREFIXES = ["/css/", "/js/", "/fonts/"];
+//
+// /photos/ is here on purpose, and it is the one entry worth explaining.
+//
+// A photo's link is written into the route sheet, and the point of putting it
+// there is that someone reading the sheet can click it. Behind the gate that
+// link answered 401, which made the column decorative.
+//
+// What that trades away: anyone holding a photo's URL can open it without a
+// code. What it does NOT open is any way to FIND one — names are a millisecond
+// timestamp plus six random characters, there is no listing endpoint, and the
+// links live in a spreadsheet that Google already restricts. So a link has to
+// be deliberately passed on before it reaches anyone, which is the same
+// arrangement a Drive link would have had.
+//
+// Uploading still requires a code. This only lets an existing photo be read.
+const PUBLIC_PREFIXES = ["/css/", "/js/", "/fonts/", "/photos/"];
 
 const DRIVER_JAR = "ev_access";
 const ADMIN_JAR = "ev_admin";

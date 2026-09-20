@@ -815,6 +815,7 @@ function connectWS() {
       const photoRoute = ROUTES.find(r => r.tabName === msg.tabName);
       const stop = stopFor(msg.tabName, msg.rowNumber);
       addFeed({
+        key: feedKey(msg.tabName, msg.rowNumber, 'photo'),
         kind: 'photo',
         icon: '📷',
         link: msg.link,
@@ -838,6 +839,8 @@ function connectWS() {
       const simPhoto = String(msg.notes || '')
         .match(/https?:\/\/\S*?(?:drive\.google\.com|\/photos\/)\S+/);
       addFeed({
+        key: feedKey(msg.tabName, msg.rowNumber,
+          simPhoto ? 'photo' : (msg.type === 'note-updated' ? 'note' : 'done')),
         kind: simPhoto ? 'photo' : (msg.type === 'note-updated' ? 'note' : (msg.done ? 'done' : 'undone')),
         icon: simPhoto ? '📷' : (msg.type === 'note-updated' ? '📝' : (msg.done ? '✅' : '↩️')),
         link: simPhoto ? simPhoto[0] : null,
@@ -860,6 +863,7 @@ function connectWS() {
       const s = state.items.find(x => x.rowNumber === msg.rowNumber);
       if (s) s.done = msg.done;
       addFeed({
+        key: feedKey(msg.tabName, msg.rowNumber, 'done'),
         kind: msg.done ? 'done' : 'undone',
         icon: msg.done ? '✅' : '↩️',
         who: stopLabel(s),
@@ -879,6 +883,7 @@ function connectWS() {
         .match(/https?:\/\/\S*?(?:drive\.google\.com|\/photos\/)\S+/);
       const incident = isIncident(msg.notes);
       addFeed({
+        key: feedKey(msg.tabName, msg.rowNumber, photo ? 'photo' : 'note'),
         kind: photo ? 'photo' : incident ? 'issue' : 'note',
         icon: photo ? '📷' : incident ? '⚠️' : '📝',
         link: photo ? photo[0] : null,
@@ -935,10 +940,33 @@ function isIncident(text) {
   return /(^|·\s*)(🚫|📦|⏭|📷)/.test(String(text || ''));
 }
 
+/* How long two updates about the same thing count as the same event. */
+const FEED_MERGE_MS = 15 * 60 * 1000;
+
+/* A note is written three times on the way to being finished — "Contamination",
+   then "Contamination: 3+ bags", then the same with a photo added — and each
+   one arrived as its own line. Five entries for one bin.
+
+   An update about the same stop AND the same kind of thing replaces the
+   earlier one rather than stacking on top of it, so the board shows what IS
+   true rather than every step of getting there. Different kinds stay separate:
+   marking a stop done is not an edit of the contamination report, and should
+   not swallow it. */
 function addFeed(entry) {
+  if (entry.key) {
+    const i = feed.findIndex(f => f.key === entry.key);
+    if (i >= 0 && Date.now() - feed[i].at.getTime() < FEED_MERGE_MS) {
+      feed.splice(i, 1);
+    }
+  }
   feed.unshift({ ...entry, at: new Date() });
   if (feed.length > FEED_MAX) feed.length = FEED_MAX;
   renderFeed();
+}
+
+/* Same stop, same kind of event. */
+function feedKey(tabName, rowNumber, group) {
+  return tabName + ':' + rowNumber + ':' + group;
 }
 
 /* A driver's photo, shown rather than linked.
