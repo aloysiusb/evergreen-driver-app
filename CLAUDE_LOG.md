@@ -815,3 +815,35 @@ rechecked every ten minutes — the failure was otherwise invisible until a
 driver said their work had vanished.
 
 **ACCESS_CODE is currently OFF** for testing and must go back on.
+
+---
+
+## 2026-09-20 (late) — the board remembers the day
+
+The feed lived only in the browser: reloading at three in the afternoon meant
+the morning had never happened, on the one screen the office is asked to leave
+open all day.
+
+`src/activity.js` records every broadcast worth keeping — **inside
+`broadcast()` rather than at each call site**, so a message added later cannot
+be forgotten; the live feed and the record are fed by the same line and cannot
+drift. Replay goes through the **same handler** as a live message, because two
+paths would drift and the replayed one is what nobody would notice breaking.
+
+Entries keep the time they happened, so the morning does not read as "just
+now". Simulated events are deliberately not recorded — a demonstration should
+vanish on reload rather than become part of the day's record. Kept seven days,
+pruned at startup.
+
+A day picker shows any of the last seven. While a past day is on screen it is
+labelled, and live events are kept out of the list; the route cards go on
+updating, since those show the sheet as it is.
+
+**Found on the way:** `parseIncidents` read only the FIRST character of a note
+to decide whether it was an incident. Notes are a line of history — "Gate code
+1234 · 🚫 Contamination: 2 bags" — so on any stop the office had already
+written on, the card said "No incidents" while the sheet plainly had some.
+
+Verified: a done-tick on a stop with no note records and replays; a real note
+survives a full reload with customer, address and original time; a sim event
+shows live and leaves nothing behind.
