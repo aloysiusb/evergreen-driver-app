@@ -854,7 +854,12 @@ app.get("/api/sheet-check", async (req, res) => {
     // Read the top of each matched tab so the columns can be eyeballed against
     // what routeParser expects.
     out.columnCheck = [];
-    for (const tab of out.tabsMatched.slice(0, 3)) {
+    /* Every matched tab, not the first three. A checker that samples three of
+       nine cannot show you the one that is broken — which is exactly what
+       happened with Friday. Pass ?tab=Name to look at one. */
+    const only = String(req.query.tab || "").trim();
+    const toCheck = only ? out.tabsMatched.filter(t => t === only) : out.tabsMatched;
+    for (const tab of toCheck) {
       try {
         const span = String(req.query.rows || "1:3");
         const safe = /^[0-9]+:[0-9]+$/.test(span) ? span : "1:3";
