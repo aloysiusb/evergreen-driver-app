@@ -158,8 +158,10 @@
     <li><a href="#office">3 · The office</a></li>
     <li><a href="#customer">4 · The customer</a></li>
     <li><a href="#demo">5 · Showing people</a></li>
+    <li><a href="#testing">Trying it yourself</a></li>
     <li><a href="#fixed">6 · What was wrong</a></li>
     <li><a href="#open">7 · Still open</a></li>
+    <li><a href="#next">What's next — customers through the website</a></li>
     <li><a href="#links">8 · Every page</a></li>
   </ol>
 </div>
@@ -329,12 +331,24 @@
         together.
       </p>
       <p>
-        <strong>The wording on those buttons can be changed.</strong> Whatever
-        you type becomes the label on the button <em>and</em> the words written
-        into the sheet, so the two can never say different things. Drivers know
-        the nuances of what actually goes wrong on a route — "Wrong stuff in
-        bin" instead of "Contamination", or whatever fits — and this is the
-        knob for it.
+        Tapping one files it <em>and</em> opens a second set of buttons in the
+        same place — for contamination that is <strong>1 bag · 2 bags · 3+ bags
+        · Recycling · Non-compost · Other</strong>. Tap one and the note becomes
+        "Contamination: 2 bags". Tap nothing and walk away and the plain report
+        still stands. One tap to file, two to say how much.
+      </p>
+      <p>
+        <strong>Every word of that is yours to change</strong>, including a
+        third level if a route needs one. Whatever you type becomes the label on
+        the button <em>and</em> the words written into the sheet, so the two can
+        never say different things. Drivers know the nuances of what actually
+        goes wrong on a route — "Wrong stuff in bin" instead of
+        "Contamination", or whatever fits — and this is the knob for it. Leave a
+        level blank and it is skipped.
+      </p>
+      <p>
+        <strong>Other</strong> opens a typing box, for the day the lists do not
+        fit.
       </p>
       <div class="how">Any stop card, on a route page · wording at /admin → Incident buttons</div>
     </div>
@@ -349,11 +363,24 @@
         one bar of signal.
       </p>
       <p>
-        Photos go into <strong>EverGreen's own Google Drive folder</strong>, not
-        somewhere belonging to the app, and a link to the photo is added to that
-        stop's note — so it opens straight from the spreadsheet.
+        <strong>The camera opens by itself</strong> for contamination and
+        overflow, so nobody has to remember. It is offered again at each step of
+        the drill-down for anyone who waved it away — but a stop that already
+        has a photo is never asked twice.
       </p>
-      <div class="how">📷 on any stop card · photos arrive in the shared Drive folder</div>
+      <p>
+        Each photo gets a <strong>new column in the route sheet, "Photos per
+        Notes"</strong>, holding a link you can click from the spreadsheet. The
+        column is created the first time a photo is taken on a tab. Several
+        photos of one stop stack up in the same cell. The note itself just says
+        <strong>📷 Photo</strong> rather than filling up with web addresses.
+      </p>
+      <p>
+        Photos are stored by the app itself and named so they make sense when
+        opened — <em>2026-09-20 0346 · Carbondale Family Dental · Tues DV row
+        9.jpg</em> — not by a number.
+      </p>
+      <div class="how">📷 on any stop card, and inside every drill-down · links land in column "Photos per Notes"</div>
     </div>
 
     <div class="row">
@@ -507,6 +534,20 @@
         happens. This is the screen to leave open during a run.
       </p>
       <div class="how">evergreen-driver-app.onrender.com/dispatch</div>
+    </div>
+
+    <div class="row">
+      <h3>Photos appear on the board as they are taken</h3><span class="chip">Working</span>
+      <p>
+        A driver's photo shows up in the live feed as the picture itself, not a
+        link to one — with the customer's name, the address, and what was
+        reported. No refresh, no opening anything.
+      </p>
+      <p>
+        That is the point of it: the office can see what is actually at the
+        kerb without phoning to ask.
+      </p>
+      <div class="how">/dispatch</div>
     </div>
 
     <div class="row">
@@ -719,6 +760,80 @@
   </div>
 </section>
 
+<section id="testing">
+  <h2>Trying it yourself</h2>
+  <p class="lede">
+    None of this needs a truck, and none of it touches the real route sheet.
+    Fifteen minutes with a laptop covers everything a driver does in a day.
+  </p>
+
+  <div class="callout">
+    <h3>Start here</h3>
+    <p>
+      Open <strong>evergreen-driver-app.onrender.com/driver/tues-dv/?sim=1</strong> — any route works, the
+      <code>?sim=1</code> on the end is what matters. A control bar appears along
+      the bottom. Without it, drivers never see any of this.
+    </p>
+  </div>
+
+  <div class="rows">
+    <div class="row">
+      <h3>Drive the route</h3><span class="chip">Working</span>
+      <p>
+        Tap <strong>🗺 Map</strong>, then <strong>▶ Drive</strong> on the bottom
+        bar. Speed 8 moves along briskly. The truck follows the real route, the
+        next turn shows at the top, and the arrival alert fires as it reaches
+        each stop.
+      </p>
+      <div class="how">Map tab → ▶ Drive</div>
+    </div>
+
+    <div class="row">
+      <h3>File an incident</h3><span class="chip">Working</span>
+      <p>
+        On the Stops tab, tap <strong>Contamination</strong> on any card. The
+        note updates immediately and a second set of buttons appears — tap
+        <strong>2 bags</strong>. Watch the note become "Contamination: 2 bags".
+      </p>
+      <div class="how">Any stop card</div>
+    </div>
+
+    <div class="row">
+      <h3>Lose signal on purpose</h3><span class="chip">Working</span>
+      <p>
+        The one worth showing Dave. Tap <strong>📶 Signal</strong> to switch it
+        off, mark a stop done, and it says <em>waiting for signal</em>. Tap
+        signal back on and it saves itself. Nothing is lost, and nobody has to
+        remember anything.
+      </p>
+      <div class="how">📶 Signal on the bottom bar</div>
+    </div>
+
+    <div class="row">
+      <h3>Watch the office screen at the same time</h3><span class="chip">Working</span>
+      <p>
+        Open <strong>/dispatch</strong> in a second window and put them side by
+        side. Everything done in the test drive appears there as it happens,
+        marked <strong>Test drive</strong> so it can never be mistaken for real
+        work — and the stop counts deliberately do not move, so a demonstration
+        next to a real shift cannot make the numbers lie.
+      </p>
+      <div class="how">/dispatch, alongside the test drive</div>
+    </div>
+
+    <div class="row">
+      <h3>Nothing reaches the sheet</h3><span class="chip">Working</span>
+      <p>
+        Every save a test drive makes is caught and counted under
+        <strong>Writes</strong> on the bottom bar instead of being sent. Open it
+        to read exactly what would have been written. Real stops cannot be
+        marked done by a test.
+      </p>
+      <div class="how">Writes, on the bottom bar</div>
+    </div>
+  </div>
+</section>
+
 <!-- ── 6 ─────────────────────────────────────────────────── -->
 <section id="fixed">
   <h2>6 · What was wrong</h2>
@@ -826,6 +941,92 @@
     <p>
       Needs a sending domain before customers receive anything. The office
       notification already works.
+    </p>
+  </div>
+</section>
+
+<section id="next">
+  <h2>What's next — customers through the website</h2>
+  <p class="lede">
+    The aim is that an enquiry turns into a stop on a route without anyone
+    retyping it. Most of that machinery is already built and running; the piece
+    that is missing is smaller than it sounds.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <h3>What already works</h3><span class="chip">Working</span>
+      <p>
+        A request arriving from the website lands in a queue, the office gets an
+        email, and approving it <strong>writes the customer straight onto the
+        route sheet</strong> — into the right columns on the right tab. Nothing
+        is retyped, and if the sheet write fails the request is not marked
+        approved, so a customer can never be quietly lost between the two.
+      </p>
+      <div class="how">/portal → /approval</div>
+    </div>
+
+    <div class="row">
+      <h3>The missing piece: a sign-up form</h3><span class="chip todo">Not built yet</span>
+      <p>
+        The portal today offers <strong>hold</strong>, <strong>missed
+        pickup</strong>, <strong>update details</strong> and <strong>pay an
+        invoice</strong>. There is no <em>"start service"</em> form — yet the
+        queue, the approval screen and the sheet-writing behind it all already
+        handle new customers and are waiting for it.
+      </p>
+      <p>
+        That is the next thing to build, and it is the smallest remaining step
+        to a new customer going from the website to a driver's screen without
+        anyone typing anything.
+      </p>
+      <div class="how">Would live at /portal</div>
+    </div>
+
+    <div class="row">
+      <h3>Suggesting the right day</h3><span class="chip todo">Proposed</span>
+      <p>
+        The app already knows where every route goes. A new address could be
+        matched against them and the likely collection day offered to the
+        office as a suggestion — still approved by a person, but not worked out
+        by hand each time.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Catching duplicates</h3><span class="chip todo">Proposed</span>
+      <p>
+        Warn when an address already appears on a route, so the same property
+        does not quietly end up on two.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Telling the customer</h3><span class="chip todo">Needs a sending domain</span>
+      <p>
+        Confirmation emails to customers need a verified sending domain before
+        anything reaches them — a once-only setup. The office notification
+        already works. After that: a welcome message saying what goes in the
+        bin, and which day to put it out.
+      </p>
+    </div>
+
+    <div class="row">
+      <h3>Paying online</h3><span class="chip todo">Proposed</span>
+      <p>
+        The groundwork for connecting to QuickBooks is in place. Finishing it
+        would let a customer settle an invoice from the portal rather than
+        being chased.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:22px">
+    <h3>The shape of it</h3>
+    <p>
+      Every one of these removes a retyping step, not a decision. The office
+      still approves each customer; the app just stops making anyone copy
+      things from one screen to another.
     </p>
   </div>
 </section>
