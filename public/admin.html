@@ -712,6 +712,42 @@
       </div>
     </div>
 
+    <!-- ── SHEET COLUMN NAMES ── -->
+    <div class="panel-section">
+      <h2>Sheet column names</h2>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        What a column may be called in the route sheet. The app finds columns by
+        <em>name</em>, never by position — that is what stops a note being written
+        over an address when a sheet changes shape.
+      </p>
+      <p style="margin:0 0 14px;font-size:12px;opacity:.65;line-height:1.5">
+        So if a tab calls the address column something not listed here, that tab
+        stops working and the dispatcher board says so. <strong>Add the word here
+        and it works again</strong> — no code change, no waiting. Comma separated;
+        matched against any part of the heading, upper or lower case.
+      </p>
+      <div class="control-row">
+        <label>Address</label>
+        <div class="inputs"><input type="text" data-text="sheet-col-address" class="wide" placeholder="Address, Street, Location, Property, Site"></div>
+      </div>
+      <div class="control-row">
+        <label>Customer</label>
+        <div class="inputs"><input type="text" data-text="sheet-col-account" class="wide" placeholder="Account Name, Account, Customer, Business, Client, Name"></div>
+      </div>
+      <div class="control-row">
+        <label>Done tick</label>
+        <div class="inputs"><input type="text" data-text="sheet-col-done" class="wide" placeholder="Yay, Done, Complete, Collected, Picked"></div>
+      </div>
+      <div class="control-row">
+        <label>Driver notes</label>
+        <div class="inputs"><input type="text" data-text="sheet-col-notes" class="wide" placeholder="Driver Notes, Notes, Special Instruction, Instruction, Comment"></div>
+      </div>
+      <p style="margin:12px 0 0;font-size:11.5px;opacity:.6;line-height:1.5">
+        Clearing a box falls back to the built-in list rather than matching
+        nothing, so a tab can never be broken by emptying one of these.
+      </p>
+    </div>
+
     <!-- ── INCIDENT BUTTONS ── -->
     <div class="panel-section">
       <h2>Incident buttons</h2>

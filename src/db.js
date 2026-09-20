@@ -88,6 +88,15 @@ export const DEFAULT_STYLES = {
   "--stop-done-bg":             "#e6f0e9",
   "--stop-done-border":         "#c4dccd",
 
+  // ── What a column may be called in the route sheet ───────
+  // Comma separated, matched case-insensitively against any part of the
+  // heading. Adding a word here is how a renamed column is fixed without
+  // waiting for a code change.
+  "sheet-col-address": "Address, Street, Location, Property, Site",
+  "sheet-col-account": "Account Name, Account, Customer, Business, Client, Name",
+  "sheet-col-done":    "Yay, Done, Complete, Collected, Picked",
+  "sheet-col-notes":   "Driver Notes, Notes, Special Instruction, Instruction, Comment",
+
   // ── Incident buttons (driver stop card) ──────────────────
   // The wording on the button IS the wording written into the sheet, so
   // changing it here changes both. Drivers know the nuances of what goes

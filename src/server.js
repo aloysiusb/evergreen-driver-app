@@ -740,6 +740,24 @@ app.post(
 // everything after it. Cached per tab — the header does not move during a
 // shift, and re-reading it on every tick of a 200-stop day would be absurd.
 
+/* The accepted headings, from settings, with the built-in list as the floor.
+   Read fresh each time rather than cached: changing one is exactly the moment
+   somebody needs the next read to use it. */
+function columnNames() {
+  const s = getStyles();
+  const split = (key) =>
+    String(s[key] || "")
+      .split(",")
+      .map(x => x.trim().toLowerCase())
+      .filter(Boolean);
+  return {
+    address: split("sheet-col-address"),
+    account: split("sheet-col-account"),
+    done:    split("sheet-col-done"),
+    notes:   split("sheet-col-notes"),
+  };
+}
+
 const columnCache = new Map();
 const COLUMN_TTL_MS = 10 * 60 * 1000;
 
@@ -761,7 +779,7 @@ async function columnsFor(tabName) {
     throw columnFault("Could not read the sheet's header row, so there is no safe place to write. Nothing was changed.");
   }
 
-  const cols = detectColumns(rows);
+  const cols = detectColumns(rows, columnNames());
 
   // This used to fall back to the fixed letters in config.js when the header
   // could not be read. That fallback is exactly what destroyed three addresses
@@ -935,7 +953,7 @@ app.get("/api/sheet-check", async (req, res) => {
         // "Photos per Notes", which lands at I on these sheets — was invisible
         // to the one tool meant for checking the columns.
         const rows = await readRange(sheetId, `'${tab}'!A${a}:N${b}`);
-        out.columnCheck.push({ tab, firstRows: rows, detected: detectColumns(rows) });
+        out.columnCheck.push({ tab, firstRows: rows, detected: detectColumns(rows, columnNames()) });
       } catch (err) {
         out.columnCheck.push({ tab, error: err.message });
       }

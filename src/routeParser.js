@@ -45,7 +45,30 @@ function isDateRow(row, label) {
  * different opinions about where a column is, is how a note ends up in the
  * address.
  */
-export function detectColumns(rawRows) {
+/* What a heading may be called, per role.
+ *
+ * These are only the defaults. The office can add to them without a code
+ * change — see "Sheet column names" in the style editor — because the thing
+ * most likely to break this app is somebody renaming a column in a
+ * spreadsheet, and waiting for a developer to teach it a new word is a poor
+ * answer to that.
+ *
+ * Address deliberately had NO alternatives until now, which is why a tab
+ * calling it anything else failed outright. */
+export const DEFAULT_COLUMN_NAMES = {
+  address: ["address", "street", "location", "property", "site"],
+  account: ["account name", "account", "customer", "business", "client", "name"],
+  done:    ["yay", "done", "complete", "collected", "picked"],
+  notes:   ["driver notes", "notes", "special instruction", "instruction", "comment"],
+};
+
+export function detectColumns(rawRows, names) {
+  const NAMES = {
+    address: (names && names.address && names.address.length) ? names.address : DEFAULT_COLUMN_NAMES.address,
+    account: (names && names.account && names.account.length) ? names.account : DEFAULT_COLUMN_NAMES.account,
+    done:    (names && names.done && names.done.length) ? names.done : DEFAULT_COLUMN_NAMES.done,
+    notes:   (names && names.notes && names.notes.length) ? names.notes : DEFAULT_COLUMN_NAMES.notes,
+  };
   const normalized = (rawRows || []).map(r =>
     Array.isArray(r) ? { values: r } : r
   );
@@ -61,10 +84,8 @@ export function detectColumns(rawRows) {
   const has = (row, words) =>
     row.some(h => h && words.some(w => String(h).trim().toLowerCase().includes(w)));
 
-  const CUSTOMER_WORDS = ["account name", "account", "customer", "business", "name"];
-
   const headerIdx = normalized.findIndex(
-    ({ values: row }) => row && has(row, ["address"]) && has(row, CUSTOMER_WORDS)
+    ({ values: row }) => row && has(row, NAMES.address) && has(row, NAMES.account)
   );
   if (headerIdx < 0) return null;
 
@@ -87,11 +108,11 @@ export function detectColumns(rawRows) {
   };
 
   const cols = {
-    doneCol:        letter(firstOf("Yay", "Done", "Complete", "Collected", "Picked")),
-    addressCol:     letter(fi("Address")),
-    notesCol:       letter(firstOf("Driver Notes", "Notes", "Special Instruction", "Instruction")),
+    doneCol:        letter(firstOf(...NAMES.done)),
+    addressCol:     letter(firstOf(...NAMES.address)),
+    notesCol:       letter(firstOf(...NAMES.notes)),
     directionsCol:  letter(fi("Direction")),
-    accountNameCol: letter(firstOf("Account Name", "Account", "Customer", "Business", "Name")),
+    accountNameCol: letter(firstOf(...NAMES.account)),
     cityCol:        letter(fi("City")),
     // Added by this app the first time a photo is taken on a tab, rather than
     // assumed to exist. Matched loosely so a human tidying the wording later
