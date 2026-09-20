@@ -687,7 +687,16 @@ function parseIncidents(items) {
     for (const part of String(s.notes).split(' · ')) {
       const t = part.trim();
       const hit = TYPES.find(([icon]) => t.startsWith(icon));
-      if (hit) chips.push({ type: hit[1], label: t.slice(0, 40) });
+      if (!hit) continue;
+      /* The colour already says WHAT kind of incident it is — red for
+         contamination, amber for overflow — so the few words that fit are
+         better spent on WHO it happened at. Reading "Contamination" on a card
+         and still having to hunt the feed for which stop was the gap. */
+      chips.push({
+        type: hit[1],
+        label: s.accountName || s.address || ('Stop ' + s.rowNumber),
+        detail: (s.accountName || s.address || '') + ' — ' + t,
+      });
     }
   }
   return chips;
@@ -728,7 +737,7 @@ function renderCard(route) {
 
   const incidentHtml = incidents.length
     ? incidents.slice(0, 4).map(c =>
-        `<span class="incident-chip ${c.type}" title="${esc(c.label)}">${esc(c.label)}</span>`
+        `<span class="incident-chip ${c.type}" title="${esc(c.detail || c.label)}">${esc(c.label)}</span>`
       ).join('')
     : `<span class="no-incidents">No incidents</span>`;
 
