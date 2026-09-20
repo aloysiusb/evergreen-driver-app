@@ -715,3 +715,31 @@ checks is worse than no tool: it reports absence as fact.**
 returns its outcome. The write is fire-and-forget so a slow spreadsheet never
 leaves a driver waiting — the cost is that failures only reach the server log,
 where I cannot see them.
+
+---
+
+## 2026-09-20 — notes rewritten for the demo, and a finding
+
+**The note no longer carries the URL.** It reads "📷 Photo"; the link lives in
+the "Photos per Notes" column. The board stopped digging links out of note text
+— the server announces `photo-added` the moment the photo is saved, *before*
+the spreadsheet write, because the picture is real either way and a failed
+column write should not also cost the office the photo.
+
+Verified the whole path: driver page in sim → note "📷 Photo", toast "Photo
+saved", write intercepted (sheet untouched) while the photo still landed in
+column **I** and appeared on the board at 400×300 with customer and address.
+
+**The write-up gained two sections.** "Trying it yourself" — the `?sim=1`
+address, driving, filing an incident, cutting the signal, watching the board
+alongside. And "What's next — customers through the website".
+
+**The finding worth carrying forward:** `REQUEST_KINDS` includes
+`new_customer`, the approval screen filters for it, and approving one appends
+the customer to the route sheet — all built, all working. But `portal.html`
+only ever sends `hold`, `missed` and `update`. **There is no "start service"
+form, so nothing of the new-customer path is ever exercised.** One form is the
+whole remaining gap between the website and a driver's screen.
+
+Also corrected in the notes: they claimed photos go to EverGreen's Drive
+folder. Google refused that arrangement; they are on the app's disk.
