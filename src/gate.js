@@ -199,7 +199,8 @@ export function mountGate(app) {
     // The error log is an ops page, not a driver page. Drivers POST to it —
     // that is the whole point — but reading it back or clearing it is admin.
     // The sheet check names tabs and prints the top of the sheet.
-    const readsSheetCheck = req.path === "/api/sheet-check";
+    const readsSheetCheck = req.path === "/api/sheet-check" ||
+      req.path === "/api/sheet-headings";
 
     const readsErrors = req.path === "/errors.html" ||
       (req.path.startsWith("/api/client-errors") && req.method !== "POST");

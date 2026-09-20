@@ -665,6 +665,49 @@ app.post("/api/sheet-heading", async (req, res) => {
   }
 });
 
+/* The column HEADINGS of any tab, including the ones the driver app is not
+ * allowed to read.
+ *
+ * Those tabs are excluded because they carry rates and accounting notes — but
+ * being unable to see even their headings means any change involving them
+ * starts with a guess about which column is which, and guessing at column
+ * positions is what destroyed three addresses in July.
+ *
+ * Headings only. Never the rows beneath them, which is where the money and the
+ * customers are. Behind the admin code, not the driver one.
+ */
+app.get("/api/sheet-headings", async (req, res) => {
+  const tabName = String(req.query.tab || "").trim();
+  if (!tabName) return res.status(400).json({ error: "Which tab?" });
+
+  try {
+    const rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A1:T8`);
+
+    /* The header row is the first with more than two non-empty cells. These
+       sheets keep blank rows and date banners above it. */
+    const idx = (rows || []).findIndex(
+      r => (r || []).filter(v => String(v || "").trim()).length > 2
+    );
+    if (idx < 0) {
+      return res.json({ tab: tabName, headerRow: null, headings: [] });
+    }
+
+    const headings = (rows[idx] || []).map((v, i) => ({
+      column: String.fromCharCode(65 + i),
+      heading: String(v || "").trim(),
+    }));
+
+    res.json({
+      tab: tabName,
+      headerRow: idx + 1,
+      headings,
+      firstFreeColumn: String.fromCharCode(65 + headings.length),
+    });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
 // --- Photos ---------------------------------------------------------------
 //
 // The phone shrinks the image before sending — a raw phone photo is 3-5 MB and
