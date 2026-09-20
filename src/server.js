@@ -745,20 +745,40 @@ async function auditColumns() {
          its header row is not recognised". They need completely different
          fixes: one is a name, the other is a heading. */
       const missing = /unable to parse range|not found/i.test(err.message);
-      let detail = missing
-        ? "No tab with this name in the spreadsheet"
-        : "Header row not recognised — needs an address, a customer name, a done column and a notes column";
+      let detail = missing ? "No tab with this name in the spreadsheet" : "";
 
-      /* Column HEADINGS of a tab that will not parse. Not the rows beneath
-         them — no customer data — just the words that need correcting. */
+      /* Say which heading is absent, not that "the header row is not
+         recognised". One of those can be fixed in ten seconds; the other
+         means opening the sheet and comparing it against another tab.
+
+         Headings only — never the rows beneath them, which are customer data. */
       if (!missing) {
         try {
-          const rows = await readRange(SPREADSHEET_ID, `'${tab}'!A1:N4`);
+          const rows = await readRange(SPREADSHEET_ID, `'${tab}'!A1:N12`);
           const headings = (rows || [])
-            .map(r => (r || []).map(v => String(v || "").trim()).filter(Boolean))
-            .find(r => r.length > 2);
-          if (headings) detail += " · found: " + headings.join(" | ");
-        } catch { /* the reason above is enough */ }
+            .map(r => (r || []).map(v => String(v || "").trim()))
+            .find(r => r.filter(Boolean).length > 2);
+
+          if (!headings) {
+            detail = "No header row found in the first 12 rows";
+          } else {
+            const words = headings.map(h => h.toLowerCase());
+            const seen = (list) => words.some(w => w && list.some(k => w.includes(k)));
+
+            const absent = [];
+            if (!seen(["address"])) absent.push("Address");
+            if (!seen(["account", "customer", "business", "name"])) absent.push("Account Name");
+            if (!seen(["yay", "done", "complete", "collected", "picked"])) absent.push("Yay");
+            if (!seen(["notes", "instruction", "request"])) absent.push("Driver Notes");
+
+            detail = absent.length
+              ? "Missing heading" + (absent.length > 1 ? "s" : "") + ": " + absent.join(", ")
+              : "Headings present but could not be matched";
+            detail += " · found: " + headings.filter(Boolean).join(" | ");
+          }
+        } catch (readErr) {
+          detail = "Could not read this tab: " + readErr.message;
+        }
       }
 
       columnProblems.set(tab, detail);
