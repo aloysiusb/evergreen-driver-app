@@ -27,6 +27,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(compression());
 app.use(cors());
+/* Render terminates TLS in front of us, so without this req.protocol reports
+   "http" on every request. That matters: a photo link built from it would be
+   an http:// URL embedded in an https:// page, which browsers block as mixed
+   content — the picture would simply never appear on the dispatcher board. */
+app.set("trust proxy", 1);
+
 app.use(express.json());
 
 // Let /portal stand in for /portal.html, and so on for every page.
