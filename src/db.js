@@ -113,8 +113,8 @@ export const DEFAULT_STYLES = {
   // see the stop rather than read about it. Off until Drive uploads are
   // switched on in Google Cloud — a camera that cannot save is worse than
   // no camera.
-  "report-contamination-photo": "no",
-  "report-overflow-photo":      "no",
+  "report-contamination-photo": "yes",
+  "report-overflow-photo":      "yes",
   "report-skip-photo":          "no",
 
   // ── Incident button appearance ───────────────────────────
@@ -126,11 +126,11 @@ export const DEFAULT_STYLES = {
   // word is read. Light enough that dark text sits on all four comfortably.
   // Solid and muted, dark enough that white type sits on all four with room
   // to spare — each was checked against white rather than picked by eye.
-  "--report-bg-contamination": "#8a4634",
-  "--report-bg-overflow":      "#73561f",
-  "--report-bg-skip":          "#4a565e",
-  "--report-bg-photo":         "#35573f",
-  "--report-btn-bg":          "#4a565e",
+  "--report-bg-contamination": "#6B812D",
+  "--report-bg-overflow":      "#468830",
+  "--report-bg-skip":          "#2B8A50",
+  "--report-bg-photo":         "#008D65",
+  "--report-btn-bg":          "#2B8A50",
   "--report-btn-text":        "#ffffff",
   "--report-btn-border":      "#d7e0d9",
   "--report-btn-radius":      "36",
