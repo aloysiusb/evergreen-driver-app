@@ -447,26 +447,41 @@ app.post("/api/sim-event", (req, res) => {
  */
 const PHOTOS_HEADING = "Photos per Notes";
 
+const colIndex = (letter) => (letter ? letter.charCodeAt(0) - 65 : -1);
+
 async function photosColumnFor(tabName) {
   const cols = await columnsFor(tabName);
-  if (cols.photosCol) return cols.photosCol;
-
   const headerRow = cols.headerRowNumber || 1;
-  let rows;
-  try {
-    rows = await readRange(SPREADSHEET_ID, `'${tabName}'!A${headerRow}:Z${headerRow}`);
-  } catch (err) {
-    console.warn(`[photos] could not read the header of '${tabName}':`, err.message);
-    return null;
+
+  /* The data ends at the rightmost column we know about. A photos column has
+     to be to the RIGHT of that — anything found to the left is not one. */
+  const dataEnd = Math.max(
+    colIndex(cols.notesCol),
+    colIndex(cols.cityCol),
+    colIndex(cols.accountNameCol),
+    colIndex(cols.directionsCol)
+  );
+  const found = colIndex(cols.photosCol);
+
+  if (found > dataEnd) return cols.photosCol;
+
+  if (found >= 0) {
+    /* An earlier version of this counted the used columns from a second read
+       of the header and got an empty answer, so it treated column A — the
+       blank leading cell this sheet keeps — as "the first free column" and
+       wrote the heading there. Clear it and place one properly rather than
+       leaving a stray word above the data. */
+    console.warn(`[photos] clearing a stray "${PHOTOS_HEADING}" at ${cols.photosCol}${headerRow} on '${tabName}'`);
+    await writeRange(SPREADSHEET_ID, `'${tabName}'!${cols.photosCol}${headerRow}`, [[""]]);
+    columnCache.delete(tabName);
   }
 
-  const values = (rows && rows[0] && (rows[0].values || rows[0])) || [];
-  let lastUsed = -1;
-  for (let i = 0; i < values.length; i++) {
-    if (String(values[i] || "").trim()) lastUsed = i;
-  }
-  const target = lastUsed + 1;
-  if (target > 25) {                      // past Z, and we only read to Z
+  /* Where to put it, taken from the header row the rest of the app already
+     trusts rather than read again. headerWidth is the number of cells up to
+     the last one with text, so it IS the next free column — and it is never
+     allowed to land on or before the data. */
+  const target = Math.max(Number(cols.headerWidth) || 0, dataEnd + 1);
+  if (target > 25) {                      // past Z
     console.warn(`[photos] no free column on '${tabName}' to add the heading`);
     return null;
   }
