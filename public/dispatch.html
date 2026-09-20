@@ -645,15 +645,31 @@ document.getElementById('today-label').textContent = today;
 const routeState = {};  // tabName → { items, error }
 
 // ── Incident detection ────────────────────────────────────────────────────
+/* Incidents on a route, read from the notes the drivers wrote.
+ *
+ * This looked at the FIRST character of a note. A note is a line of history —
+ * "Gate code 1234 · 🚫 Contamination: 2 bags" — so on any stop the office had
+ * already written on, the marker is never at the front, and the card said "No
+ * incidents" while the sheet plainly had some.
+ *
+ * Splitting on the same separator the app writes with finds the marker
+ * wherever it sits, and shows just that part rather than forty characters of
+ * whatever came before it. */
 function parseIncidents(items) {
+  const TYPES = [
+    ['🚫', 'contamination'],
+    ['📦', 'overflow'],
+    ['⏭', 'skip'],
+    ['📷', 'photo'],
+  ];
   const chips = [];
   for (const s of items) {
     if (!s.notes) continue;
-    const n = s.notes;
-    if (n.startsWith('🚫'))      chips.push({ type:'contamination', label: n.slice(0, 40) });
-    else if (n.startsWith('📦')) chips.push({ type:'overflow',      label: n.slice(0, 40) });
-    else if (n.startsWith('⏭')) chips.push({ type:'skip',          label: n.slice(0, 40) });
-    else if (n.startsWith('📷')) chips.push({ type:'photo',         label: n.slice(0, 40) });
+    for (const part of String(s.notes).split(' · ')) {
+      const t = part.trim();
+      const hit = TYPES.find(([icon]) => t.startsWith(icon));
+      if (hit) chips.push({ type: hit[1], label: t.slice(0, 40) });
+    }
   }
   return chips;
 }
@@ -828,7 +844,15 @@ function connectWS() {
     wsTimer = setTimeout(connectWS, 4000);
   };
   ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
+    handleMessage(JSON.parse(event.data));
+  };
+}
+
+/* One path for a message, whether it just arrived or is being replayed from
+   today's record. Two paths would drift, and the replayed half is the one
+   nobody would notice breaking. */
+function handleMessage(msg) {
+  {
 
     // Before the route lookup: a style change carries no tabName, so the
     // guard below would drop it.
@@ -836,6 +860,7 @@ function connectWS() {
       window.onStyleMessage(msg);
       return;
     }
+
 
     /* A customer request from the website.
        The board is meant to be the one screen the office watches, and until
@@ -1040,13 +1065,16 @@ const FEED_MERGE_MS = 15 * 60 * 1000;
    marking a stop done is not an edit of the contamination report, and should
    not swallow it. */
 function addFeed(entry) {
+  // A replayed entry carries the time it actually happened, not the time the
+  // page was opened — otherwise the whole morning would read as "just now".
+  const at = entry.at ? new Date(entry.at) : new Date();
   if (entry.key) {
     const i = feed.findIndex(f => f.key === entry.key);
     if (i >= 0 && Date.now() - feed[i].at.getTime() < FEED_MERGE_MS) {
       feed.splice(i, 1);
     }
   }
-  feed.unshift({ ...entry, at: new Date() });
+  feed.unshift({ ...entry, at });
   if (feed.length > FEED_MAX) feed.length = FEED_MAX;
   renderFeed();
 }
@@ -1139,7 +1167,22 @@ function esc(str) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-loadAll();
+/* Load the routes first, then replay the day.
+
+   Order matters: the feed resolves each customer name and address out of the
+   route data, so replaying before the routes are loaded would produce a list
+   of anonymous row numbers. */
+loadAll().then(replayToday);
+
+async function replayToday() {
+  try {
+    const r = await fetch("/api/activity");
+    const { events } = await r.json();
+    (events || []).forEach(handleMessage);
+  } catch {
+    // A board without the morning behind it is still a working board.
+  }
+}
 /* Ask the app whether it can actually write to every route.
  *
  * /health is outside the access gate and reports names and reasons only — no

@@ -14,6 +14,7 @@ import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
 import { uploadPhoto, photosFolderId } from "./drive.js";
 import { savePhoto, pathFor, labelFor, usage as photoUsage } from "./photoStore.js";
+import { recordActivity, todaysActivity, pruneActivity } from "./activity.js";
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
@@ -412,6 +413,13 @@ app.get("/photos/:name", (req, res) => {
   res.sendFile(file, { maxAge: "7d", immutable: true }, (err) => {
     if (err) res.sendStatus(404);
   });
+});
+
+/* What has happened today, so a reloaded board is not a blank one.
+   Returns the raw broadcasts; the board replays them through the same code
+   path that handles live ones. */
+app.get("/api/activity", (req, res) => {
+  res.json({ events: todaysActivity() });
 });
 
 // --- Simulated activity (demo only) ---------------------------------------
@@ -1374,7 +1382,14 @@ app.use(express.static(PUBLIC_DIR, {
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });
 
+/* Everything the board shows is recorded on its way out.
+ *
+ * Doing it here rather than at each call site means a broadcast added later
+ * cannot be forgotten — the live feed and the day's record are fed by the
+ * same line, so they cannot drift apart. activity.js decides what is worth
+ * keeping, and ignores simulated events. */
 function broadcast(message) {
+  recordActivity(message);
   const payload = JSON.stringify(message);
   wss.clients.forEach((client) => {
     if (client.readyState === client.OPEN) {
@@ -1390,4 +1405,5 @@ wss.on("connection", (ws) => {
 server.listen(PORT, () => {
   console.log(`Evergreen driver app backend listening on port ${PORT}`);
   auditColumns();
+  pruneActivity();
 });
