@@ -805,9 +805,14 @@ function connectWS() {
        next to a real shift cannot make the numbers lie. */
     if (msg.sim) {
       const simRoute = ROUTES.find(r => r.tabName === msg.tabName);
+      // Same photo detection the real path uses — a test drive that files a
+      // photo should show the photo, or the demo proves less than it should.
+      const simPhoto = String(msg.notes || '')
+        .match(/https?:\/\/\S*?(?:drive\.google\.com|\/photos\/)\S+/);
       addFeed({
-        kind: msg.type === 'note-updated' ? 'note' : (msg.done ? 'done' : 'undone'),
-        icon: msg.type === 'note-updated' ? '📝' : (msg.done ? '✅' : '↩️'),
+        kind: simPhoto ? 'photo' : (msg.type === 'note-updated' ? 'note' : (msg.done ? 'done' : 'undone')),
+        icon: simPhoto ? '📷' : (msg.type === 'note-updated' ? '📝' : (msg.done ? '✅' : '↩️')),
+        link: simPhoto ? simPhoto[0] : null,
         who: 'Stop ' + msg.rowNumber,
         what: msg.type === 'note-updated' ? (msg.notes || '') : (msg.done ? 'Marked done' : 'Reopened'),
         routeName: simRoute ? simRoute.name : msg.tabName,
