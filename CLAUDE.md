@@ -256,7 +256,7 @@ billing.
 - **Column D has no heading but holds data in 11 rows — it is NOT free.**
   "No heading" is not "empty"; that distinction is the July bug.
 - **Column K is genuinely free** and is where such a column should go.
--  (admin code) reports headings and a count of
+- `GET /api/sheet-headings?tab=X` (admin code) reports headings and a count of
   non-empty cells per column, for any tab including excluded ones. Counts, never
   contents.
 
