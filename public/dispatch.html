@@ -832,6 +832,62 @@ function connectWS() {
       return;
     }
 
+    /* A customer request from the website.
+       The board is meant to be the one screen the office watches, and until
+       now a new customer could arrive on it and never appear here at all. */
+    if (msg.type === 'request-created') {
+      const KIND = {
+        new_customer: 'New customer',
+        hold: 'Service hold',
+        missed: 'Missed pickup',
+        update: 'Account update',
+      };
+      addFeed({
+        key: 'request:' + msg.id,
+        kind: 'request',
+        icon: '🆕',
+        who: msg.name || 'A customer',
+        where: msg.address || '',
+        what: (KIND[msg.kind] || 'Request') + ' — waiting in the queue',
+        link: null,
+        routeName: 'From the website',
+        color: 'var(--d-accent)',
+      });
+      return;
+    }
+
+    if (msg.type === 'request-decided') {
+      addFeed({
+        key: 'request:' + msg.id,
+        kind: msg.status === 'approved' ? 'done' : 'undone',
+        icon: msg.status === 'approved' ? '✅' : '✖️',
+        who: 'Customer request',
+        what: msg.status === 'approved'
+          ? 'Approved and added to a route'
+          : 'Declined',
+        routeName: 'From the website',
+        color: 'var(--d-accent)',
+      });
+      return;
+    }
+
+    /* A driver's free-form note, written from the truck rather than against a
+       stop. It was reaching the Driver Notes Log tab and nowhere a person
+       would see it. */
+    if (msg.type === 'notes-log-entry') {
+      const noteRoute = ROUTES.find(r => r.tabName === msg.tabName);
+      addFeed({
+        kind: 'note',
+        icon: '📝',
+        who: msg.accountName || msg.driverName || 'A driver',
+        where: '',
+        what: msg.text || '',
+        routeName: noteRoute ? noteRoute.name : (msg.tabName || ''),
+        color: noteRoute ? routeColor(noteRoute) : 'var(--d-muted)',
+      });
+      return;
+    }
+
     /* A photo, announced by the server the moment it lands. The link used to
        be dug out of the note text; it is in its own column now, so the note
        just says a photo was taken and this carries the picture. */
@@ -878,6 +934,8 @@ function connectWS() {
       return;
     }
 
+    /* Everything past here is about a stop on a route. Messages that are not —
+       requests, free-form notes, styles — have already returned above. */
     const route = ROUTES.find(r => r.tabName === msg.tabName);
     if (!route) return;
     const state = routeState[route.tabName];

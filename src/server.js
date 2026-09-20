@@ -1034,7 +1034,17 @@ app.post("/api/requests", (req, res) => {
   sendConfirmation(saved).catch(err =>
     console.warn("[requests] confirmation email failed:", err.message));
 
-  broadcast({ type: "request-created", id: saved.id });
+  /* Enough for the office to know what arrived and decide whether to go and
+     look. Deliberately NOT the email address or phone number: this goes to
+     every screen with the board open, and the queue itself is one click away
+     for anyone who needs to contact them. */
+  broadcast({
+    type: "request-created",
+    id: saved.id,
+    kind: saved.kind,
+    name: saved.name,
+    address: [saved.address, saved.city].filter(Boolean).join(", "),
+  });
   res.status(201).json({ ok: true, id: saved.id });
 });
 
