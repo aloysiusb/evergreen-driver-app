@@ -13,7 +13,7 @@ import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./confi
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
 import { uploadPhoto, photosFolderId } from "./drive.js";
-import { savePhoto, pathFor, usage as photoUsage } from "./photoStore.js";
+import { savePhoto, pathFor, labelFor, usage as photoUsage } from "./photoStore.js";
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
@@ -382,6 +382,18 @@ app.get("/api/backup/:tabName", async (req, res) => {
 app.get("/photos/:name", (req, res) => {
   const file = pathFor(req.params.name);
   if (!file) return res.sendStatus(400);
+
+  /* The file on disk is named by timestamp and random characters so the URL
+     cannot be talked into pointing elsewhere. That name is no use to a person,
+     so it is opened INLINE but offered under a readable one — save it and you
+     get "2026-09-19 1432 · Carbondale Community School · Tues DV row 6.jpg"
+     rather than "1789864200427-yiwr3v.jpg".
+
+     Quotes and newlines are stripped: the value sits inside a quoted header,
+     and either would break out of it. */
+  const label = String(labelFor(req.params.name)).replace(/["\r\n]/g, "");
+  res.setHeader("Content-Disposition", `inline; filename="${label}"`);
+
   res.sendFile(file, { maxAge: "7d", immutable: true }, (err) => {
     if (err) res.sendStatus(404);
   });
@@ -470,7 +482,7 @@ app.post(
     }
 
     try {
-      const saved = savePhoto(req.body, mimeType);
+      const saved = savePhoto(req.body, mimeType, { tabName, rowNumber, account });
       console.log(`[photo] disk: ${saved.name} (${kb} KB)`);
       /* A relative path is no use once it is sitting in a spreadsheet cell —
          it has to be a link someone can click from anywhere. */

@@ -29,6 +29,63 @@ export function photoDir() {
   return DIR;
 }
 
+/* What each photo is OF.
+ *
+ * The file on disk is named by timestamp and six random characters, because
+ * that name goes into a URL and has to be impossible to talk into pointing
+ * somewhere else. That makes it useless to a person: "1789864200427-yiwr3v.jpg"
+ * says nothing about which stop, which route, or which day.
+ *
+ * So the stop is recorded alongside it, and used to build a readable name
+ * whenever the file is opened or saved. One line appended per photo — cheap
+ * to write, and rebuilt into memory once at startup. */
+const INDEX = path.join(DIR, "index.jsonl");
+let labels = null;
+
+function loadLabels() {
+  if (labels) return labels;
+  labels = new Map();
+  try {
+    const text = fs.readFileSync(INDEX, "utf8");
+    for (const line of text.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const row = JSON.parse(line);
+        if (row && row.name) labels.set(row.name, row);
+      } catch { /* a half-written line is not worth losing the rest for */ }
+    }
+  } catch { /* nothing recorded yet */ }
+  return labels;
+}
+
+function remember(entry) {
+  loadLabels().set(entry.name, entry);
+  try {
+    ensureDir();
+    fs.appendFileSync(INDEX, JSON.stringify(entry) + "\n");
+  } catch (err) {
+    console.warn("[photos] could not record what this photo is:", err.message);
+  }
+}
+
+/** A name a person can read, for when the photo is opened or saved. */
+export function labelFor(name) {
+  const meta = loadLabels().get(name);
+  const ext = String(name).endsWith(".webp") ? "webp" : "jpg";
+  if (!meta) return name;
+
+  const when = new Date(meta.at || Date.now());
+  const stamp = when.toISOString().slice(0, 10) + " " +
+    when.toISOString().slice(11, 16).replace(":", "");
+  const who = String(meta.account || "stop " + meta.rowNumber)
+    .replace(/[\\/:*?"<>|]/g, "")     // characters a filesystem will refuse
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 48);
+
+  return `${stamp} · ${who} · ${meta.tabName} row ${meta.rowNumber}.${ext}`;
+}
+
 /** Only ever serve names this module generates. */
 export function isSafeName(name) {
   return /^[0-9]{13}-[a-z0-9]{6}\.(jpg|webp)$/.test(String(name || ""));
@@ -80,7 +137,7 @@ function pruneIfNeeded() {
  * Throws with a readable message — the caller must never report success for a
  * photo that did not land.
  */
-export function savePhoto(buffer, mimeType) {
+export function savePhoto(buffer, mimeType, meta = {}) {
   if (!buffer || !buffer.length) throw new Error("No image received.");
   ensureDir();
   pruneIfNeeded();
@@ -89,5 +146,13 @@ export function savePhoto(buffer, mimeType) {
   const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   fs.writeFileSync(path.join(DIR, name), buffer);
 
-  return { id: name, name, link: "/photos/" + name, store: "disk" };
+  remember({
+    name,
+    at: Date.now(),
+    tabName: meta.tabName || "",
+    rowNumber: meta.rowNumber || 0,
+    account: meta.account || "",
+  });
+
+  return { id: name, name, label: labelFor(name), link: "/photos/" + name, store: "disk" };
 }

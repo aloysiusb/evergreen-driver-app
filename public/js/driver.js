@@ -223,6 +223,11 @@
       isDrilled && quick.length
         ? `<div class="stop-report-row is-sub">
              ${quick.map(subBtn).join('')}
+             <button class="stop-report-btn srb-sub" data-report="photo"
+                     data-drill-photo="1" data-row="${item.rowNumber}"
+                     aria-label="Take a photo of this stop">
+               <span class="srb-label">📷 Photo</span>
+             </button>
              <button class="stop-report-btn srb-sub srb-back" data-drill-back="1"
                      data-row="${item.rowNumber}" aria-label="Back">
                <span class="srb-label">←</span>
@@ -301,6 +306,18 @@
         if (btn.dataset.drillBack) {
           clearDrill();
           render();
+          return;
+        }
+
+        /* The camera, reachable from inside the drill-down as well as from the
+           four. Deliberately does NOT close the level: a driver takes the
+           picture and is still looking at the choices they were part-way
+           through. */
+        if (btn.dataset.drillPhoto) {
+          const stop = allStops.find(s => s.rowNumber === row);
+          if (typeof capturePhoto === 'function') {
+            capturePhoto(row, route.tabName, stop && stop.accountName);
+          }
           return;
         }
 
