@@ -661,7 +661,12 @@ function parseIncidents(items) {
 // ── Render one card ───────────────────────────────────────────────────────
 function renderCard(route) {
   const state = routeState[route.tabName];
-  const isToday = route.day === today || route.day === 'Daily';
+  /* "Daily" means it can run on any working day — not that it runs on a
+     Sunday. Without this, a weekend showed Max Routes with a truck beside it
+     while every other route sat paused, which reads as "there is a truck out"
+     on a day nobody is working. */
+  const isWorkingDay = today !== 'Saturday' && today !== 'Sunday';
+  const isToday = route.day === today || (route.day === 'Daily' && isWorkingDay);
   const card = document.getElementById('card-' + route.id) || makeCardEl(route.id);
   // One variable per card; the stylesheet does the rest. Cheaper than
   // threading the colour through every template string, and it means a
