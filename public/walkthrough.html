@@ -538,10 +538,15 @@ const SCENES = [
   {
     title: 'Opening the route',
     body: 'The driver taps their route and sees the whole day — <b>every stop in sheet order</b>, with the notes the office already wrote. No paper, no scrolling a spreadsheet on a phone.',
-    apply() { done = new Set(); pending = 0; toastHtml = ''; addingNoteRow = null; },
+    apply() {
+      done = new Set(); pending = 0; toastHtml = ''; addingNoteRow = null;
+      // The walkthrough loops, so anything a later step writes is undone here.
+      const marcy = STOPS.find(s => s.row === 4);
+      if (marcy) { marcy.note = ''; marcy.urgency = ''; }
+    },
   },
   {
-    title: 'Notes are colour-coded',
+    title: 'Notes are color-coded',
     body: 'Notes carry weight. <b>Red</b> means something the driver needs before they get out of the truck — a dog, a locked gate. <b>Amber</b> is a hold. Access details ride along on the card itself.',
     apply() {},
   },
@@ -552,7 +557,7 @@ const SCENES = [
   },
   {
     title: 'The app knows when they arrive',
-    body: 'Within <b>80 metres</b> of the next stop, the phone buzzes and asks. One tap confirms and moves on — no hunting for the right row while parked in the road.',
+    body: 'Within <b>80 meters</b> of the next stop, the phone buzzes and asks. One tap confirms and moves on — no hunting for the right row while parked in the road.',
     apply() {
       done = new Set([4]);
       toastHtml = 'Arrived at <b>Kestrel Bakery</b>? <button class="fake-done">✓ Done</button>';
@@ -582,12 +587,34 @@ const SCENES = [
   {
     title: 'Arriving',
     view: 'map',
-    body: 'Within <b>80 metres</b> the phone buzzes and asks — one tap marks it done and moves to the next stop. The driver never has to look away from the road to find the right row.',
+    body: 'Within <b>80 meters</b> the phone buzzes and asks — one tap marks it done and moves to the next stop. The driver never has to look away from the road to find the right row.',
     apply() {
       done = new Set([4, 5]);
       turn = { arrow: '🏁', dist: 'Arriving', text: 'Silt River House', next: '' };
       driverAt = { x: 226, y: 100 };
       toastHtml = 'Arrived at <b>Silt River House</b>? <button class="fake-done">✓ Done</button>';
+    },
+  },
+  {
+    title: 'Reporting a problem in one tap',
+    body: 'Four buttons on every stop — <b>contamination, overflow, skipped, photo</b>. One press files it into the sheet with no typing at all. A second press says how much: <b>1 bag, 2 bags, 3+ bags</b>. The wording on those buttons is the office\'s to change, and it is the same wording that lands in the sheet.',
+    apply() {
+      done = new Set([4, 5]);
+      toastHtml = '';
+      addingNoteRow = null;
+      const marcy = STOPS.find(s => s.row === 4);
+      if (marcy) { marcy.note = '🚫 Contamination: 2 bags'; marcy.urgency = 'urgent'; }
+    },
+  },
+  {
+    title: 'A photo, straight from the curb',
+    body: 'The camera opens to the shutter. The photo is shrunk on the phone — three to five megabytes down to about a hundred kilobytes — so it sends on one bar of signal, and a link lands in the route sheet. <b>The office sees the picture on their screen within seconds.</b>',
+    apply() {
+      done = new Set([4, 5]);
+      toastHtml = '';
+      addingNoteRow = null;
+      const marcy = STOPS.find(s => s.row === 4);
+      if (marcy) { marcy.note = '🚫 Contamination: 2 bags · 📷 Photo'; marcy.urgency = 'urgent'; }
     },
   },
   {
@@ -1025,7 +1052,7 @@ function arrive(leg) {
   document.getElementById('turn-next').textContent = '';
   document.getElementById('turn-banner').classList.add('arriving');
   setReadout('<b>' + leg.stop + '</b>' + (sideBit ? ',' + sideBit.replace(' — ', ' ') : '') +
-    '. The phone buzzed and asked, and it says which side to look — no hunting both kerbs for a bin. One tap marks it done and the route moves on.');
+    '. The phone buzzed and asked, and it says which side to look — no hunting both curbs for a bin. One tap marks it done and the route moves on.');
   holding = 2800;
 }
 
@@ -1126,7 +1153,7 @@ function startDrive() {
   done = new Set([4, 5]); pending = 0; toastHtml = ''; addingNoteRow = null;
   renderScreen();
   document.getElementById('turn-banner').classList.add('show');
-  setReadout('Driving to <b>Kestrel Bakery</b>. The map rides with the driver, the next turn sits on top, and the alert fires on its own at 80 metres.');
+  setReadout('Driving to <b>Kestrel Bakery</b>. The map rides with the driver, the next turn sits on top, and the alert fires on its own at 80 meters.');
   lastT = performance.now();
   clearInterval(raf);
   raf = setInterval(driveFrame, 60);
