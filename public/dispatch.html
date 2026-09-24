@@ -604,6 +604,39 @@ body {
   font-weight: 500;
 }
 .theme-toggle:hover { color: var(--d-text); }
+
+/* The way to the approval board, and the count of what is waiting on it.
+   A request arriving in the feed scrolls away; this does not, so the board
+   can say "three people are waiting" an hour after they came in. */
+.approvals-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 5px 12px;
+  border-radius: var(--r-card);
+  background: var(--d-muted-bg);
+  color: var(--d-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.approvals-link:hover { color: var(--d-text); }
+.approvals-link.waiting { background: var(--d-accent); color: #08170d; }
+.approvals-link.waiting:hover { color: #08170d; }
+.approvals-count {
+  display: none;
+  min-width: 19px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .22);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.approvals-link.waiting .approvals-count { display: inline-block; }
 </style>
 </head>
 <body>
@@ -622,6 +655,11 @@ body {
       <div class="fleet-divider"></div>
       <div class="ws-dot" id="ws-dot"></div>
       <div class="ws-label" id="ws-label">Connecting…</div>
+      <div class="fleet-divider"></div>
+      <a class="approvals-link" id="approvals-link" href="/approval.html"
+         title="Customer requests waiting for approval">
+        <span>Approvals</span><span class="approvals-count" id="approvals-count">0</span>
+      </a>
       <div class="fleet-divider"></div>
       <button class="theme-toggle" onclick="toggleTheme()">☀ / ☾</button>
     </div>
@@ -938,10 +976,12 @@ function handleMessage(msg) {
         routeName: 'From the website',
         color: 'var(--d-accent)',
       });
+      refreshApprovals();
       return;
     }
 
     if (msg.type === 'request-decided') {
+      refreshApprovals();
       addFeed({
         key: 'request:' + msg.id,
         kind: msg.status === 'approved' ? 'done' : 'undone',
@@ -1304,12 +1344,34 @@ async function checkSheet() {
   }
 }
 
+/* How many customer requests are sitting unanswered. Re-read rather than
+   counted up and down locally: a request can be approved from the approval
+   board, from another laptop, or while this screen was asleep, and a number
+   the office trusts has to survive all three. */
+async function refreshApprovals() {
+  const link = document.getElementById('approvals-link');
+  const count = document.getElementById('approvals-count');
+  if (!link || !count) return;
+  try {
+    const res = await fetch('/api/requests');
+    if (!res.ok) return;                     // gated or offline — leave it as it was
+    const pending = (await res.json())?.counts?.pending || 0;
+    count.textContent = pending;
+    link.classList.toggle('waiting', pending > 0);
+    link.title = pending
+      ? pending + ' customer request' + (pending === 1 ? '' : 's') + ' waiting for approval'
+      : 'No customer requests waiting';
+  } catch { /* the board keeps working without it */ }
+}
+
 checkSheet();
 setInterval(checkSheet, 10 * 60 * 1000);
 
 connectWS();
+refreshApprovals();
 // Refresh every 5 min in case WebSocket misses something
 setInterval(loadAll, 5 * 60 * 1000);
+setInterval(refreshApprovals, 5 * 60 * 1000);
 </script>
 
 <script src="/js/style-units.js"></script>
