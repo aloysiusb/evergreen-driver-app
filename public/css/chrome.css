@@ -82,6 +82,13 @@
   color: var(--appbar-link, #9fb8a8);
   text-decoration: none;
   white-space: nowrap;
+  /* 18px of text, hit like 44. The padding grows the target; the equal
+     negative margin leaves the bar exactly the height it already was. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  margin: -13px 0;
 }
 .app-bar nav a:hover,
 .app-bar nav a:focus-visible { color: var(--appbar-text, #ffffff); }

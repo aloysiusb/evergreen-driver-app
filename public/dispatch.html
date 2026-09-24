@@ -240,6 +240,7 @@ body {
   margin-left: auto;
   font: inherit;
   font-size: 12px;
+  min-height: 40px;
   padding: 3px 8px;
   border-radius: var(--r-control);
   border: 1px solid var(--d-border);
@@ -345,7 +346,9 @@ body {
   font-size: 10.5px;
   font-weight: 600;
   padding: 1px 6px;
-  border-radius: 3px;
+  /* Was a bare 3px. Every corner in this app resolves through tokens.css so
+     the whole thing stays consistent; --r-chip is the role for a small tag. */
+  border-radius: var(--r-chip);
   margin-left: 6px;
   vertical-align: 1px;
 }
@@ -437,6 +440,12 @@ body {
   font-size: 17px;
   text-decoration: none;
   line-height: 1;
+  /* Alyssa may well be on an iPad; a 25px icon is a miss waiting to happen. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
   padding: 4px 6px;
   border-radius: var(--r-control);
   opacity: 0.55;
@@ -586,6 +595,7 @@ body {
   background: var(--d-muted-bg);
   border: none;
   border-radius: var(--r-card);
+  min-height: 40px;
   padding: 5px 10px;
   font-size: 12px;
   color: var(--d-muted);

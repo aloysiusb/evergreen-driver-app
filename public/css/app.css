@@ -123,8 +123,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  /* Was 36. Reached for with a glove on, in a moving truck. */
+  width: 44px;
+  height: 44px;
   border-radius: var(--r-circle);
   background: rgba(255,255,255,0.18);
   color: #fff;
@@ -155,6 +156,8 @@ body {
 }
 .view-tab {
   flex: 1;
+  /* Was 33px tall. This is the control a driver uses more than any other. */
+  min-height: 44px;
   padding: 7px 0;
   border: none;
   border-radius: var(--r-card);
