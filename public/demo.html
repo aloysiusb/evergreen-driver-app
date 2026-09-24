@@ -586,7 +586,13 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
   let apiKey;
   try {
     const r = await fetch('/api/maps-key');
+    /* fetch resolves on a 404, and the error body parses as JSON, so without
+       these two checks the key is silently undefined and the page asks Google
+       for ?key=undefined — leaving the map stuck on "Loading" with no reason
+       given. Same checks map.js and walkthrough.html make. */
+    if (!r.ok) throw new Error('maps key not configured');
     apiKey = (await r.json()).key;
+    if (!apiKey) throw new Error('maps key empty');
   } catch {
     setCaption('⚠️', 'Maps key not configured.');
     return;
