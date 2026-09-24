@@ -1434,6 +1434,16 @@ app.get(/\.html$|^\/$/, (req, res, next) => {
   sendStampedHtml(res, file, next);
 });
 
+/* No page carries a <link rel="icon">, so browsers fall back to asking for
+   /favicon.ico. Serving the leaf here answers that one request everywhere at
+   once, instead of adding a tag to twenty-odd pages. It is an SVG under an
+   .ico path on purpose: browsers read the Content-Type, not the extension. */
+app.get("/favicon.ico", (req, res) => {
+  res.type("image/svg+xml")
+     .setHeader("Cache-Control", "public, max-age=86400");
+  res.sendFile(path.join(PUBLIC_DIR, "favicon.svg"));
+});
+
 app.use(express.static(PUBLIC_DIR, {
   etag: true,
   setHeaders(res, filePath) {

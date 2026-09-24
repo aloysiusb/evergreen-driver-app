@@ -185,6 +185,11 @@ export function mountGate(app) {
     if (PUBLIC_PREFIXES.some(prefix => req.path.startsWith(prefix))) return next();
     if (req.path === "/manifest.json") return next();
 
+    // Browsers ask for /favicon.ico on their own, before anyone has entered a
+    // code. Answering 401 put a red error in the console of every page in the
+    // app, including the public ones, for an icon that carries nothing.
+    if (req.path === "/favicon.ico" || req.path === "/favicon.svg") return next();
+
     // The public walkthrough loads real satellite imagery, which needs this.
     // The key is already visible to any browser that opens the driver app — it
     // is a browser key, protected by an HTTP-referrer restriction in the Google
