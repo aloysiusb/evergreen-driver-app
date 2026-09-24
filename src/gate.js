@@ -40,9 +40,12 @@ const ADMIN_CODE = process.env.ADMIN_CODE || "";
 // pitch.html is the presentation. Like the walkthrough it exists to be shown
 // to people who will never hold a code, and it contains no route data — only a
 // description of what the system does.
+// start.html is the one page here that serves people who are not customers
+// yet. Gating it would let the website link to a form nobody could fill in,
+// which is the same dead end the portal would have been.
 const PUBLIC_PAGES = new Set([
   "/portal.html", "/pay.html", "/walkthrough.html", "/updates.html", "/pitch.html",
-  "/brief.html",
+  "/brief.html", "/start.html",
 ]);
 
 // Stylesheets, client scripts and the manifest. No secrets live in these — the
