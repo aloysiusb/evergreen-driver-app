@@ -215,7 +215,15 @@ let pano, svService, geocoder, stops = [], idx = 0;
   sel.innerHTML = ROUTES.map(r => `<option value="${r.tab}">${r.name}</option>`).join('');
 
   let key;
-  try { key = (await (await fetch('/api/maps-key')).json()).key; }
+  /* A 404 from /api/maps-key does not reject, and its error body parses as
+     JSON, so the catch never ran and the page asked Google for ?key=undefined
+     instead of showing this message. */
+  try {
+    const r = await fetch('/api/maps-key');
+    if (!r.ok) throw new Error('maps key not configured');
+    key = (await r.json()).key;
+    if (!key) throw new Error('maps key empty');
+  }
   catch { document.getElementById('loading').textContent = 'Maps key not configured.'; return; }
 
   await new Promise((res, rej) => {

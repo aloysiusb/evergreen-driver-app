@@ -641,7 +641,14 @@
     document.getElementById('main-content').style.display = 'none';
     try {
       const res = await fetch(`/api/routes/${encodeURIComponent(route.tabName)}`);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      /* The server says what is actually wrong — a route sheet that was never
+         connected, a missing service account key. Showing 'HTTP 500' instead
+         leaves the driver tapping Retry on something retrying cannot fix.
+         Same shape as the upload error in camera.js. */
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'HTTP ' + res.status);
+      }
       const data = await res.json();
       allStops = data.items;
       applyPendingToStops();              // keep unsynced work visible
