@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-radius="soft">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start Service — EverGreen ZeroWaste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap">
+<link rel="stylesheet" href="/css/tokens.css">
+<style>
+  /* Same palette and faces as portal.html, so a customer moving between the
+     two pages does not feel like they changed companies. Each page in this
+     app carries its own block rather than sharing one stylesheet. */
+  :root {
+    --bg:       #f3f7f2;
+    --surface:  #ffffff;
+    --surface2: #eaf2e7;
+    --border:   #cddec9;
+    --text:     #1b2e19;
+    --muted:    #587552;
+    --green:    #2d9e4f;
+    --green-dk: #1a6b33;
+    --green-lt: #d4edda;
+    --err-bg:   #fef2f2;
+    --err-br:   #f87171;
+    --err-tx:   #991b1b;
+    --font:     'DM Sans', system-ui, sans-serif;
+    --serif:    'DM Serif Display', Georgia, serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:       #101c0f;
+      --surface:  #182416;
+      --surface2: #1f2e1d;
+      --border:   #2a3d27;
+      --text:     #e2eedf;
+      --muted:    #7aaa73;
+      --green:    #4ade80;
+      --green-dk: #86efac;
+      --green-lt: #14532d;
+      --err-bg:   #2a1414;
+      --err-br:   #7f1d1d;
+      --err-tx:   #fca5a5;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:       #101c0f;
+    --surface:  #182416;
+    --surface2: #1f2e1d;
+    --border:   #2a3d27;
+    --text:     #e2eedf;
+    --muted:    #7aaa73;
+    --green:    #4ade80;
+    --green-dk: #86efac;
+    --green-lt: #14532d;
+    --err-bg:   #2a1414;
+    --err-br:   #7f1d1d;
+    --err-tx:   #fca5a5;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 34px 60px;
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 15px; color: var(--green-dk);
+    margin-bottom: 26px;
+  }
+  .brand .leaf { font-size: 20px; }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(30px, 6vw, 42px);
+    line-height: 1.1;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .lede { color: var(--muted); font-size: 17px; margin: 0 0 28px; max-width: 48ch; }
+
+  /* What happens after they press the button. Three steps because there are
+     three — the request is staged, the office approves it, and only then does
+     it land on a route. Saying so up front is why people finish the form. */
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--r-card, 10px);
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+  .step { background: var(--surface2); padding: 14px 15px; }
+  .step-n {
+    font-size: 11px; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--green-dk); margin-bottom: 3px;
+  }
+  .step p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-card, 10px);
+    padding: 26px 24px;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block; font-size: 14px; font-weight: 500;
+    margin-bottom: 6px; color: var(--text);
+  }
+  .opt { font-weight: 300; opacity: .65; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    font: inherit; font-size: 16px;   /* 16px stops iOS zooming on focus */
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-control, 7px);
+    padding: 11px 12px;
+  }
+  .field textarea { min-height: 92px; resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: 2px solid var(--green);
+    outline-offset: 1px;
+    border-color: var(--green);
+  }
+  .hint { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+
+  .btn-submit {
+    width: 100%;
+    font: inherit; font-size: 16px; font-weight: 600;
+    background: var(--green); color: #fff;
+    border: 0; border-radius: var(--r-control, 7px);
+    padding: 15px 20px;              /* 48px tall — gloves, phones, thumbs */
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-submit:hover { background: var(--green-dk); }
+  .btn-submit:active { transform: scale(0.99); }
+  .btn-submit:disabled { opacity: .65; cursor: default; }
+  .btn-submit:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  .form-error {
+    display: none;
+    margin-top: 14px; padding: 11px 13px;
+    background: var(--err-bg); border: 1px solid var(--err-br);
+    border-radius: var(--r-control, 7px);
+    color: var(--err-tx); font-size: 14px;
+  }
+  .form-error.show { display: block; }
+
+  .form-footer {
+    margin: 16px 0 0; font-size: 13px; color: var(--muted); text-align: center;
+  }
+
+  .success { display: none; text-align: center; padding: 16px 4px 8px; }
+  .success-icon { font-size: 42px; line-height: 1; margin-bottom: 12px; }
+  .success h2 { font-family: var(--serif); font-size: 26px; margin: 0 0 10px; }
+  .success p { color: var(--muted); margin: 0 auto 8px; max-width: 42ch; }
+  .success .ref {
+    display: inline-block; margin-top: 10px;
+    font-size: 13px; font-weight: 600; color: var(--green-dk);
+    background: var(--green-lt); border-radius: var(--r-chip, 5px);
+    padding: 6px 12px;
+  }
+
+  .foot {
+    margin-top: 26px; text-align: center;
+    font-size: 14px; color: var(--muted);
+  }
+  .foot a { color: var(--green-dk); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="brand"><span class="leaf">🌿</span> EverGreen ZeroWaste</div>
+
+  <h1>Start compost service</h1>
+  <p class="lede">Tell us where you are and what you need. We'll confirm your pickup day and get you on a route.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">Step 1</div>
+      <p>You send this form.</p>
+    </div>
+    <div class="step">
+      <div class="step-n">Step 2</div>
+      <p>We check coverage for your address and confirm with you.</p>
+    </div>
+    <div class="step">
+      <div class="step-n">Step 3</div>
+      <p>You're added to a route and your first pickup is scheduled.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="form-body">
+
+      <div class="field">
+        <label for="s-name">Your name</label>
+        <input type="text" id="s-name" placeholder="First and last name" autocomplete="name">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="s-email">Email</label>
+          <input type="email" id="s-email" placeholder="you@example.com" autocomplete="email" inputmode="email">
+        </div>
+        <div class="field">
+          <label for="s-phone">Phone</label>
+          <input type="tel" id="s-phone" placeholder="(970) 555-0140" autocomplete="tel" inputmode="tel">
+        </div>
+      </div>
+      <p class="hint" style="margin-top:-10px;margin-bottom:18px">Either one is fine — we just need a way to reach you.</p>
+
+      <div class="field">
+        <label for="s-address">Service address</label>
+        <input type="text" id="s-address" placeholder="Street address where the bin goes" autocomplete="street-address">
+      </div>
+
+      <div class="field">
+        <label for="s-city">City <span class="opt">(optional)</span></label>
+        <input type="text" id="s-city" placeholder="Basalt, Carbondale, Glenwood…" autocomplete="address-level2">
+      </div>
+
+      <div class="field">
+        <label for="s-service">What do you need?</label>
+        <select id="s-service">
+          <option value="Residential compost pickup">Residential compost pickup</option>
+          <option value="Commercial compost pickup">Commercial — restaurant, café, office</option>
+          <option value="Yard and green waste">Yard and green waste</option>
+          <option value="Extra or larger container">An extra or larger container</option>
+          <option value="Not sure yet">Not sure yet — help me choose</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="s-notes">Anything we should know? <span class="opt">(optional)</span></label>
+        <textarea id="s-notes" placeholder="Where the bin lives, a gate code, a dog in the yard, a steep driveway…"></textarea>
+        <div class="hint">Whatever you put here reaches the driver, so the first pickup goes smoothly.</div>
+      </div>
+
+      <button class="btn-submit" id="s-btn">Request service</button>
+      <div class="form-error" id="s-error"></div>
+      <p class="form-footer">No payment now. We'll confirm pricing and your pickup day before service starts.</p>
+    </div>
+
+    <div class="success" id="s-success">
+      <div class="success-icon">🌱</div>
+      <h2>Request received</h2>
+      <p>Thanks — it's in the queue. We'll check coverage for your address and be in touch to confirm your pickup day.</p>
+      <p>Nothing is scheduled and nothing is charged until we've spoken.</p>
+      <div class="ref" id="s-ref"></div>
+    </div>
+  </div>
+
+  <p class="foot">Already a customer? <a href="/portal.html">Manage your account</a> — holds, missed pickups and address changes.</p>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var val = function (id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
+  var errEl = document.getElementById('s-error');
+  var btn   = document.getElementById('s-btn');
+
+  function showError(msg) {
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+    errEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  /* These mirror validateRequest() in src/requests.js. Checking here as well
+     is not duplication for its own sake — it means a customer is told what is
+     missing without a round trip, and the server still refuses anything that
+     gets past it. */
+  function firstProblem(p) {
+    if (!p.name)    return 'Please add your name so we know who to contact.';
+    if (!p.address) return 'Please add the address where the bin goes — we need it to check coverage.';
+    if (!p.email && !p.phone) return 'Please add an email address or a phone number so we can reach you.';
+    if (p.email && !/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(p.email)) {
+      return 'That email address does not look right — please check it.';
+    }
+    return null;
+  }
+
+  btn.addEventListener('click', async function () {
+    errEl.classList.remove('show');
+
+    var payload = {
+      kind:    'new_customer',
+      name:    val('s-name'),
+      email:   val('s-email'),
+      phone:   val('s-phone'),
+      address: val('s-address'),
+      city:    val('s-city'),
+      service: val('s-service'),
+      notes:   val('s-notes'),
+      detail:  'New customer · ' + (val('s-service') || 'service not specified')
+    };
+
+    var problem = firstProblem(payload);
+    if (problem) return showError(problem);
+
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      var res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        /* The endpoint answers with an errors array on a validation failure and
+           an error string otherwise. Show whichever it sent rather than a
+           status code — the customer can act on the first and not the second. */
+        throw new Error(
+          (data.errors && data.errors.length && data.errors[0]) ||
+          data.error ||
+          'Something went wrong sending that. Please try again.'
+        );
+      }
+
+      document.getElementById('form-body').style.display = 'none';
+      var ref = document.getElementById('s-ref');
+      if (data.id) ref.textContent = 'Reference ' + data.id;
+      else ref.style.display = 'none';
+      document.getElementById('s-success').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      showError(e.message);
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+})();
+</script>
+</body>
+</html>
