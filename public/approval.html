@@ -346,6 +346,35 @@
     border: 1px solid var(--border); border-radius: var(--r-control);
     background: var(--surface); color: var(--text);
   }
+
+  /* Price sits beside the route picker because the two are one decision:
+     which day they are served, and what they pay for it. */
+  .amount-pick {
+    font: inherit; font-size: 13px; width: 112px; padding: 7px 10px; margin-right: 8px;
+    border: 1px solid var(--border); border-radius: var(--r-control);
+    background: var(--surface); color: var(--text);
+  }
+
+  /* What QuickBooks did, once it has done it. */
+  .qbo-line {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted);
+  }
+  .qbo-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    padding: 3px 8px; border-radius: var(--r-chip, 5px);
+    background: var(--green-lt); color: var(--green-dk);
+  }
+  .qbo-tag.failed { background: #fef2f2; color: #991b1b; }
+  .qbo-link { font-weight: 600; color: var(--green-dk); word-break: break-all; }
+  .qbo-copy {
+    font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    padding: 6px 11px; border-radius: var(--r-control);
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  .qbo-copy:hover { border-color: var(--green); color: var(--green); }
 </style>
 </head>
 <body>
@@ -483,11 +512,17 @@
 
     // Only a new customer needs somewhere to go. Everything else is just
     // "handled" — approving a hold should not add anyone to a route.
+    /* Price is optional. Approving without one still puts them on a route —
+       it just leaves the invoicing to be done by hand, which is where this
+       was before. Nothing is blocked on QuickBooks. */
     const picker = r.kind === 'new_customer'
       ? '<select id="tab-' + esc(r.id) + '" class="tab-pick">' +
           '<option value="">Which route?</option>' +
           ROUTE_TABS.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('') +
-        '</select>'
+        '</select>' +
+        '<input id="amt-' + esc(r.id) + '" class="amount-pick" type="text" ' +
+          'inputmode="decimal" placeholder="$ / month" ' +
+          'title="Leave blank to skip invoicing and add them to the route only">'
       : '';
 
     return '<div class="card-actions">' + picker +
@@ -495,6 +530,56 @@
       '<button class="btn-decline" onclick="doDecline(\'' + esc(r.id) + '\')">Decline</button>' +
       '</div>';
   }
+
+  /* What QuickBooks did, shown only once there is something to say. An
+     approved customer with no QBO row at all was approved without a price,
+     which is a choice rather than a failure, so it says nothing. */
+  function qboHtml(r) {
+    if (r.status !== 'approved') return '';
+    if (!r.qbo_invoice_id && !r.qbo_error) return '';
+
+    if (r.qbo_error) {
+      return '<div class="qbo-line">' +
+        '<span class="qbo-tag failed">Not invoiced</span>' +
+        '<span>' + esc(r.qbo_error) + '</span>' +
+        '</div>';
+    }
+
+    const amount = r.plan_amount ? '$' + esc(r.plan_amount) : '';
+    let out = '<div class="qbo-line">' +
+      '<span class="qbo-tag">Invoiced' + (amount ? ' ' + amount : '') + '</span>';
+
+    if (r.qbo_pay_link) {
+      out += '<a class="qbo-link" href="' + esc(r.qbo_pay_link) + '" target="_blank" rel="noopener">Payment link</a>' +
+             '<button class="qbo-copy" onclick="copyPayLink(this, \'' + esc(r.id) + '\')">Copy</button>';
+    } else {
+      out += '<span>No payment link — switch on QuickBooks Payments to get one.</span>';
+    }
+    return out + '</div>';
+  }
+
+  window.copyPayLink = async function (btn, id) {
+    const r = REQUESTS.find(x => x.id === id);
+    if (!r || !r.qbo_pay_link) return;
+    const original = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(r.qbo_pay_link);
+      btn.textContent = 'Copied';
+    } catch {
+      /* Older webviews refuse the clipboard. Select it so it can be copied
+         by hand rather than claiming a copy that did not happen. */
+      const a = btn.previousElementSibling;
+      if (a) {
+        const range = document.createRange();
+        range.selectNodeContents(a);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      btn.textContent = 'Select and copy';
+    }
+    setTimeout(() => { btn.textContent = original; }, 2500);
+  };
 
   function render() {
     const list = document.getElementById('request-list');
@@ -524,6 +609,7 @@
           '<span class="status-pill ' + pillClass(r.status) + '">' + pillLabel(r.status) + '</span>' +
         '</div>' +
         actionsHtml(r) +
+        qboHtml(r) +
       '</div>';
     }).join('');
 
@@ -560,13 +646,27 @@
 
   window.doApprove = function (id) {
     const r = REQUESTS.find(x => x.id === id);
-    let tabName = '';
+    const body = {};
     if (r && r.kind === 'new_customer') {
       const sel = document.getElementById('tab-' + id);
-      tabName = sel ? sel.value : '';
+      const tabName = sel ? sel.value : '';
       if (!tabName) { alert('Pick which route they go on first.'); return; }
+      body.tabName = tabName;
+
+      /* Accept "45", "$45", "45.00" — whatever gets typed in a hurry. An
+         empty box means no invoice, not a zero one. */
+      const raw = (document.getElementById('amt-' + id)?.value || '').replace(/[^0-9.]/g, '');
+      if (raw) {
+        const amount = Number(raw);
+        if (!Number.isFinite(amount) || amount <= 0) {
+          alert('That price does not look right. Leave it blank to add them to the route without invoicing.');
+          return;
+        }
+        body.amount = String(amount);
+        body.planLabel = r.service || '';
+      }
     }
-    decide(id, 'approve', tabName ? { tabName } : {});
+    decide(id, 'approve', body);
   };
 
   window.doDecline = function (id) { decide(id, 'decline'); };

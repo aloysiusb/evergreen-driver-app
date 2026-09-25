@@ -11,7 +11,7 @@ import { readRange, readRangeWithColors, writeRange, appendRows, duplicateSheet,
 import { parseRouteTab, classifyNote, detectColumns } from "./routeParser.js";
 import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./config.js";
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
-import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink } from "./qbo.js";
+import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink, ensureCustomer, createInvoice, isConfigured as qboConfigured } from "./qbo.js";
 import { uploadPhoto, photosFolderId } from "./drive.js";
 import { savePhoto, pathFor, labelFor, usage as photoUsage } from "./photoStore.js";
 import { recordActivity, todaysActivity, pruneActivity } from "./activity.js";
@@ -19,7 +19,7 @@ import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
   validateRequest, createRequest, listRequests, getRequest,
-  decideRequest, countByStatus, rateLimited,
+  decideRequest, countByStatus, rateLimited, recordQbo,
   getSettings, setSettings,
 } from "./requests.js";
 
@@ -1177,8 +1177,74 @@ app.post("/api/requests/:id/approve", async (req, res) => {
 
   const updated = decideRequest(req.params.id, "approved", tabName);
   broadcast({ type: "request-decided", id: req.params.id, status: "approved" });
+
+  /* QuickBooks comes after the approval is committed, never before it.
+     Alyssa's click has already done the thing that matters — the customer is
+     on a route — and an Intuit outage, an expired token or a missing service
+     item must not undo that or leave her clicking again. Whatever happens is
+     written onto the request so the approval screen can show it. */
+  const amount = String(req.body?.amount ?? "").trim();
+  const label  = String(req.body?.planLabel ?? row.service ?? "").trim();
+
+  if (amount) {
+    createQboRecords(row, amount, label).catch(err =>
+      console.warn("[qbo] unexpected failure for", row.id, err.message));
+  }
+
   res.json(updated);
 });
+
+/**
+ * Create the customer and first invoice in QuickBooks for an approved request.
+ * Swallows every failure into qbo_error — the caller has already responded.
+ */
+async function createQboRecords(row, amount, label) {
+  if (!qboConfigured()) {
+    recordQbo(row.id, {
+      amount, label,
+      error: "QuickBooks is not connected — set the QBO_* variables in Render.",
+    });
+    broadcast({ type: "request-decided", id: row.id, status: "approved" });
+    return;
+  }
+
+  try {
+    const { customer, created } = await ensureCustomer({
+      name: row.name, email: row.email, phone: row.phone,
+      address: row.address, city: row.city,
+    });
+
+    const invoice = await createInvoice({
+      customerId: customer.Id,
+      amount,
+      description: label || "Compost service",
+      email: row.email || undefined,
+    });
+
+    /* A pay link only exists once QuickBooks Payments is switched on for the
+       account. Its absence is not a failure of the invoice, so it is not
+       recorded as one. */
+    let payLink = null;
+    try {
+      payLink = await getInvoicePaymentLink(invoice.Id);
+    } catch (err) {
+      console.warn("[qbo] no pay link for invoice", invoice.Id, err.message);
+    }
+
+    recordQbo(row.id, {
+      customerId: customer.Id, invoiceId: invoice.Id, payLink, amount, label,
+    });
+    console.log(
+      `[qbo] ${row.id}: ${created ? "created" : "matched"} customer ${customer.Id}, ` +
+      `invoice ${invoice.Id}${payLink ? ", pay link ready" : ", no pay link"}`
+    );
+  } catch (err) {
+    recordQbo(row.id, { amount, label, error: err.message });
+    console.warn("[qbo]", row.id, "->", err.message);
+  }
+
+  broadcast({ type: "request-decided", id: row.id, status: "approved" });
+}
 
 app.post("/api/requests/:id/decline", (req, res) => {
   const updated = decideRequest(req.params.id, "declined");
@@ -1432,6 +1498,16 @@ app.get(/\.html$|^\/$/, (req, res, next) => {
   const file = path.join(PUBLIC_DIR, rel);
   if (!file.startsWith(PUBLIC_DIR)) return res.sendStatus(403);  // path traversal guard
   sendStampedHtml(res, file, next);
+});
+
+/* No page carries a <link rel="icon">, so browsers fall back to asking for
+   /favicon.ico. Serving the leaf here answers that one request everywhere at
+   once, instead of adding a tag to twenty-odd pages. It is an SVG under an
+   .ico path on purpose: browsers read the Content-Type, not the extension. */
+app.get("/favicon.ico", (req, res) => {
+  res.type("image/svg+xml")
+     .setHeader("Cache-Control", "public, max-age=86400");
+  res.sendFile(path.join(PUBLIC_DIR, "favicon.svg"));
 });
 
 app.use(express.static(PUBLIC_DIR, {

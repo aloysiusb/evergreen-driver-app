@@ -34,19 +34,10 @@
   }
   .narration { width: 100%; max-width: 1000px; }
 
-  /* The demo shows an iPad because that is what sits on the dash, but the
-     page itself gets opened on a phone all the time. Below iPad width the
-     side rail drops under the map so the map keeps the room, rather than both
-     being squeezed into columns too narrow to read. */
-  @media (max-width: 760px) {
-    .wt-stage { flex-direction: column; }
-    .wt-rail { width: auto; border-left: 0; border-top: 1px solid var(--border); }
-    .wt-mapwrap { min-height: 240px; }
-    .screen { aspect-ratio: auto; height: 560px; }
-    .phone { border-radius: 18px; padding: 8px; }
-    .viewpick-btn { flex-basis: 100%; }
-    .turn-dist { font-size: 22px; }
-  }
+  /* The phone rules live at the very bottom of this stylesheet, after every
+     rule they override. They used to sit here, above .phone, .screen and
+     .wt-rail — same specificity, earlier in the file, so the desktop widths
+     won every time and the whole block did nothing on a phone. */
 
   .intro { grid-column: 1 / -1; text-align: center; margin-bottom: 4px; }
   .demo-flag {
@@ -288,6 +279,35 @@
   @media (prefers-reduced-motion: reduce) {
     .phone.buzzing { animation: none; }
     .screen * { transition: none !important; animation: none !important; }
+  }
+
+  /* ── Phone ──────────────────────────────────────────────────────────────
+     The demo shows an iPad because that is what sits on the dash, but the
+     page itself gets opened on a phone all the time. Below iPad width the
+     side rail drops under the map so the map keeps the room, rather than both
+     being squeezed into columns too narrow to read.
+
+     This block must stay last: every rule it overrides is declared above it
+     at the same specificity, so position in the file is what decides. */
+  @media (max-width: 760px) {
+    .wt-stage { flex-direction: column; }
+    .wt-rail {
+      width: auto;
+      flex-shrink: 1;          /* 300px + no shrink was what forced the page wide */
+      border-left: 0;
+      border-top: 1px solid var(--border);
+    }
+    .wt-mapwrap { min-height: 240px; }
+    .screen { aspect-ratio: auto; height: 560px; }
+    .phone { border-radius: 18px; padding: 8px; }
+    .viewpick-btn { flex-basis: 100%; }
+    .turn-dist { font-size: 22px; }
+
+    /* A grid item will not shrink below its own min-content unless told to,
+       so one wide descendant drags the whole track — and the page — with it. */
+    .stage { grid-template-columns: minmax(0, 1fr); padding-inline: 16px; }
+    .stage > * { min-width: 0; max-width: 100%; }
+    .screen .route-header { min-width: 0; }
   }
 
 </style>
