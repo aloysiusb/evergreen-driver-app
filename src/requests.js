@@ -41,7 +41,19 @@ db.exec(`CREATE TABLE IF NOT EXISTS requests (
 
 // Added after the first release, so bring existing databases forward rather
 // than requiring the disk to be wiped.
-for (const [col, decl] of [["kind", "TEXT NOT NULL DEFAULT 'new_customer'"], ["detail", "TEXT"]]) {
+for (const [col, decl] of [
+  ["kind", "TEXT NOT NULL DEFAULT 'new_customer'"],
+  ["detail", "TEXT"],
+  /* What QuickBooks did when this was approved. Recorded rather than assumed:
+     the approval succeeds whether or not QBO answered, so the office has to be
+     able to see which half happened, and why if it did not. */
+  ["qbo_customer_id", "TEXT"],
+  ["qbo_invoice_id", "TEXT"],
+  ["qbo_pay_link", "TEXT"],
+  ["qbo_error", "TEXT"],
+  ["plan_amount", "TEXT"],
+  ["plan_label", "TEXT"],
+]) {
   const present = db.prepare("PRAGMA table_info(requests)").all().some(c => c.name === col);
   if (!present) db.exec(`ALTER TABLE requests ADD COLUMN ${col} ${decl}`);
 }
@@ -154,6 +166,34 @@ export function decideRequest(id, status, tabName = null) {
   db.prepare(
     "UPDATE requests SET status = ?, decided_at = ?, decided_tab = ? WHERE id = ?"
   ).run(status, new Date().toISOString(), tabName, id);
+  return getRequest(id);
+}
+
+/**
+ * Record what QuickBooks did for an already-decided request.
+ *
+ * Separate from decideRequest on purpose: the approval is committed the moment
+ * the route sheet write lands, and this fills in afterwards. A QBO failure
+ * writes qbo_error and nothing else, so the office can see the customer is on
+ * a route but not yet invoiced.
+ */
+export function recordQbo(id, { customerId, invoiceId, payLink, error, amount, label } = {}) {
+  const row = getRequest(id);
+  if (!row) return null;
+  db.prepare(
+    `UPDATE requests SET
+       qbo_customer_id = ?, qbo_invoice_id = ?, qbo_pay_link = ?, qbo_error = ?,
+       plan_amount = ?, plan_label = ?
+     WHERE id = ?`
+  ).run(
+    customerId ?? row.qbo_customer_id ?? null,
+    invoiceId  ?? row.qbo_invoice_id  ?? null,
+    payLink    ?? row.qbo_pay_link    ?? null,
+    error      ?? null,
+    amount     ?? row.plan_amount     ?? null,
+    label      ?? row.plan_label      ?? null,
+    id
+  );
   return getRequest(id);
 }
 

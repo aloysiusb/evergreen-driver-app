@@ -119,6 +119,169 @@ export async function getInvoicePaymentLink(invoiceId) {
   return data.Invoice?.invoiceLink || null;
 }
 
+/* Everything above this line reads. Everything below writes.
+ *
+ * Nothing here is on the critical path of approving a customer: the route
+ * sheet is what a driver works from, and a QuickBooks outage must never be
+ * the reason someone cannot be put on a route. The caller treats all of this
+ * as best effort and records what happened either way. */
+
+/** True when the four values an API call needs are all present. */
+export function isConfigured() {
+  return Boolean(
+    process.env.QBO_CLIENT_ID &&
+    process.env.QBO_CLIENT_SECRET &&
+    process.env.QBO_REFRESH_TOKEN &&
+    process.env.QBO_REALM_ID
+  );
+}
+
+async function qboPost(path, body) {
+  const realmId = process.env.QBO_REALM_ID;
+  const token   = await getAccessToken();
+
+  const res = await fetch(
+    `${QBO_BASE}/v3/company/${realmId}/${path}?minorversion=${MINOR_VERSION}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    /* QBO puts the useful part in Fault.Error[0] — a bare status tells you
+       nothing about which field it objected to. */
+    const fault = data?.Fault?.Error?.[0];
+    const detail = fault
+      ? `${fault.Message}${fault.Detail ? ` — ${fault.Detail}` : ''} (code ${fault.code})`
+      : `HTTP ${res.status}`;
+    const err = new Error(`QBO ${path} failed: ${detail}`);
+    err.qboCode = fault?.code;
+    throw err;
+  }
+  return data;
+}
+
+async function qboQuery(query) {
+  const realmId = process.env.QBO_REALM_ID;
+  const token   = await getAccessToken();
+  const res = await fetch(
+    `${QBO_BASE}/v3/company/${realmId}/query?query=${encodeURIComponent(query)}&minorversion=${MINOR_VERSION}`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
+  );
+  if (!res.ok) throw new Error(`QBO query failed: ${res.status}`);
+  return (await res.json()).QueryResponse || {};
+}
+
+/* An invoice line needs something to sell. QBO_SERVICE_ITEM_ID names it
+   explicitly; without that we take the first active service item on the
+   account, which is what a small hauler will have anyway. Cached because it
+   does not change between approvals. */
+let cachedItemRef = null;
+export async function serviceItemRef() {
+  if (process.env.QBO_SERVICE_ITEM_ID) {
+    return { value: process.env.QBO_SERVICE_ITEM_ID };
+  }
+  if (cachedItemRef) return cachedItemRef;
+  const { Item = [] } = await qboQuery(
+    "SELECT Id, Name FROM Item WHERE Type = 'Service' AND Active = true MAXRESULTS 1"
+  );
+  if (!Item.length) {
+    throw new Error(
+      'No active service item in QuickBooks. Create one, or set QBO_SERVICE_ITEM_ID.'
+    );
+  }
+  cachedItemRef = { value: Item[0].Id, name: Item[0].Name };
+  return cachedItemRef;
+}
+
+/** Look a customer up by display name. QBO requires these to be unique. */
+async function findCustomerByName(displayName) {
+  const escaped = displayName.replace(/'/g, "\\'");
+  const { Customer = [] } = await qboQuery(
+    `SELECT * FROM Customer WHERE DisplayName = '${escaped}' MAXRESULTS 1`
+  );
+  return Customer[0] || null;
+}
+
+/**
+ * The customer for this request, created if they are new.
+ *
+ * Matching is by email first, then by display name, because QBO rejects a
+ * duplicate DisplayName outright and a hauler's sheet often carries the same
+ * household twice. Returns { customer, created }.
+ */
+export async function ensureCustomer({ name, email, phone, address, city }) {
+  if (email) {
+    const byEmail = await findCustomerByEmail(email);
+    if (byEmail) return { customer: byEmail, created: false };
+  }
+
+  const displayName = String(name || '').trim();
+  if (!displayName) throw new Error('A customer needs a name.');
+
+  const existing = await findCustomerByName(displayName);
+  if (existing) return { customer: existing, created: false };
+
+  const body = { DisplayName: displayName };
+  if (email)   body.PrimaryEmailAddr = { Address: email };
+  if (phone)   body.PrimaryPhone     = { FreeFormNumber: phone };
+  if (address) body.BillAddr = { Line1: address, ...(city ? { City: city } : {}) };
+
+  try {
+    const data = await qboPost('customer', body);
+    return { customer: data.Customer, created: true };
+  } catch (err) {
+    /* 6240 is "duplicate name exists" — someone else created them between our
+       lookup and our write, or the name collides with an inactive record.
+       Re-read rather than failing the approval over a race. */
+    if (err.qboCode === '6240') {
+      const found = await findCustomerByName(displayName);
+      if (found) return { customer: found, created: false };
+    }
+    throw err;
+  }
+}
+
+/**
+ * Raise a single-line invoice. `amount` is in dollars.
+ * Returns the created Invoice object.
+ */
+export async function createInvoice({ customerId, amount, description, email }) {
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`Invoice amount must be a positive number, got "${amount}".`);
+  }
+  const itemRef = await serviceItemRef();
+
+  const body = {
+    CustomerRef: { value: String(customerId) },
+    Line: [
+      {
+        Amount: value,
+        DetailType: 'SalesItemLineDetail',
+        ...(description ? { Description: description } : {}),
+        SalesItemLineDetail: { ItemRef: itemRef, Qty: 1, UnitPrice: value },
+      },
+    ],
+  };
+  /* Lets Alyssa send it from QuickBooks without retyping the address, and is
+     what QBO uses if she turns on automatic delivery. */
+  if (email) {
+    body.BillEmail = { Address: email };
+    body.EmailStatus = 'NeedToSend';
+  }
+
+  const data = await qboPost('invoice', body);
+  return data.Invoice;
+}
+
 // Build the OAuth authorization URL — visit this once in the browser.
 export function getAuthUrl() {
   const client = makeOAuthClient();
