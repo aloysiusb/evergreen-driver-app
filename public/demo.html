@@ -489,6 +489,18 @@ body {
   font-size: 12px;
   font-family: inherit;
 }
+
+/* ── Touch sizing ──────────────────────────────────────────────────────────
+   Last in the file so it wins over the rules above, which set the padding
+   these heights override. 44px is Apple's minimum and roughly a fingertip;
+   these are the controls someone taps while holding the phone up to show
+   the app, so they were the wrong ones to have at 29px. */
+.ctrl-btn, .vt-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>
 </head>
 <body>
