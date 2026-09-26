@@ -310,6 +310,25 @@
     .screen .route-header { min-width: 0; }
   }
 
+  /* ── Touch sizing ────────────────────────────────────────────────────────
+     Prev / Navigate / Done are what a person taps while holding the phone up
+     to show someone the app, and they were 35px. 44px is the minimum a
+     fingertip reliably hits. */
+  /* By element, not by class: the page's own controls are bare <button>s with
+     no class at all, which is why naming classes here missed them. */
+  button, .nav-btn {
+    min-height: 44px;
+  }
+  /* Everything inside .screen is the simulated app, drawn at the app's own
+     metrics and already pointer-events: none. It keeps its sizing. */
+  .screen button, .screen .nav-btn { min-height: 0; }
+  /* The step dots stay 4px to look at — the hit area around them does not. */
+  .dot {
+    padding: 20px 8px;
+    background-clip: content-box;
+    box-sizing: content-box;
+  }
+
 </style>
 </head>
 <body>

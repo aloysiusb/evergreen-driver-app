@@ -28,8 +28,12 @@ body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color
   animation:pulse 1.8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
-.route-pick{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-select{font-family:inherit;font-size:13px;font-weight:600;padding:7px 11px;
+.route-pick{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0;max-width:100%}
+/* A select sizes itself to its longest option unless stopped. The route names
+   run to "Thursday COM/EAGLE — commercial", which is wider than a 320px
+   phone, and that width pushed the page sideways. */
+select{font-family:inherit;font-size:13px;font-weight:600;padding:10px 11px;min-height:44px;
+  min-width:0;max-width:100%;
   border:1.5px solid var(--border);border-radius:var(--r-control);background:var(--surface);color:var(--text)}
 
 /* Panorama */

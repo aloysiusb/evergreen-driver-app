@@ -221,6 +221,7 @@
   select,
   textarea {
     width: 100%;
+    min-height: 44px;        /* a customer fills this in on a phone */
     font-family: var(--font);
     font-size: 15px;
     padding: 11px 14px;
@@ -385,14 +386,19 @@
   .account-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   .account-start {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;           /* the phone tap-target minimum, not a guess at it */
+    max-width: 100%;
     font-size: 13.5px;
     font-weight: 600;
     color: var(--green-dk);
     text-decoration: none;
     background: var(--green-lt);
     border-radius: var(--r-control);
-    padding: 13px 16px;         /* 44px tall — the phone tap-target minimum */
-    white-space: nowrap;
+    padding: 8px 16px;
+    /* No nowrap. At 320px this line is wider than the screen, and holding it
+       on one line pushed the whole page sideways. */
   }
   .account-start:hover { text-decoration: underline; }
 

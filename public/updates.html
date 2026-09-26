@@ -85,7 +85,10 @@
   .chip {
     font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500;
     letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 3px 8px; border-radius: var(--r-chip); white-space: nowrap;
+    padding: 3px 8px; border-radius: var(--r-chip);
+    /* nowrap kept the longest chip on one line and pushed a 320px screen
+       sideways. It wraps now; two lines of a label beats a scrollbar. */
+    max-width: 100%;
     background: var(--accent-l); color: var(--accent);
   }
   .chip.todo { background: var(--amber-l); color: var(--amber); }
@@ -93,7 +96,10 @@
 
   /* ── Fix list ───────────────────────────────────────────── */
   .fixes { display: flex; flex-direction: column; gap: 18px; }
-  .fix { display: grid; grid-template-columns: auto 1fr; gap: 3px 13px; }
+  /* minmax(0, 1fr), not 1fr: an fr track will not shrink below its content's
+     min-content width, so one wide child widened the column, the grid and
+     then the page. */
+  .fix { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 13px; }
   .fix-mark { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); padding-top: 3px; }
   .fix h3, .fix p { grid-column: 2; }
   .fix p { margin: 0; color: var(--muted); font-size: 14.5px; max-width: 70ch; }
