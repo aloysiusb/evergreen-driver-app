@@ -991,3 +991,101 @@ code is solving the wrong problem.
 - **`setSettings()` coerces every value to `"1"`/`"0"`** except the keys with
   their own branch (`notify_email`, `digest_hour`). A new non-boolean setting
   needs its own branch or it will silently store `"0"`.
+
+---
+
+## 2026-09-26 — the other session: error messages, the signup form, and phones
+
+Written from the session that pushed PRs #1–#4, to sit beside the handoff
+entry above. Everything here is merged to `main`; nothing is in flight.
+
+### One correction to the handoff above
+
+**`RESEND_API_KEY` is set, and the digest is sending.** The entry above says
+the digest "sends nothing until Render has `RESEND_API_KEY`". That was true
+when it was written and is not true now. The 04:26 boot on 2026-09-26 logged:
+
+    [digest] sent to perryaloysius@gmail.com
+
+`server.js` only reaches that line *after* `sendMail()` resolves, and only
+when the key is present — without it the branch above logs `would send to`
+and returns `"email not configured"`. So the mail went out. `REQUESTS_FROM_EMAIL`
+is still the thing standing between this and customers receiving anything;
+that half of the note holds.
+
+### What PRs #1–#4 changed
+
+- **The driver was shown `HTTP 500`** while the server had already explained
+  the cause. `driver.js` threw the status code away. It reads the server's
+  message now, the way `camera.js` already did on upload. The other two
+  `HTTP ' + res.status` throws in that file are deliberately left: their catch
+  discards the error and retries offline, so nobody ever reads the text.
+- **`demo.html`, `streetview.html` and `weekly.html` asked Google for
+  `?key=undefined`.** They guarded the maps key with a bare try/catch, and
+  `fetch` does not reject on a 404 — the error body parsed as JSON, `.key`
+  came back undefined, and the catch never ran. They check `res.ok` and a
+  present key now, as `map.js` and `walkthrough.html` already did.
+- **`start.html`** — the new-customer signup form, and `/start.html` added to
+  `PUBLIC_PAGES`. (The handoff above is right that this is easy to miss.)
+- **The dispatch board carries an Approvals count**, re-read from
+  `/api/requests` rather than counted locally, because a request can be
+  decided from another laptop or while the screen slept.
+- **A favicon**, because `/favicon.ico` was answering 401 and putting a red
+  error in every page's console.
+
+### QuickBooks: what is built, and what has never run
+
+`ensureCustomer()` and `createInvoice()` exist in `src/qbo.js`, and approving
+a new customer **with a price** creates the customer, raises the first invoice,
+fetches the pay link and stores all three on the request.
+
+**The contract, which matters if you touch the approve handler:**
+QuickBooks runs *after* `decideRequest` has committed and the response has
+been sent — never before. The click has already done the thing that counts,
+and an Intuit outage must not undo it or make Alyssa click twice. Every
+failure is caught into `qbo_error`, which the approval card renders as
+"Not invoiced" with the reason. Six columns were added to `requests` for
+this: `qbo_customer_id`, `qbo_invoice_id`, `qbo_pay_link`, `qbo_error`,
+`plan_amount`, `plan_label`.
+
+**It has never been called against Intuit.** There are no `QBO_*` credentials
+in any environment this session could reach, so no request has ever been made.
+22 unit tests cover `isConfigured`, amount validation, the nameless-customer
+guard and the `recordQbo` round trip — including that a QBO failure leaves
+`status` approved and `decided_tab` intact. None of that exercises the v3 API.
+The request and response shapes follow the docs and are unverified. Worth a
+sandbox run (`QBO_SANDBOX=true`) before it touches a real customer.
+
+### Phones: an invariant, and the trap that broke it
+
+All 23 pages were measured at 320px and 390px. **No page scrolls sideways.**
+Three did: `portal.html` 341px, `streetview.html` 331px, `updates.html` 325px.
+
+**The trap worth knowing about**, because it will happen again:
+`walkthrough.html` had a correct `@media (max-width: 760px)` block that did
+**nothing**. It sat at line 41, above `.phone`, `.screen`, `.wt-stage` and
+`.wt-rail` — same specificity, earlier in the file, so the desktop rules won.
+The page looked responsive in the source and was 797px wide on a 390px phone.
+The block now lives at the end of that stylesheet and must stay there. **Any
+rule added below it silently re-breaks the page.**
+
+The same shape caused two of the three overflows: a grid or flex item will not
+shrink below its own min-content unless told to, so one `nowrap` chip or one
+`flex-shrink: 0` rail widens the track, the grid, and then the page.
+`minmax(0, 1fr)` and `min-width: 0` are the fix, not a new breakpoint.
+
+Tap targets are 44px on the pages someone holds a phone to use — `demo`,
+`walkthrough`, `portal`, the dispatch Approvals link. Deliberately not
+`admin.html` (208 dense inputs, a desktop tool) or links inside sentences.
+Anything inside `.screen` on the walkthrough is exempt: that is the simulated
+app, drawn at the app's own metrics and already `pointer-events: none`.
+
+### On `ACCESS_CODE`
+
+The handoff above has this right and it is worth repeating: **off is a
+decision, not an oversight.** The owner is demonstrating the app as part of a
+proposal and cannot be locked out of it mid-pitch. Do not turn it on to tidy
+a stale-looking note. When it does go back on, the link needs to carry the
+code — `?c=…` — because the last time it was on, the code only ever travelled
+inside a text message and the owner could not open his own app once the
+message scrolled away.
