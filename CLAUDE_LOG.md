@@ -934,3 +934,60 @@ signup posting `kind: 'new_customer'`, and `portal.html` already links to it.
 
 **Still outstanding:** `ACCESS_CODE` is off, and QuickBooks is waiting on
 Alyssa authorizing the OAuth connection — neither is a code change.
+
+---
+
+## 2026-09-26 — handoff: where the automation work stands
+
+Read this with the two entries above it. Everything below is merged to `main`
+(PRs #5 and #6); nothing is in flight.
+
+### Working, and needing nothing
+
+- **Customer portal** (`portal.html`) — hold, missed pickup, account update.
+  All three collect the service address now, so a request can be matched to a
+  stop without emailing the customer back.
+- **New-customer signup** (`start.html`) — complete, posts
+  `kind: 'new_customer'`, linked from the portal. It is easy to mistake this
+  for unbuilt because the portal's four tabs are all for existing customers;
+  it is a separate page and it works.
+- **Request queue** (`approval.html`) — approve a new customer onto a route
+  tab; a hold/missed/update approves as "handled" without touching the sheet.
+- **Evening digest** (`src/digest.js`) — built, merged, and **not sending**,
+  for the reason below.
+
+### Blocked on configuration, not code
+
+None of these three are worth writing code for. A session that "fixes" them in
+code is solving the wrong problem.
+
+1. **The digest sends nothing until Render has `RESEND_API_KEY`.** Without it
+   the digest logs what it *would* send and reports `"email not configured"`.
+   With the key but no `REQUESTS_FROM_EMAIL`, the only address that can
+   receive is the notify address itself (Resend's sandbox sender) — that is
+   the deliberate "practice" path in `sendConfirmation`, not a bug. A verified
+   sending domain in `REQUESTS_FROM_EMAIL` is what makes it reach customers.
+   Preview and Send now on `approval.html` both work before any of that, and
+   a refused send says why rather than claiming success.
+
+2. **`ACCESS_CODE` is OFF deliberately, not by oversight.** Earlier entries say
+   it "must go back on", which is still true — but the owner's decision on
+   2026-09-26 was to wait: **the drivers do not have the code yet.** Turning
+   the gate on before they do takes every driver's route away mid-day. Do not
+   flip it to tidy up a stale-looking note; it is a rollout step, and the
+   owner owns the timing.
+
+3. **QuickBooks is waiting on a human.** `src/qbo.js` and the pay flow are
+   built. Alyssa has to click through the OAuth approval at `/qbo/auth`. There
+   is nothing to implement until she has.
+
+### Two things worth knowing before touching this code
+
+- **`todaysActivity()` decides the day with the SERVER's midnight**, which on
+  Render is UTC. `digest.js` does not use it for that reason — it uses
+  `activityBetween()` with a window from `localDayStart()`. Anything else that
+  needs "today" in the valley's terms should do the same, not call
+  `todaysActivity()`.
+- **`setSettings()` coerces every value to `"1"`/`"0"`** except the keys with
+  their own branch (`notify_email`, `digest_hour`). A new non-boolean setting
+  needs its own branch or it will silently store `"0"`.
