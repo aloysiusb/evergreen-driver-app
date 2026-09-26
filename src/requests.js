@@ -228,6 +228,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS settings (
 const SETTING_DEFAULTS = {
   notify_email: "perryaloysius@gmail.com",
   notify_enabled: "1",
+  // The evening digest. Goes to notify_email — one address to keep current,
+  // not two that drift apart.
+  digest_enabled: "1",
+  digest_hour: "18",          // local to DIGEST_TZ, 0–23
 };
 
 export function getSetting(key) {
@@ -252,6 +256,12 @@ export function setSettings(patch) {
       // Empty is allowed — it means "stop emailing me".
       if (v && !/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(v)) continue;
       stmt.run(key, v);
+    } else if (key === "digest_hour") {
+      /* An hour, not a flag — the "1"/"0" coercion below would turn 18 into
+         "0" and quietly move the digest to midnight. */
+      const n = Number(value);
+      if (!Number.isInteger(n) || n < 0 || n > 23) continue;
+      stmt.run(key, String(n));
     } else {
       stmt.run(key, String(value) === "1" ? "1" : "0");
     }

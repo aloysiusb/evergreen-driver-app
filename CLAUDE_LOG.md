@@ -873,3 +873,64 @@ carries both, the address gets its own line, suppressed when it would just
 repeat the detail — so a new customer's card does not print it twice.
 
 Also: `portal.html` ended with `</body></html>` twice.
+
+---
+
+## 2026-09-26 — the evening digest
+
+The pitch has promised this for a while: notes are stored in real time, "this
+can be extended to a daily summary that emails Alyssa each evening — what was
+skipped, what needs follow-up, what complaints came in". The storing half was
+built. This is the other half.
+
+`src/digest.js` builds it from **what the day already recorded** — `activity`
+and the requests table — rather than re-reading the sheet, so the email cannot
+disagree with what the board showed. It writes nothing, so a failed digest
+cannot damage a day's work.
+
+Three things it deliberately does not do:
+
+- **A tick then an un-tick is not two collections.** The last state of each
+  stop wins, so a driver fixing a mis-tap does not inflate the count.
+- **An edited note is one situation, not two.** Only the last note on a stop
+  is reported, and clearing a note removes it.
+- **Urgency is not re-derived.** It reports the `noteUrgency` the note was
+  already classified with, so the digest and the board cannot drift.
+
+**Timezone.** `todaysActivity()` decides the day with `setHours()`, which is
+the *server's* midnight — on Render that is UTC, so "today" ends at 6pm in the
+valley and an evening digest would report a day that had not finished.
+`activityBetween()` takes an explicit window and `localDayStart()` works out
+the valley's own midnight through `Intl`, so it survives daylight saving
+rather than assuming −7.
+
+**The timer checks every minute against the valley's clock** rather than
+sleeping 24 hours. Render restarts the process on every deploy, and a long
+`setTimeout` would be discarded each time — on a busy week the digest would
+simply never fire. A restart at 6:05pm still sends today's, and the local date
+is recorded before the send so it cannot go twice.
+
+Sent from the web process, not a Render cron job: the digest reads the SQLite
+file on the persistent disk, and a cron job is a separate container without it
+mounted.
+
+**`sendMail()`** — `notifyNewRequest` and `sendConfirmation` had each grown
+their own copy of the Resend fetch. A third would have been the point where
+they start to differ. One call site now.
+
+**`/api/requests-settings` existed from the first release and no screen ever
+called it**, so the notify address could only be changed with curl. The digest
+would have inherited exactly that, so `approval.html` now has a strip: on/off,
+the hour, who it goes to, Preview, and Send now. "Send now" reports `ok:false`
+as *not sent, and why* — reporting "sent" for mail nobody receives is the
+failure this codebase keeps having to dig out.
+
+`digest_hour` needed its own branch in `setSettings`: the existing `"1"`/`"0"`
+coercion would have turned 18 into `"0"` and quietly moved the digest to
+midnight.
+
+**Not built, because it already was:** `start.html` is a complete new-customer
+signup posting `kind: 'new_customer'`, and `portal.html` already links to it.
+
+**Still outstanding:** `ACCESS_CODE` is off, and QuickBooks is waiting on
+Alyssa authorizing the OAuth connection — neither is a code change.
