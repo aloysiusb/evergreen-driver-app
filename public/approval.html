@@ -274,6 +274,11 @@
     margin-bottom: 3px;
   }
 
+  .card-address {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
   .card-detail {
     font-size: 13px;
     color: var(--muted);
@@ -481,12 +486,25 @@
     return (today ? 'Today ' : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ') + time;
   }
 
+  function addressText(r) {
+    return [r.address, r.city].filter(Boolean).join(', ');
+  }
+
   /* What the card says under the name. Requests carry a free-text detail from
-     the portal; a new customer has an address instead. */
+     the portal; a new customer has an address instead. The address gets its
+     own line (addressHtml) rather than standing in for the detail — a hold or
+     a missed pickup now carries both, and the address is the half that says
+     WHICH stop this is about. */
   function detailText(r) {
-    if (r.detail) return r.detail;
-    const addr = [r.address, r.city].filter(Boolean).join(', ');
-    return addr || r.notes || '';
+    return r.detail || addressText(r) || r.notes || '';
+  }
+
+  /* Only when it is not already the detail line, so a new customer's card
+     does not print its address twice. */
+  function addressHtml(r) {
+    const addr = addressText(r);
+    if (!addr || detailText(r) === addr) return '';
+    return '<div class="card-address">📍 ' + esc(addr) + '</div>';
   }
 
   async function load() {
@@ -603,6 +621,7 @@
           '<div class="card-info">' +
             '<div class="card-customer">' + esc(r.name) + '</div>' +
             '<div class="card-detail">' + esc(detailText(r)) + '</div>' +
+            addressHtml(r) +
             '<div class="card-meta">' + esc(contact) + (contact ? ' · ' : '') + esc(whenText(r.created_at)) +
               (r.decided_tab ? ' · added to ' + esc(r.decided_tab) : '') + '</div>' +
           '</div>' +

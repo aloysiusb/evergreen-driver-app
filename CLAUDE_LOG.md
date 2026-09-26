@@ -847,3 +847,29 @@ written on, the card said "No incidents" while the sheet plainly had some.
 Verified: a done-tick on a stop with no note records and replays; a real note
 survives a full reload with customer, address and original time; a sim event
 shows live and leaves nothing behind.
+
+---
+
+## 2026-09-26 — the portal asks which house
+
+Three of the four portal forms — hold, missed pickup, account update — asked
+for a name and an email and nothing else. The request reached the queue, so
+from the customer's side it worked; from the office's side it was a name with
+no stop attached. Every one of them started with a reply asking where they
+live.
+
+`validateRequest` already accepted `address` and `phone`, and already required
+the address only for a new customer. The gap was entirely in the form. All
+three now ask for the **service address** (required client-side, with a
+message that says why) and a phone number (optional).
+
+Two date inputs — the missed-pickup date and the update's effective date — had
+**no `id` and were read by nothing**. A customer could type the day they were
+missed and it went nowhere. Both are wired into the request's detail line now.
+
+**On the approval screen**, `detailText()` showed the address *instead of* the
+detail, which was right when only a new customer had one. Now that a hold
+carries both, the address gets its own line, suppressed when it would just
+repeat the detail — so a new customer's card does not print it twice.
+
+Also: `portal.html` ended with `</body></html>` twice.

@@ -486,6 +486,17 @@
 
       <div class="field-row">
         <div class="field">
+          <label>Service address</label>
+          <input type="text" id="hold-address" placeholder="123 Main St, Carbondale" autocomplete="street-address">
+        </div>
+        <div class="field">
+          <label>Phone <span style="font-weight:300;opacity:0.7">(optional)</span></label>
+          <input type="tel" id="hold-phone" placeholder="(970) 555-0123" autocomplete="tel">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
           <label>Your name</label>
           <input type="text" id="hold-name" placeholder="First and last name" autocomplete="name">
         </div>
@@ -537,7 +548,7 @@
 
       <div class="field">
         <label>Date of missed pickup</label>
-        <input type="text" placeholder="e.g. Aug 26, 2026">
+        <input type="text" id="missed-date" placeholder="e.g. Aug 26, 2026">
       </div>
 
       <div class="field">
@@ -561,6 +572,17 @@
       <div class="field">
         <label>Any additional details?</label>
         <textarea id="missed-details" placeholder="Bin location, access notes, what you saw…"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Service address</label>
+          <input type="text" id="missed-address" placeholder="123 Main St, Carbondale" autocomplete="street-address">
+        </div>
+        <div class="field">
+          <label>Phone <span style="font-weight:300;opacity:0.7">(optional)</span></label>
+          <input type="tel" id="missed-phone" placeholder="(970) 555-0123" autocomplete="tel">
+        </div>
       </div>
 
       <div class="field-row">
@@ -648,12 +670,23 @@
 
       <div class="field">
         <label>Effective date <span style="font-weight:300;opacity:0.7">(optional)</span></label>
-        <input type="text" placeholder="e.g. Sep 1, 2026 — leave blank for immediately">
+        <input type="text" id="update-when" placeholder="e.g. Sep 1, 2026 — leave blank for immediately">
       </div>
 
       <div class="field">
         <label>Anything else we should know?</label>
         <textarea id="update-notes" placeholder="Additional notes…"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Service address on the account</label>
+          <input type="text" id="update-address" placeholder="123 Main St, Carbondale" autocomplete="street-address">
+        </div>
+        <div class="field">
+          <label>Phone <span style="font-weight:300;opacity:0.7">(optional)</span></label>
+          <input type="tel" id="update-phone" placeholder="(970) 555-0123" autocomplete="tel">
+        </div>
       </div>
 
       <div class="field-row">
@@ -758,6 +791,9 @@
 
     if (!payload.name) return showError(form, 'Please add your name so we know who to contact.');
     if (!payload.email) return showError(form, 'Please add an email address so we can confirm.');
+    /* Without the address the office has a name and no stop to match it to,
+       which means a reply-and-wait before anything can be acted on. */
+    if (!payload.address) return showError(form, 'Please add your service address so we can find your stop.');
 
     const original = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
@@ -782,6 +818,8 @@
       kind: 'hold',
       name: val('hold-name'),
       email: val('hold-email'),
+      phone: val('hold-phone'),
+      address: val('hold-address'),
       detail: 'Hold ' + (from || '?') + ' → ' + (to || '?') +
               (val('hold-reason') ? ' · ' + val('hold-reason') : ''),
       notes: val('hold-reason'),
@@ -790,21 +828,29 @@
 
   window.submitMissed = function () {
     const binOut = document.querySelector('input[name="bin-out"]:checked');
+    const when = val('missed-date');
     postRequest('missed', {
       kind: 'missed',
       name: val('missed-name'),
       email: val('missed-email'),
-      detail: 'Missed pickup · bin out: ' + (binOut && binOut.value === 'yes' ? 'yes' : 'no'),
+      phone: val('missed-phone'),
+      address: val('missed-address'),
+      detail: 'Missed pickup' + (when ? ' ' + when : '') +
+              ' · bin out: ' + (binOut && binOut.value === 'yes' ? 'yes' : 'no'),
       notes: val('missed-details'),
     });
   };
 
   window.submitUpdate = function () {
+    const when = val('update-when');
     postRequest('update', {
       kind: 'update',
       name: val('update-name'),
       email: val('update-email'),
-      detail: val('update-what') + ': ' + (val('update-from') || '—') + ' → ' + (val('update-to') || '—'),
+      phone: val('update-phone'),
+      address: val('update-address'),
+      detail: val('update-what') + ': ' + (val('update-from') || '—') + ' → ' + (val('update-to') || '—') +
+              (when ? ' · from ' + when : ''),
       notes: val('update-notes'),
     });
   };
@@ -824,5 +870,4 @@
   }
 </script>
 
-</body></html>
 </body></html>
