@@ -84,6 +84,32 @@ export function todaysActivity(limit = 300, dayStart = null) {
   }
 }
 
+/**
+ * Events in an explicit UTC window, oldest first.
+ *
+ * todaysActivity() decides the day with setHours(), which is the SERVER's
+ * midnight — on Render that is UTC, so "today" would end at 6pm in the valley
+ * and the evening digest would report a day that had not finished. The digest
+ * works out the valley's own midnight and asks for that window directly.
+ */
+export function activityBetween(startISO, endISO, limit = 2000) {
+  try {
+    const rows = db.prepare(
+      "SELECT at, payload FROM activity WHERE at >= ? AND at < ? ORDER BY id ASC LIMIT ?"
+    ).all(startISO, endISO, limit);
+    return rows.map(r => {
+      try {
+        return { ...JSON.parse(r.payload), at: r.at };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+  } catch (err) {
+    console.warn("[activity] could not read range:", err.message);
+    return [];
+  }
+}
+
 /* A week is enough to answer "what happened on Tuesday" without the table
    growing without limit. Runs on startup rather than on every write. */
 export function pruneActivity(days = 7) {

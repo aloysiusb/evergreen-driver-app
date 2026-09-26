@@ -242,6 +242,46 @@
 
   .request-card.resolved { opacity: 0.55; }
 
+  .digest-bar {
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    background: var(--surface2, #f6f7f5);
+    border: 1px solid var(--border, #e2e5e0);
+    border-radius: var(--r-control, 10px);
+  }
+  .digest-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .digest-toggle, .digest-hour {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .digest-hour select { font: inherit; padding: 2px 4px; }
+  .digest-to { font-size: 13px; color: var(--muted); }
+  .digest-spacer { flex: 1 1 auto; }
+  .digest-preview {
+    margin: 12px 0 0;
+    padding: 12px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e2e5e0);
+    border-radius: var(--r-control, 10px);
+    font-size: 12.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+  .digest-status { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  /* The bar wraps to two rows on a phone rather than pushing the buttons off
+     the edge — this page gets opened on one. */
+  @media (max-width: 560px) {
+    .digest-spacer { flex-basis: 100%; }
+  }
   .card-top {
     display: flex;
     align-items: flex-start;
@@ -434,6 +474,28 @@
   <button class="filter-btn" onclick="setFilter('new_customer', this)">New customers</button>
 </div>
 
+<!-- EVENING DIGEST -->
+<!-- /api/requests-settings existed from the first release and no screen ever
+     called it, so the notify address could only be changed with curl. The
+     digest would have inherited exactly that. -->
+<div class="digest-bar">
+  <div class="digest-row">
+    <label class="digest-toggle">
+      <input type="checkbox" id="digest-enabled" onchange="saveDigest()">
+      <span>Email me an evening summary</span>
+    </label>
+    <label class="digest-hour">at
+      <select id="digest-hour" onchange="saveDigest()"></select>
+    </label>
+    <span class="digest-to" id="digest-to"></span>
+    <span class="digest-spacer"></span>
+    <button class="btn-send" onclick="previewDigest()">Preview</button>
+    <button class="btn-send" onclick="sendDigestNow()">Send now</button>
+  </div>
+  <pre class="digest-preview" id="digest-preview" style="display:none;"></pre>
+  <div class="digest-status" id="digest-status"></div>
+</div>
+
 <!-- REQUEST LIST -->
 <div class="list" id="request-list"></div>
 
@@ -464,6 +526,98 @@
     new_customer: 'New customer', hold: 'Service hold',
     missed: 'Missed pickup', update: 'Account update',
   };
+
+  /* ── Evening digest ──────────────────────────────────────────────────── */
+
+  let digestSettings = null;
+
+  function hourLabel(h) {
+    const suffix = h < 12 ? 'am' : 'pm';
+    const twelve = h % 12 === 0 ? 12 : h % 12;
+    return twelve + ':00' + suffix;
+  }
+
+  async function loadDigestSettings() {
+    const sel = document.getElementById('digest-hour');
+    if (sel && !sel.options.length) {
+      for (let h = 0; h < 24; h++) {
+        const o = document.createElement('option');
+        o.value = String(h);
+        o.textContent = hourLabel(h);
+        sel.appendChild(o);
+      }
+    }
+    try {
+      const res = await fetch('/api/requests-settings');
+      if (!res.ok) return;
+      digestSettings = await res.json();
+      document.getElementById('digest-enabled').checked = digestSettings.digest_enabled === '1';
+      sel.value = String(Number(digestSettings.digest_hour));
+      const to = document.getElementById('digest-to');
+      /* Say where it goes. An evening summary silently addressed to an old
+         address is the same failure as a route tab nobody can write to. */
+      to.textContent = digestSettings.notify_email
+        ? 'to ' + digestSettings.notify_email
+        : 'no recipient set — nothing will be sent';
+    } catch { /* the queue still works without this */ }
+  }
+
+  async function saveDigest() {
+    const status = document.getElementById('digest-status');
+    const body = {
+      digest_enabled: document.getElementById('digest-enabled').checked ? '1' : '0',
+      digest_hour: Number(document.getElementById('digest-hour').value),
+    };
+    status.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/requests-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      digestSettings = await res.json();
+      status.textContent = digestSettings.digest_enabled === '1'
+        ? 'Summary will be sent each day after ' + hourLabel(Number(digestSettings.digest_hour)) + '.'
+        : 'Evening summary is off.';
+    } catch (e) {
+      status.textContent = 'Could not save: ' + e.message;
+    }
+  }
+
+  async function previewDigest() {
+    const pre = document.getElementById('digest-preview');
+    const status = document.getElementById('digest-status');
+    status.textContent = 'Loading…';
+    try {
+      const res = await fetch('/api/digest');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      pre.textContent = data.subject + '\n\n' + data.text;
+      pre.style.display = 'block';
+      status.textContent = 'This is what today\u2019s email would say.';
+    } catch (e) {
+      status.textContent = 'Could not load preview: ' + e.message;
+    }
+  }
+
+  async function sendDigestNow() {
+    const status = document.getElementById('digest-status');
+    status.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/digest/send', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
+      /* ok:false is not an error — it means the send was refused for a reason
+         worth reading, like no sending domain configured. Saying "sent" there
+         is the exact failure this codebase keeps digging out. */
+      status.textContent = data.ok
+        ? 'Sent.'
+        : 'Not sent — ' + (data.reason || 'unknown reason') + '.';
+    } catch (e) {
+      status.textContent = 'Could not send: ' + e.message;
+    }
+  }
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -718,6 +872,7 @@
   })();
 
   load();
+  loadDigestSettings();
 </script>
 
 </body></html>

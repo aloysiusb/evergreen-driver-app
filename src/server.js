@@ -15,6 +15,7 @@ import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoice
 import { uploadPhoto, photosFolderId } from "./drive.js";
 import { savePhoto, pathFor, labelFor, usage as photoUsage } from "./photoStore.js";
 import { recordActivity, todaysActivity, pruneActivity } from "./activity.js";
+import { buildDigest, digestText, digestSubject, localClock, DIGEST_TZ } from "./digest.js";
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import {
@@ -1281,25 +1282,19 @@ async function notifyNewRequest(request) {
     return;
   }
 
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from,
-      to,
-      subject: `New Evergreen request — ${request.name}`,
-      text: [
-        `${request.name}`,
-        `${request.address}${request.city ? ", " + request.city : ""}`,
-        request.email ? `Email: ${request.email}` : "",
-        request.phone ? `Phone: ${request.phone}` : "",
-        request.notes ? `Notes: ${request.notes}` : "",
-        "",
-        `Approve or decline: https://evergreen-driver-app.onrender.com/approval.html`,
-      ].filter(Boolean).join("\n"),
-    }),
+  await sendMail({
+    from, to,
+    subject: `New Evergreen request — ${request.name}`,
+    text: [
+      `${request.name}`,
+      `${request.address}${request.city ? ", " + request.city : ""}`,
+      request.email ? `Email: ${request.email}` : "",
+      request.phone ? `Phone: ${request.phone}` : "",
+      request.notes ? `Notes: ${request.notes}` : "",
+      "",
+      `Approve or decline: ${publicBaseUrl()}/approval.html`,
+    ].filter(Boolean).join("\n"),
   });
-  if (!r.ok) throw new Error("Resend responded " + r.status);
   console.log(`[requests] ${request.id} notified ${to}`);
 }
 
@@ -1399,19 +1394,119 @@ async function sendConfirmation(request) {
     console.log(`[requests] ${request.id} stored; confirmation email not sent (not configured)`);
     return;
   }
+  await sendMail({
+    from,
+    to: request.email,
+    subject: confirmationSubject(request),
+    text: confirmationBody(request),
+  });
+  console.log(`[requests] ${request.id} confirmation email sent`);
+}
+
+// --- Evening digest ------------------------------------------------------
+//
+// "What was skipped, what needs follow-up, what complaints came in" — built
+// from what the day already recorded, so it cannot disagree with the board.
+//
+// Sent on a timer inside the web process rather than as a Render cron job:
+// the digest reads the SQLite file on the persistent disk, and a cron job is
+// a separate container that would not have it mounted.
+
+/* One place that talks to Resend. notifyNewRequest and sendConfirmation each
+   grew their own copy of this fetch; a third would have been the point where
+   they start to differ. */
+async function sendMail({ to, subject, text, from }) {
+  const key = process.env.RESEND_API_KEY;
+  from = from || process.env.REQUESTS_FROM_EMAIL || SANDBOX_FROM;
+  if (!key) throw new Error("RESEND_API_KEY is not set");
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from,
-      to: request.email,
-      subject: confirmationSubject(request),
-      text: confirmationBody(request),
-    }),
+    body: JSON.stringify({ from, to, subject, text }),
   });
   if (!r.ok) throw new Error("Resend responded " + r.status);
-  console.log(`[requests] ${request.id} confirmation email sent`);
 }
+
+/**
+ * @param force  a hand-triggered send goes out even on a quiet day — someone
+ *               who pressed the button is owed an answer, unlike the timer.
+ */
+async function sendDigest({ force = false } = {}) {
+  const { notify_email: to, digest_enabled: enabled } = getSettings();
+  const digest = buildDigest();
+
+  if (!force && enabled !== "1") return { sent: false, reason: "digest disabled", digest };
+  if (!to) return { sent: false, reason: "no recipient set", digest };
+  if (!force && digest.empty) return { sent: false, reason: "nothing happened today", digest };
+  if (!process.env.RESEND_API_KEY) {
+    console.log(`[digest] would send to ${to}:\n${digestText(digest, publicBaseUrl())}`);
+    return { sent: false, reason: "email not configured", digest };
+  }
+
+  await sendMail({ to, subject: digestSubject(digest), text: digestText(digest, publicBaseUrl()) });
+  console.log(`[digest] sent to ${to}`);
+  return { sent: true, digest };
+}
+
+function publicBaseUrl() {
+  return process.env.PUBLIC_BASE_URL || "https://evergreen-driver-app.onrender.com";
+}
+
+/* Checked every minute against the valley's clock rather than scheduled with
+   a 24-hour setTimeout: Render restarts the process on every deploy, and a
+   long timer would be thrown away each time — on a busy week the digest would
+   simply never fire. A restart at 6:05pm still sends today's.
+   
+   sentOn is the local date string, so the digest goes once a day however many
+   times the minute is checked or the process restarts. */
+let digestSentOn = "";
+
+function digestTick() {
+  try {
+    const { digest_enabled: enabled, digest_hour: hourStr } = getSettings();
+    if (enabled !== "1") return;
+    const hour = Number(hourStr);
+    if (!Number.isInteger(hour)) return;
+
+    const now = new Date();
+    const { hour: localHour } = localClock(now);
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: DIGEST_TZ }).format(now);
+    if (digestSentOn === today) return;
+    if (localHour < hour) return;
+
+    digestSentOn = today;                       // set BEFORE awaiting, so a
+                                                // slow send cannot double-fire
+    sendDigest().then(r => {
+      if (!r.sent && r.reason !== "nothing happened today") {
+        console.log(`[digest] not sent — ${r.reason}`);
+      }
+    }).catch(err => console.warn("[digest] failed:", err.message));
+  } catch (err) {
+    console.warn("[digest] tick failed:", err.message);
+  }
+}
+
+/* Preview. Behind the gate like every other office screen, and read-only —
+   this is what tonight's email WOULD say. */
+app.get("/api/digest", (req, res) => {
+  const digest = buildDigest();
+  res.json({
+    settings: getSettings(),
+    tz: DIGEST_TZ,
+    subject: digestSubject(digest),
+    text: digestText(digest, publicBaseUrl()),
+    digest,
+  });
+});
+
+app.post("/api/digest/send", async (req, res) => {
+  try {
+    const result = await sendDigest({ force: true });
+    res.json({ ok: result.sent, reason: result.reason || null, subject: digestSubject(result.digest) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- Static file server --------------------------------------------------
 
@@ -1549,4 +1644,6 @@ server.listen(PORT, () => {
   console.log(`Evergreen driver app backend listening on port ${PORT}`);
   auditColumns();
   pruneActivity();
+  digestTick();                                  // catch a restart after the hour
+  setInterval(digestTick, 60 * 1000).unref();
 });
