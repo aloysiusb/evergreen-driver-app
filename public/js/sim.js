@@ -180,6 +180,106 @@
       }));
   }
 
+  /* ── Driving on the roads ────────────────────────────────────────────────
+     The truck used to interpolate straight from one stop's coordinates to the
+     next, which is a crow's flight: across fields, through buildings, over the
+     river. A hovercraft, not a truck.
+
+     So ask Google how you actually get there, and walk the answer. The route
+     between two stops comes back as a list of points along the road; driving
+     those in order is driving the street.
+
+     One leg at a time, fetched the first time it is needed and then cached,
+     with the next one warmed while the current one is being driven. A round
+     here can be two hundred stops and asking for all of it up front would be
+     two hundred stops' worth of Directions quota to watch the first ten.
+
+     If the request fails — offline, quota, no key — the leg keeps its straight
+     line. The test drive carries on; it just looks like it used to. */
+  const legPaths = new Map();   // legIdx → [{lat,lng}, …] along the road
+  const legPending = new Set();
+  let directions = null;
+
+  function pathFor(from, to, idx) {
+    const cached = legPaths.get(idx);
+    if (cached) return cached;
+    requestPath(from, to, idx);
+    return null;                // straight line until it lands
+  }
+
+  function requestPath(from, to, idx) {
+    if (legPending.has(idx) || legPaths.has(idx)) return;
+    if (!window.google?.maps?.DirectionsService) return;
+    legPending.add(idx);
+    try {
+      directions = directions || new google.maps.DirectionsService();
+      directions.route({
+        origin: { lat: from.lat, lng: from.lng },
+        destination: { lat: to.lat, lng: to.lng },
+        travelMode: google.maps.TravelMode.DRIVING,
+      }, (res, status) => {
+        legPending.delete(idx);
+        if (status !== 'OK' || !res?.routes?.[0]) return;
+        /* steps[].path is the full road geometry. overview_path is a
+           simplified version of the same thing — good enough to fall back on,
+           but it cuts corners visibly, so prefer the detailed one. */
+        const pts = [];
+        for (const leg of res.routes[0].legs || []) {
+          for (const stepLeg of leg.steps || []) {
+            for (const p of stepLeg.path || []) pts.push({ lat: p.lat(), lng: p.lng() });
+          }
+        }
+        const path = pts.length > 1
+          ? pts
+          : (res.routes[0].overview_path || []).map(p => ({ lat: p.lat(), lng: p.lng() }));
+        if (path.length > 1) legPaths.set(idx, path);
+      });
+    } catch {
+      legPending.delete(idx);   // no Directions available; straight line it is
+    }
+  }
+
+  /* Where along a path of many points does a fraction t land, and which way is
+     the truck pointing when it gets there? Walked by distance, not by point
+     count, or the truck would crawl through a cluster of points on a bend and
+     bolt down a long straight. */
+  function alongPath(path, t) {
+    let total = 0;
+    const segs = [];
+    for (let i = 1; i < path.length; i++) {
+      const d = metresBetween(path[i - 1], path[i]);
+      segs.push(d);
+      total += d;
+    }
+    if (total <= 0) return { lat: path[0].lat, lng: path[0].lng, heading: 0 };
+
+    let want = Math.max(0, Math.min(t, 1)) * total;
+    for (let i = 0; i < segs.length; i++) {
+      if (want > segs[i] && i < segs.length - 1) { want -= segs[i]; continue; }
+      const a = path[i], b = path[i + 1];
+      const f = segs[i] > 0 ? Math.min(want / segs[i], 1) : 0;
+      return {
+        lat: a.lat + (b.lat - a.lat) * f,
+        lng: a.lng + (b.lng - a.lng) * f,
+        heading: bearing(a, b),
+      };
+    }
+    const last = path[path.length - 1];
+    return { lat: last.lat, lng: last.lng, heading: 0 };
+  }
+
+  function metresBetween(a, b) {
+    const dx = (b.lng - a.lng) * 85000;
+    const dy = (b.lat - a.lat) * 111000;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function pathLength(path) {
+    let m = 0;
+    for (let i = 1; i < path.length; i++) m += metresBetween(path[i - 1], path[i]);
+    return m;
+  }
+
   function bearing(a, b) {
     const toRad = d => d * Math.PI / 180;
     const y = Math.sin(toRad(b.lng - a.lng)) * Math.cos(toRad(b.lat));
@@ -197,11 +297,20 @@
     const from = r[legIdx];
     const to = r[legIdx + 1];
 
-    // Rough metres for this leg, so the pace stays believable instead of
-    // crawling on long legs and teleporting across short ones.
-    const dx = (to.lng - from.lng) * 85000;
-    const dy = (to.lat - from.lat) * 111000;
-    const legM = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+    // The road, if we have it yet. Null means the request is still out (or
+    // failed), and this leg flies straight the way it always did.
+    const path = pathFor(from, to, legIdx);
+
+    // Warm the next leg while this one is being driven, so the truck does not
+    // arrive at a corner and fly the following leg while it waits.
+    if (legIdx + 2 < r.length) requestPath(r[legIdx + 1], r[legIdx + 2], legIdx + 1);
+
+    /* Metres for this leg, so the pace stays believable instead of crawling on
+       long legs and teleporting across short ones. The road is always longer
+       than the crow's flight, and measuring the road is the point: a stop two
+       streets away that is a mile round the one-way system should take a mile's
+       worth of driving. */
+    const legM = Math.max(path ? pathLength(path) : metresBetween(from, to), 1);
     // Scaled to the tick so the pace is unchanged by how often we step — a
     // shorter tick moves a shorter distance, not slower.
     const perTick = (BASE_MPS * speed * (TICK_MS / 1000)) / legM;
@@ -210,11 +319,13 @@
     if (legT >= 1) { legT = 0; legIdx++; }
 
     const t = Math.min(legT, 1);
-    pos = {
-      lat: from.lat + (to.lat - from.lat) * t,
-      lng: from.lng + (to.lng - from.lng) * t,
-      heading: bearing(from, to),
-    };
+    pos = path
+      ? alongPath(path, t)
+      : {
+          lat: from.lat + (to.lat - from.lat) * t,
+          lng: from.lng + (to.lng - from.lng) * t,
+          heading: bearing(from, to),
+        };
 
     if (gpsCb) gpsCb(makePosition(pos));
     if (tickCount++ % STATUS_EVERY === 0) renderStatusLine(r);
