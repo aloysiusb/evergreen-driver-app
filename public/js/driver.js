@@ -240,9 +240,16 @@
                <span class="srb-label">←</span>
              </button>
            </div>`
+        /* Order is by how often a driver reaches for it, not by category:
+           the two commonest first, then the combined one beside them because
+           it is the pair they go together as, then the valley-specific ones,
+           then skip and photo which end the visit. */
         : `<div class="stop-report-row">
-             ${rbtn('contamination', '🚫', 'Contamination', 'Report contamination')}
+             ${rbtn('contamination', '🚫', 'Contam', 'Report contamination')}
              ${rbtn('overflow', '📦', 'Overflow', 'Report overflow')}
+             ${rbtn('combo', '⚠️', 'Both', 'Report contamination and overflow together')}
+             ${rbtn('bear', '🐻', 'Bear', 'Report a bear')}
+             ${rbtn('locked', '🔒', 'Locked', 'Report a locked gate, bin or enclosure')}
              ${rbtn('skip', '⏭', 'Skipped', 'Report skipped')}
              ${rbtn('photo', '📷', 'Photo', 'Take a photo of this stop')}
            </div>`

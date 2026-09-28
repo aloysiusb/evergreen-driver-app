@@ -694,6 +694,25 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(calc(var(--report-btn-min-width) * 0.7), 1fr));
   gap: calc(var(--report-btn-gap) * 0.7);
 }
+
+/* The same trick the sub-row already uses, for the same reason.
+   Seven report buttons at the full 104px minimum pack two to a row on a
+   phone, which makes the block four rows and 568px deep — the note box and
+   the next stop both get pushed off the screen. Scaled down, three fit
+   across and the block is one screen shorter. The token still governs the
+   size, so raising it still makes every circle bigger; this only changes
+   how many share a row on a phone. */
+@media (max-width: 480px) {
+  .stop-report-row:not(.is-sub) {
+    grid-template-columns: repeat(auto-fit, minmax(calc(var(--report-btn-min-width) * 0.72), 1fr));
+  }
+  /* A smaller circle needs smaller words in it, or 'Overflow' comes out as
+     'Overflo' + 'w'. Scaled from the same token, so the setting still
+     governs and this only keeps the ratio. */
+  .stop-report-row:not(.is-sub) .srb-label {
+    font-size: calc(var(--report-btn-font-size) * 0.8);
+  }
+}
 /* A report has been filed that is worth a picture. The camera button is
    ringed and breathes gently — noticeable at a glance, ignorable if the driver
    has decided otherwise. It is a reminder, not a demand: nothing is blocked
@@ -737,7 +756,11 @@ body {
 }
 
 /* Very narrow phones: two across still beats four squashed, whatever the
-   minimum width is set to. */
+   minimum width is set to.
+   Tried three here when the button count went from four to seven. It buys a
+   shorter card — 204px against 428px — and costs 55px circles with the words
+   breaking inside them. On the narrowest phone a driver reads at arm's
+   length, that is the wrong trade: two stays. */
 @media (max-width: 360px) {
   .stop-report-row { grid-template-columns: repeat(2, 1fr); }
 }

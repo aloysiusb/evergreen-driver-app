@@ -37,6 +37,25 @@ app.set("trust proxy", 1);
 
 app.use(express.json());
 
+/* Keep the whole app out of search results.
+ *
+ * Eight pages carried no robots meta tag — among them approval.html, which
+ * lists a customer's name, address, email and phone. A tag per page is a rule
+ * that has to be remembered on every new file, and it was not. A header is
+ * applied whether or not anyone remembered, and it also covers what a meta
+ * tag cannot: the JSON from /api/routes, and the photos under /photos.
+ *
+ * This is not a security control. It is a request, and only well-behaved
+ * crawlers honour it — Google and Bing do, a scraper does not. What keeps
+ * route data private is ACCESS_CODE. This stops the app turning up in a
+ * search for a customer's address, which is a different problem and worth
+ * fixing on its own.
+ */
+app.use((req, res, next) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+  next();
+});
+
 // Let /portal stand in for /portal.html, and so on for every page.
 //
 // Deliberately BEFORE the gate. The gate decides what is public by exact path

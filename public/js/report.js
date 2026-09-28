@@ -90,6 +90,122 @@
         `📦 Overflow: ${answers.severity}${answers.extra ? ' · ' + answers.extra.replace('_', ' ') : ''}${photo ? ' · 📷 photo taken' : ''}`,
     },
 
+    combo: {
+      title: '⚠️ Contamination + Overflow',
+      color: '#5A3A0B',
+      steps: [
+        {
+          label: 'How bad is the bin?',
+          key: 'severity',
+          options: [
+            { value: 'slight',   label: 'Slight' },
+            { value: 'moderate', label: 'Moderate' },
+            { value: 'severe',   label: 'Severe / cannot collect' },
+          ],
+        },
+        {
+          label: 'What was in it?',
+          key: 'type',
+          options: [
+            { value: 'black_bags',  label: 'Black trash bags' },
+            { value: 'recyclables', label: 'Recyclables mixed in' },
+            { value: 'non_compost', label: 'Non-compostable items' },
+            { value: 'other',       label: 'Other' },
+          ],
+        },
+        {
+          label: 'Did you take it?',
+          key: 'extra',
+          options: [
+            { value: 'collected',   label: 'Collected anyway' },
+            { value: 'left_behind', label: 'Left behind' },
+            { value: 'partial',     label: 'Partial collection' },
+          ],
+        },
+      ],
+      format: (answers, photo) => {
+        const typeMap = {
+          black_bags: 'black trash bags', recyclables: 'recyclables mixed in',
+          non_compost: 'non-compostable items', other: 'contamination',
+        };
+        return `⚠️ Contamination + overflow: ${answers.severity} · ` +
+               `${typeMap[answers.type] || answers.type}` +
+               `${answers.extra ? ' · ' + answers.extra.replace('_', ' ') : ''}` +
+               `${photo ? ' · 📷 photo taken' : ''}`;
+      },
+    },
+
+    locked: {
+      title: '🔒 Locked',
+      color: '#3B3B52',
+      steps: [
+        {
+          label: "What's locked?",
+          key: 'what',
+          options: [
+            { value: 'gate',      label: 'Gate' },
+            { value: 'bin',       label: 'Bin lid' },
+            { value: 'enclosure', label: 'Enclosure / shed' },
+            { value: 'code',      label: 'Code on file did not work' },
+          ],
+        },
+        {
+          label: 'Could you service it?',
+          key: 'outcome',
+          options: [
+            { value: 'serviced',  label: 'Got in — serviced anyway' },
+            { value: 'no_access', label: 'No access — not serviced' },
+          ],
+        },
+      ],
+      format: (answers, photo) => {
+        const map = {
+          gate: 'gate locked', bin: 'bin lid locked',
+          enclosure: 'enclosure locked', code: 'code on file did not work',
+        };
+        return `🔒 Locked: ${map[answers.what] || answers.what}` +
+               `${answers.outcome === 'serviced' ? ' · serviced anyway' : ' · not serviced'}` +
+               `${photo ? ' · 📷 photo taken' : ''}`;
+      },
+    },
+
+    bear: {
+      title: '🐻 Bear',
+      color: '#4A2F18',
+      steps: [
+        {
+          label: 'What happened?',
+          key: 'what',
+          options: [
+            { value: 'in_bin',      label: 'Bear got into the bin' },
+            { value: 'knocked',     label: 'Bin knocked over' },
+            { value: 'damaged',     label: 'Bin damaged' },
+            { value: 'latch',       label: 'Latch broken / not closing' },
+            { value: 'on_site',     label: 'Bear on site — did not approach' },
+          ],
+        },
+        {
+          label: 'What did you do?',
+          key: 'outcome',
+          options: [
+            { value: 'collected',  label: 'Collected' },
+            { value: 'cleaned',    label: 'Cleaned up and collected' },
+            { value: 'left',       label: 'Left it — unsafe or too much' },
+          ],
+        },
+      ],
+      format: (answers, photo) => {
+        const map = {
+          in_bin: 'got into the bin', knocked: 'bin knocked over',
+          damaged: 'bin damaged', latch: 'latch broken', on_site: 'bear on site',
+        };
+        const out = { collected: 'collected', cleaned: 'cleaned up and collected', left: 'left it' };
+        return `🐻 Bear: ${map[answers.what] || answers.what}` +
+               `${answers.outcome ? ' · ' + (out[answers.outcome] || answers.outcome) : ''}` +
+               `${photo ? ' · 📷 photo taken' : ''}`;
+      },
+    },
+
     skip: {
       title: '⏭ Skip Stop',
       color: '#085B30',
@@ -165,10 +281,30 @@
      one thing and the sheet to record another. The icon is fixed, because
      writeNote() below uses it to recognise and replace a previous report on
      the same stop. */
-  const ICON = { contamination: '🚫', overflow: '📦', skip: '⏭', photo: '📷' };
+  const ICON = {
+    contamination: '🚫', overflow: '📦', skip: '⏭', photo: '📷',
+    combo: '⚠️', locked: '🔒', bear: '🐻',
+  };
+  /* Short on purpose, for the same reason 'Recyclables' became 'Recycling'
+     below: these are read off a circle, and with seven buttons three now
+     share a row on a phone. 'Contamination' broke as 'Contami' + 'nation'.
+     Any of them can be renamed in the style editor. */
   const FALLBACK = {
-    contamination: 'Contamination',
+    contamination: 'Contam',
     overflow: 'Overflow',
+    /* Contamination AND overflow on the same bin, as one report. Filing the
+       two separately means two notes on one stop, and the second overwrites
+       the first in the sheet's notes column.
+       'Both' rather than a name of its own: it sits between Contam and
+       Overflow, so what it means is legible from where it is. */
+    combo: 'Both',
+    /* A lock was only reachable through Skip, so a driver who got in anyway,
+       or who wants the locked gate on record without skipping the stop, had
+       nowhere to put it. */
+    locked: 'Locked',
+    /* Bears open compost bins in this valley. It was going in as free text
+       or not at all, which means it never counted for anything. */
+    bear: 'Bear',
     skip: 'Skipped',
     photo: 'Photo',
   };
@@ -204,6 +340,13 @@
   const QUICK_FALLBACK = {
     contamination: { l2: ['1 bag', '2 bags', '3+ bags', 'Recycling', 'Non-compost', 'Other'], l3: [] },
     overflow:      { l2: ['Slight', 'Moderate', 'Severe', 'Left behind'], l3: [] },
+    /* One tap covers both problems. The words describe the bin, not each
+       problem separately — a driver is not going to grade them apart. */
+    combo:         { l2: ['Slight', 'Moderate', 'Severe', 'Left behind'], l3: [] },
+    /* What was locked, not whether the stop was skipped. If it was skipped
+       that is a Skip; this records the lock either way. */
+    locked:        { l2: ['Gate', 'Bin lid', 'Enclosure', 'Code failed', 'Got in anyway'], l3: [] },
+    bear:          { l2: ['In the bin', 'Knocked over', 'Bin damaged', 'Latch broken', 'Bear on site'], l3: [] },
     skip:          { l2: ['Not at curb', 'Gate locked', 'Customer', 'On hold'], l3: [] },
     photo:         { l2: [], l3: [] },
   };
@@ -262,10 +405,20 @@
      dog warning — with no way to get it back. */
   function writeNote(rowNumber, addition) {
     const existing = (typeof existingNote === 'function' ? existingNote(rowNumber) : '').trim();
-    // Replace a previous report of our own rather than stacking them up.
+    /* Replace a previous report of our own rather than stacking them up.
+       Read from ICON rather than a list written out here: this was four
+       icons hard-coded, and adding a button without noticing meant its
+       reports appended forever — "🐻 Bear · 🐻 Bear: In the bin · 🐻 Bear…"
+       down the notes column. Now a new kind is covered the moment it has an
+       icon. startsWith, not a regex, because ⚠️ is two code points and does
+       not survive being dropped into a character class. */
+    const reportIcons = Object.values(ICON);
     const cleaned = existing
       .split(' · ')
-      .filter(part => !/^(🚫|📦|⏭|📷)/.test(part.trim()))
+      .filter(part => {
+        const t = part.trim();
+        return !reportIcons.some(icon => t.startsWith(icon));
+      })
       .join(' · ')
       .trim();
     const combined = cleaned ? cleaned + ' · ' + addition : addition;
