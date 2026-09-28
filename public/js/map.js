@@ -118,6 +118,17 @@ let followMode = true;
 // further back than the walkthrough's driving view — that one is 18, and 18 is
 // what people mean when they say they want the view from the video.
 let followZoom = 18;
+// The single point where the zoom is allowed to change. See the zoom notes
+// below: everything else asks this, and nothing calls setZoom directly.
+function goToZoom(z) {
+  if (!gMap) return;
+  zoomLocked = z;
+  // Unpin, move, re-pin. Pinned means minZoom === maxZoom, which is what stops
+  // a pinch doing anything at all.
+  gMap.setOptions({ minZoom: null, maxZoom: null });
+  gMap.setZoom(z);
+  gMap.setOptions({ minZoom: z, maxZoom: z });
+}
 let suppressFollowOff = false; // set while WE move the map, so our own pans don't count as manual
 
 // The vector Map ID, if one is configured on the server. Null on a raster map,
@@ -126,24 +137,32 @@ let suppressFollowOff = false; // set while WE move the map, so our own pans don
 let mapId = null;
 const FOLLOW_TILT = 45;       // matches the walkthrough's driving view
 
-/* Zoom belongs to the driver.
+/* ── Zoom: two considered views, not a gesture to fight ───────────────────
  *
- * The app sets the close-in driving zoom ONCE, when the map first starts
- * following, and never touches it again on its own. Everything after that is
- * the driver's: pinch, the +/- control, or the 🔭 button. Nothing the app does
- * in the background — a GPS tick, re-centring, tapping 🧭 back on — moves it.
+ * Pinch zoom is continuous and very sensitive, and on a map that is also
+ * riding along with you it is genuinely unpleasant: a fingertip's travel is
+ * several zoom levels, every one of them re-rendering, and you end up either
+ * in the weeds or in orbit and hunting for the level you actually wanted.
  *
- * It used to re-assert followZoom on every engage, so a driver who pinched out
- * to see where they were got hauled back in the moment anything re-centred.
- * That is the map "jumping around when you touch the screen". */
-let zoomIsDriverOwned = false;  // has the one automatic zoom already happened?
-let ourZoom = null;             // the zoom WE last set, to tell ours from theirs
-const OVERVIEW_ZOOM = 14;       // the pulled-back look, same as the demo
+ * So the map has TWO views and no dial:
+ *
+ *   Driving   close in, riding with the truck                (the default)
+ *   Route     pulled back far enough to see what is still to do
+ *
+ * and the zoom is LOCKED to whichever one is showing. Locked literally —
+ * minZoom and maxZoom are pinned to the same number, so a stray pinch has
+ * nowhere to go and simply does nothing. The buttons unlock, move, and re-lock.
+ * Panning is untouched: dragging to look around still works, and still drops
+ * follow.
+ *
+ * The effect is that the zoom cannot be nudged, only chosen — which is the
+ * point. Nothing between the two views is a view anybody asked for. */
+const ZOOM_DRIVING = 18;
+let zoomLocked = null;          // the level the map is currently pinned to
 let overviewOn = false;
-// A short window after we move the camera ourselves, during which a zoom
-// change is ours rather than the driver's. A timestamp rather than a flag
-// because fitBounds reports its zoom back asynchronously.
-let selfZoomUntil = 0;
+// fitBounds picks its own zoom and reports it back asynchronously, so the lock
+// has to wait for the map to settle before it can pin the result.
+let pendingLock = false;
 
 // ── Traffic + auto-reroute state ──────────────────────────────────────────
 let trafficDelayMins = null;   // minutes lost to traffic vs free-flow
@@ -236,7 +255,16 @@ async function initMap() {
     // view is the one the driver wants anyway.
     zoom: followZoom,
     center: { lat: 39.4022, lng: -107.2117 },   // Carbondale, CO
+    // Pinned from the start, so the zoom is never a thing a finger can nudge.
+    // The two view buttons move between levels; see the zoom notes at the top.
+    minZoom: followZoom,
+    maxZoom: followZoom,
     gestureHandling: 'greedy',
+    // The rest of the ways a map normally changes zoom, all of them
+    // accidental on a phone on a dashboard mount.
+    zoomControl: false,
+    scrollwheel: false,
+    disableDoubleClickZoom: true,
     // Only passed when one is configured. Handing Google a mapId of null or
     // an empty string is not the same as omitting it — it asks for a map that
     // does not exist, and the map fails to load rather than falling back.
@@ -250,7 +278,6 @@ async function initMap() {
     },
     fullscreenControl: true,
     streetViewControl: true,   // drop pegman to scout an unfamiliar driveway
-    zoomControl: true,
     scaleControl: true,
     rotateControl: true,
     clickableIcons: true,      // tap POIs — gas stations, etc.
@@ -781,13 +808,10 @@ function applyFollow(latLng, heading, snapZoom) {
      it. The animation was never the thing making it smooth. */
   gMap.setCenter(latLng);
 
-  // Only on the very first engage. After that the zoom belongs to the driver:
-  // see driverZoom below.
-  if (snapZoom && !zoomIsDriverOwned) {
-    ourZoom = followZoom;          // claim it before the event can fire
-    gMap.setZoom(followZoom);
-    zoomIsDriverOwned = true;
-  }
+  // Coming back to the driving view from the route view. Otherwise the zoom is
+  // already pinned where it belongs and there is nothing to do — no re-assert
+  // on every engage, which is what used to haul a driver back in.
+  if (snapZoom && zoomLocked !== followZoom && !overviewOn) goToZoom(followZoom);
 
   // Tilt and heading-up only exist on a vector map, which means a Map ID made
   // with vector rendering in the Google Cloud console and set as
@@ -836,25 +860,16 @@ function watchForManualPan() {
   if (!gMap) return;
   gMap.addListener('dragstart', () => { if (!suppressFollowOff) setFollow(false); });
 
-  /* Pinching is not dragging, and Google does not report it as one, so a pinch
-     never dropped follow and never registered as a choice. The driver pinched
-     out, the app kept its own idea of the zoom, and the next thing to re-centre
-     put them straight back where they started.
-     A pinch is now a decision: the map keeps riding with them — that is what
-     they wanted, or they would have dragged — but at THEIR zoom, for good. */
-  gMap.addListener('zoom_changed', () => {
+  /* fitBounds is the one place the app does not know the zoom in advance — it
+     asks Google to frame the stops and takes whatever level that needs. Wait
+     for the map to settle, then pin the result, so the route view is as locked
+     as the driving view is. */
+  gMap.addListener('idle', () => {
+    if (!pendingLock) return;
+    pendingLock = false;
     const z = gMap.getZoom();
-    // Ours, not theirs. Two ways to tell: it is the number we just asked for,
-    // or it landed inside the window we opened before moving the camera —
-    // which is how fitBounds gets recognised, since it chooses its own zoom
-    // and reports it back asynchronously. Without that second test the button
-    // would see its own fitBounds as a pinch and switch itself off.
-    if (z === ourZoom || Date.now() < selfZoomUntil) { ourZoom = z; return; }
-    zoomIsDriverOwned = true;
-    ourZoom = z;
-    // They have zoomed by hand, so the 🔭 button is no longer describing the
-    // view they are looking at.
-    if (overviewOn) setOverview(false, true);
+    zoomLocked = z;
+    gMap.setOptions({ minZoom: z, maxZoom: z });
   });
 }
 
@@ -875,27 +890,26 @@ function setOverview(on, keepZoom) {
   }
   if (keepZoom || !gMap) return;
 
-  // Everything the camera does for the next moment is ours, not the driver's.
-  selfZoomUntil = Date.now() + 600;
-
   if (on) {
     setFollow(false);              // looking at the round, not riding along
     const rest = navStops.filter(s => !s.done && s._latLng);
     if (rest.length > 1) {
-      // Frame what is actually left to do, which is more useful than a fixed
-      // zoom on a round that might be four blocks or forty miles.
+      /* Frame what is actually left to do, which is more useful than a fixed
+         zoom on a round that might be four blocks or forty miles. fitBounds
+         needs room to choose, so unpin first and let the idle handler pin
+         whatever it settles on. */
       const b = new google.maps.LatLngBounds();
       rest.forEach(s => b.extend(s._latLng));
       if (lastGpsPos) b.extend(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng));
+      gMap.setOptions({ minZoom: null, maxZoom: null });
+      pendingLock = true;
       gMap.fitBounds(b, 48);
-      ourZoom = null;              // fitBounds picks its own zoom; don't guess it
     } else {
-      ourZoom = OVERVIEW_ZOOM;
-      gMap.setZoom(OVERVIEW_ZOOM);
+      // One stop left, or none placed yet: nothing to frame, so just step back.
+      goToZoom(Math.max(ZOOM_DRIVING - 4, 1));
     }
   } else {
-    ourZoom = followZoom;
-    gMap.setZoom(followZoom);
+    goToZoom(followZoom);
     setFollow(true);               // back in the cab
   }
 }
