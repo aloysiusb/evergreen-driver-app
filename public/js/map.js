@@ -114,8 +114,17 @@ const ARRIVAL_CLEAR_RADIUS_M = ARRIVAL_RADIUS_M * 1.5;
 // on the destination. Panning the map by hand drops out of follow (otherwise
 // it fights you); the 🧭 button puts it back.
 let followMode = true;
-let followZoom = 17;          // street level; the old default of 15 is too far out to read side streets
+// Street level. This was 17, which reads the side streets fine but sits
+// further back than the walkthrough's driving view — that one is 18, and 18 is
+// what people mean when they say they want the view from the video.
+let followZoom = 18;
 let suppressFollowOff = false; // set while WE move the map, so our own pans don't count as manual
+
+// The vector Map ID, if one is configured on the server. Null on a raster map,
+// and that is the whole difference: tilt and heading-up are silently ignored
+// without it. Everything below checks this rather than trying and hoping.
+let mapId = null;
+const FOLLOW_TILT = 45;       // matches the walkthrough's driving view
 
 // ── Traffic + auto-reroute state ──────────────────────────────────────────
 let trafficDelayMins = null;   // minutes lost to traffic vs free-flow
@@ -180,7 +189,9 @@ async function initMap() {
   try {
     const res = await fetch('/api/maps-key');
     if (!res.ok) throw new Error();
-    apiKey = (await res.json()).key;
+    const cfg = await res.json();
+    apiKey = cfg.key;
+    mapId = cfg.mapId || null;
   } catch {
     loadingEl.textContent = 'Maps not configured — add GOOGLE_MAPS_API_KEY in Render.';
     return;
@@ -188,7 +199,10 @@ async function initMap() {
 
   await new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    // map_ids lets Google fetch the style for this map before the map is
+    // created, so a vector map paints in one pass instead of two.
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places` +
+            (mapId ? `&map_ids=${encodeURIComponent(mapId)}` : '');
     s.async = true;
     s.onload = resolve;
     s.onerror = () => reject(new Error('Maps failed'));
@@ -201,6 +215,10 @@ async function initMap() {
     zoom: 15,
     center: { lat: 39.4022, lng: -107.2117 },   // Carbondale, CO
     gestureHandling: 'greedy',
+    // Only passed when one is configured. Handing Google a mapId of null or
+    // an empty string is not the same as omitting it — it asks for a map that
+    // does not exist, and the map fails to load rather than falling back.
+    ...(mapId ? { mapId } : {}),
     // Full Google Maps capability for drivers
     mapTypeControl: true,
     mapTypeControlOptions: {
@@ -729,12 +747,19 @@ function applyFollow(latLng, heading, snapZoom) {
   // Only on engage — re-asserting zoom every tick would fight a driver who
   // deliberately zoomed out to see the rest of the route.
   if (snapZoom && gMap.getZoom() < followZoom) gMap.setZoom(followZoom);
-  // Heading-up rotation only takes effect on a vector map (needs a vector
-  // mapId from the Google Cloud console). On a raster map this is a no-op,
-  // which is why the view stays north-up today.
+
+  // Tilt and heading-up only exist on a vector map, which means a Map ID made
+  // with vector rendering in the Google Cloud console and set as
+  // GOOGLE_MAPS_MAP_ID. Without one both calls are ignored, so there is
+  // nothing to gain by making them and a tilt to un-do if one appears later.
+  if (!mapId) return;
+
+  // Lean the map over on engage only, for the same reason as the zoom: a
+  // driver who flattened it deliberately should not have it pushed back.
+  if (snapZoom && gMap.setTilt) gMap.setTilt(FOLLOW_TILT);
+
   if (typeof heading === 'number' && !Number.isNaN(heading) && gMap.setHeading) {
-    // Raster maps throw rather than ignore it; nothing to do and nothing to say.
-    try { gMap.setHeading(heading); } catch { /* raster map, heading unsupported */ }
+    gMap.setHeading(heading);   // rotates so the way they are driving is "up"
   }
   setTimeout(() => { suppressFollowOff = false; }, 0);
 }
@@ -748,6 +773,14 @@ function setFollow(on) {
   }
   if (on && lastGpsPos) {
     applyFollow(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng), lastGpsHeading, true);
+  }
+  // Dropping out of follow is how a driver asks to look at the route as a
+  // whole, and a tilted, rotated map is the wrong shape for that. Put it back
+  // flat and north-up so 🧭 is the toggle between the two views rather than a
+  // one-way trip into the driving one. No extra button for it.
+  if (!on && mapId && gMap) {
+    if (gMap.setTilt) gMap.setTilt(0);
+    if (gMap.setHeading) gMap.setHeading(0);
   }
 }
 
