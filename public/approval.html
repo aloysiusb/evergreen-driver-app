@@ -686,15 +686,20 @@
     // "handled" — approving a hold should not add anyone to a route.
     /* Price is optional. Approving without one still puts them on a route —
        it just leaves the invoicing to be done by hand, which is where this
-       was before. Nothing is blocked on QuickBooks. */
+       was before. Nothing is blocked on QuickBooks.
+
+       The placeholder said "$ / month", which promised recurring billing this
+       app does not do: createInvoice() raises ONE invoice and stops. There is
+       no subscription, and nothing here charges anyone a second time. */
     const picker = r.kind === 'new_customer'
       ? '<select id="tab-' + esc(r.id) + '" class="tab-pick">' +
           '<option value="">Which route?</option>' +
           ROUTE_TABS.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('') +
         '</select>' +
         '<input id="amt-' + esc(r.id) + '" class="amount-pick" type="text" ' +
-          'inputmode="decimal" placeholder="$ / month" ' +
-          'title="Leave blank to skip invoicing and add them to the route only">'
+          'inputmode="decimal" placeholder="$ first invoice" ' +
+          'title="Raises one invoice in QuickBooks for this amount. Not a recurring charge. ' +
+                 'Leave blank to add them to the route without invoicing.">'
       : '';
 
     return '<div class="card-actions">' + picker +
