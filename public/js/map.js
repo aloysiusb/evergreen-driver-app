@@ -126,6 +126,25 @@ let suppressFollowOff = false; // set while WE move the map, so our own pans don
 let mapId = null;
 const FOLLOW_TILT = 45;       // matches the walkthrough's driving view
 
+/* Zoom belongs to the driver.
+ *
+ * The app sets the close-in driving zoom ONCE, when the map first starts
+ * following, and never touches it again on its own. Everything after that is
+ * the driver's: pinch, the +/- control, or the 🔭 button. Nothing the app does
+ * in the background — a GPS tick, re-centring, tapping 🧭 back on — moves it.
+ *
+ * It used to re-assert followZoom on every engage, so a driver who pinched out
+ * to see where they were got hauled back in the moment anything re-centred.
+ * That is the map "jumping around when you touch the screen". */
+let zoomIsDriverOwned = false;  // has the one automatic zoom already happened?
+let ourZoom = null;             // the zoom WE last set, to tell ours from theirs
+const OVERVIEW_ZOOM = 14;       // the pulled-back look, same as the demo
+let overviewOn = false;
+// A short window after we move the camera ourselves, during which a zoom
+// change is ours rather than the driver's. A timestamp rather than a flag
+// because fitBounds reports its zoom back asynchronously.
+let selfZoomUntil = 0;
+
 // ── Traffic + auto-reroute state ──────────────────────────────────────────
 let trafficDelayMins = null;   // minutes lost to traffic vs free-flow
 let rerouteTimer = null;
@@ -212,7 +231,10 @@ async function initMap() {
   loadingEl.style.display = 'none';
 
   gMap = new google.maps.Map(document.getElementById('route-map'), {
-    zoom: 15,
+    // Open at the driving zoom rather than at 15 and then snapping in once
+    // GPS arrives. That snap was a visible lurch on every load, and the close
+    // view is the one the driver wants anyway.
+    zoom: followZoom,
     center: { lat: 39.4022, lng: -107.2117 },   // Carbondale, CO
     gestureHandling: 'greedy',
     // Only passed when one is configured. Handing Google a mapId of null or
@@ -743,10 +765,29 @@ function updateTurnBanner(lat, lng) {
 function applyFollow(latLng, heading, snapZoom) {
   if (!followMode || !gMap) return;
   suppressFollowOff = true;
-  gMap.panTo(latLng);
-  // Only on engage — re-asserting zoom every tick would fight a driver who
-  // deliberately zoomed out to see the rest of the route.
-  if (snapZoom && gMap.getZoom() < followZoom) gMap.setZoom(followZoom);
+
+  /* setCenter, not panTo, and this is the whole reason the map still looked
+     jumpy after the GPS updates were smoothed out.
+
+     panTo is an ANIMATED pan: it eases the map across over a few hundred
+     milliseconds. That was fine at one position a second, because each
+     animation finished long before the next arrived. At a position every 80 ms
+     each pan interrupts the one before it a fraction of the way through its
+     easing curve, and a map that is forever restarting an ease looks like it
+     is stuttering — worse than the slideshow it replaced.
+
+     setCenter moves instantly. Thirteen small instant steps a second is what
+     smooth motion is; it is how the walkthrough does it, and how video does
+     it. The animation was never the thing making it smooth. */
+  gMap.setCenter(latLng);
+
+  // Only on the very first engage. After that the zoom belongs to the driver:
+  // see driverZoom below.
+  if (snapZoom && !zoomIsDriverOwned) {
+    ourZoom = followZoom;          // claim it before the event can fire
+    gMap.setZoom(followZoom);
+    zoomIsDriverOwned = true;
+  }
 
   // Tilt and heading-up only exist on a vector map, which means a Map ID made
   // with vector rendering in the Google Cloud console and set as
@@ -771,6 +812,9 @@ function setFollow(on) {
     btn.classList.toggle('active', on);
     btn.title = on ? 'Following you — tap to stop' : 'Re-centre on your location';
   }
+  // Re-centres, but does NOT haul the zoom back. Tapping 🧭 after looking
+  // around used to snap you to zoom 18 whatever you had chosen, which is the
+  // map "jumping" for no reason a driver asked for.
   if (on && lastGpsPos) {
     applyFollow(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng), lastGpsHeading, true);
   }
@@ -791,7 +835,72 @@ window.toggleFollow = function() { setFollow(!followMode); };
 function watchForManualPan() {
   if (!gMap) return;
   gMap.addListener('dragstart', () => { if (!suppressFollowOff) setFollow(false); });
+
+  /* Pinching is not dragging, and Google does not report it as one, so a pinch
+     never dropped follow and never registered as a choice. The driver pinched
+     out, the app kept its own idea of the zoom, and the next thing to re-centre
+     put them straight back where they started.
+     A pinch is now a decision: the map keeps riding with them — that is what
+     they wanted, or they would have dragged — but at THEIR zoom, for good. */
+  gMap.addListener('zoom_changed', () => {
+    const z = gMap.getZoom();
+    // Ours, not theirs. Two ways to tell: it is the number we just asked for,
+    // or it landed inside the window we opened before moving the camera —
+    // which is how fitBounds gets recognised, since it chooses its own zoom
+    // and reports it back asynchronously. Without that second test the button
+    // would see its own fitBounds as a pinch and switch itself off.
+    if (z === ourZoom || Date.now() < selfZoomUntil) { ourZoom = z; return; }
+    zoomIsDriverOwned = true;
+    ourZoom = z;
+    // They have zoomed by hand, so the 🔭 button is no longer describing the
+    // view they are looking at.
+    if (overviewOn) setOverview(false, true);
+  });
 }
+
+/* ── The pulled-back look ──────────────────────────────────────────────────
+ * The driving view is the default and stays the default. This is the deliberate
+ * step back out of it: one tap to see the shape of the round, one tap to get
+ * back in the cab. Nothing else in the app pulls the camera out on its own.
+ *
+ * keepZoom is for when the driver has already changed the zoom themselves —
+ * then the button just stops claiming to be on, and leaves their view alone. */
+function setOverview(on, keepZoom) {
+  overviewOn = on;
+  const btn = document.getElementById('mode-overview');
+  if (btn) {
+    btn.classList.toggle('active', on);
+    btn.title = on ? 'Showing the route — tap to go back to driving'
+                   : 'Zoom out to see the rest of the route';
+  }
+  if (keepZoom || !gMap) return;
+
+  // Everything the camera does for the next moment is ours, not the driver's.
+  selfZoomUntil = Date.now() + 600;
+
+  if (on) {
+    setFollow(false);              // looking at the round, not riding along
+    const rest = navStops.filter(s => !s.done && s._latLng);
+    if (rest.length > 1) {
+      // Frame what is actually left to do, which is more useful than a fixed
+      // zoom on a round that might be four blocks or forty miles.
+      const b = new google.maps.LatLngBounds();
+      rest.forEach(s => b.extend(s._latLng));
+      if (lastGpsPos) b.extend(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng));
+      gMap.fitBounds(b, 48);
+      ourZoom = null;              // fitBounds picks its own zoom; don't guess it
+    } else {
+      ourZoom = OVERVIEW_ZOOM;
+      gMap.setZoom(OVERVIEW_ZOOM);
+    }
+  } else {
+    ourZoom = followZoom;
+    gMap.setZoom(followZoom);
+    setFollow(true);               // back in the cab
+  }
+}
+
+window.toggleOverview = function() { setOverview(!overviewOn); };
 
 // ── Satellite toggle ─────────────────────────────────────────────────────────
 // Hybrid (aerial + labels) helps drivers spot driveways, bin placement and

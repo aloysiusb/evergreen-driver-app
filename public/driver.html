@@ -59,11 +59,16 @@
   <div id="view-map" style="display:none;">
     <div id="map-optimize-bar">
       <div class="route-mode-toggle">
-        <button class="mode-btn active" id="mode-planned" onclick="setRouteMode('planned')">📋 Planned</button>
-        <button class="mode-btn" id="mode-live" onclick="setRouteMode('live')">⚡ Live</button>
-        <button class="mode-btn active" id="mode-follow" onclick="toggleFollow()" title="Following you — tap to stop">🧭 Follow</button>
-        <button class="mode-btn" id="mode-sat" onclick="toggleSatellite()">🛰 Satellite</button>
-        <button class="mode-btn active" id="mode-alert" onclick="cycleAlertMode()">🔔 Sound</button>
+        <!-- The words sit in a span so a phone can drop them. Six labelled
+             buttons are wider than any phone screen, and the bar was already
+             pushing the page sideways with five. The emoji and the tap target
+             stay; the title carries the word for anyone hovering. -->
+        <button class="mode-btn active" id="mode-planned" onclick="setRouteMode('planned')" title="Planned route order">📋<span class="mode-label"> Planned</span></button>
+        <button class="mode-btn" id="mode-live" onclick="setRouteMode('live')" title="Live optimised order">⚡<span class="mode-label"> Live</span></button>
+        <button class="mode-btn active" id="mode-follow" onclick="toggleFollow()" title="Following you — tap to stop">🧭<span class="mode-label"> Follow</span></button>
+        <button class="mode-btn" id="mode-overview" onclick="toggleOverview()" title="Zoom out to see the rest of the route">🔭<span class="mode-label"> Route</span></button>
+        <button class="mode-btn" id="mode-sat" onclick="toggleSatellite()" title="Satellite view">🛰<span class="mode-label"> Satellite</span></button>
+        <button class="mode-btn active" id="mode-alert" onclick="cycleAlertMode()" title="Arrival sound">🔔<span class="mode-label"> Sound</span></button>
       </div>
       <span id="optimize-status"></span>
     </div>

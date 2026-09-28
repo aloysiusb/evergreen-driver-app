@@ -855,6 +855,16 @@ body {
 #sim-bar button.off { background: #7f1d1d; border-color: #b91c1c; color: #fecaca; }
 #sim-bar label { display: flex; align-items: center; gap: 6px; opacity: 0.9; }
 #sim-bar input[type="range"] { width: 90px; }
+/* The speed readout. Tabular figures so the number does not jiggle the bar
+   about as you drag the slider, and a fixed width for the same reason. */
+#sim-speed-read {
+  font-variant-numeric: tabular-nums;
+  min-width: 8.5ch;
+  opacity: 0.85;
+}
+/* Above about 60 mph you are fast-forwarding, not driving, and the view stops
+   looking like a truck. Say so rather than leave it a mystery. */
+#sim-speed-read.fast { color: #fbbf24; opacity: 1; }
 
 #sim-log {
   max-height: 34vh;
@@ -1430,3 +1440,38 @@ textarea.note-edit {
   font-weight: 700;
   line-height: 1.2;
 }
+
+/* ── The map's mode bar on a phone ────────────────────────────────────────
+   This bar has six buttons and it never fitted. Measured on a 390 px phone it
+   was 496 px wide with five buttons and 591 px with six, which is not a
+   cosmetic problem: it made the whole PAGE wider than the screen, so a driver
+   touching anywhere near the map dragged the page sideways under their finger
+   and the map appeared to jump around. That is a two-finger fight between the
+   page scrolling and the map panning, and the map always lost.
+
+   flex: 1 alone could not shrink them, because a flex item will not go below
+   its min-content width by default and `white-space: nowrap` makes that the
+   full label. min-width: 0 lets them shrink; dropping the words below 560 px
+   means they do not have to shrink far.
+
+   Deliberately at the end of the stylesheet: an earlier version of the mobile
+   rules in this file sat above the rules they were meant to override and did
+   nothing at all for months. Same specificity means last one wins. */
+.mode-btn { min-width: 0; }
+
+@media (max-width: 560px) {
+  .mode-btn .mode-label { display: none; }
+  .mode-btn {
+    /* Emoji only. Bigger glyph and more height than the labelled version had,
+       because this is aimed at a thumb in a moving truck, possibly gloved. */
+    padding: 10px 4px;
+    font-size: 17px;
+    line-height: 1.1;
+    min-height: 44px;     /* a thumb in a moving truck, possibly gloved */
+  }
+}
+
+/* No `overflow-x: hidden` on html or body here, tempting as it is. It would
+   hide this kind of bug rather than fix it, and it silently kills
+   `position: sticky` — which .route-header relies on to keep the route name
+   and the Done count on screen while a driver scrolls the stop list. */

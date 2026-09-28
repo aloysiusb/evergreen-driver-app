@@ -109,7 +109,24 @@
   let gpsCb = null;
   let simTimer = null;
   let playing = false;
-  let speed = 3;              // multiplier on a ~13 m/s baseline
+
+  /* Speed.
+     The baseline is one truck-speed on a collection round: 11 m/s, about
+     25 mph, which is what the stretches between stops actually look like.
+     The slider on top of it is FAST FORWARD, not the accelerator — it
+     compresses time so you can reach stop forty without driving to stop forty.
+
+     This used to be an 11 m/s baseline in all but name with the slider
+     defaulting to 3, which meant the truck left the kerb at 87 mph and the top
+     of the slider was 291 mph. At one position a second nobody could tell. At
+     twelve a second it looks like the driver can fly, which is the honest
+     rendering of 87 mph down a residential street.
+
+     So: default to ×1, and put the real number on the screen. Anyone who wants
+     to skip ahead still can, and now they can see what they asked for. */
+  const BASE_MPS = 11;
+  const MPH = 2.23694;
+  let speed = 1;
   let legIdx = 0;             // which stop-to-stop leg we are on
   let legT = 0;               // 0..1 progress along the current leg
   let pos = null;
@@ -143,7 +160,7 @@
         longitude: p.lng,
         accuracy: 8,
         heading: p.heading,
-        speed: playing ? 13 * speed : 0,
+        speed: playing ? BASE_MPS * speed : 0,
         altitude: null,
         altitudeAccuracy: null,
       },
@@ -185,9 +202,9 @@
     const dx = (to.lng - from.lng) * 85000;
     const dy = (to.lat - from.lat) * 111000;
     const legM = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-    // ~13 m/s baseline, scaled to the tick so the pace is unchanged by how
-    // often we step — a shorter tick moves a shorter distance, not slower.
-    const perTick = (13 * speed * (TICK_MS / 1000)) / legM;
+    // Scaled to the tick so the pace is unchanged by how often we step — a
+    // shorter tick moves a shorter distance, not slower.
+    const perTick = (BASE_MPS * speed * (TICK_MS / 1000)) / legM;
 
     legT += perTick;
     if (legT >= 1) { legT = 0; legIdx++; }
@@ -229,7 +246,8 @@
         '<span id="sim-status">ready</span>' +
         '<button id="sim-play" type="button">▶ Drive</button>' +
         '<button id="sim-signal" type="button">📶 Signal: on</button>' +
-        '<label>Speed <input id="sim-speed" type="range" min="1" max="10" step="1" value="3"></label>' +
+        '<label>Speed <input id="sim-speed" type="range" min="1" max="10" step="1" value="1">' +
+          '<span id="sim-speed-read"></span></label>' +
         '<button id="sim-reset" type="button">↺ Restart</button>' +
         '<button id="sim-toggle-log" type="button">Writes (0)</button>' +
       '</div>' +
@@ -240,7 +258,11 @@
     document.getElementById('sim-reset').onclick = () => {
       pause(); legIdx = 0; legT = 0; pos = null; setStatus('ready');
     };
-    document.getElementById('sim-speed').oninput = (e) => { speed = Number(e.target.value); };
+    document.getElementById('sim-speed').oninput = (e) => {
+      speed = Number(e.target.value);
+      showSpeed();
+    };
+    showSpeed();
     document.getElementById('sim-signal').onclick = () => {
       hasSignal = !hasSignal;
       const b = document.getElementById('sim-signal');
@@ -254,6 +276,17 @@
       log.hidden = !log.hidden;
     };
     renderLog();
+  }
+
+  /* Says what the slider is actually doing. ×1 is a truck; anything above it
+     is time being compressed, and the mph is there so nobody has to wonder why
+     the driver appears to be flying. */
+  function showSpeed() {
+    const el = document.getElementById('sim-speed-read');
+    if (!el) return;
+    const mph = Math.round(BASE_MPS * speed * MPH);
+    el.textContent = '×' + speed + ' · ' + mph + ' mph';
+    el.classList.toggle('fast', mph > 60);
   }
 
   function setStatus(msg) {
