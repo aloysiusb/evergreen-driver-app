@@ -114,6 +114,19 @@
   let legT = 0;               // 0..1 progress along the current leg
   let pos = null;
 
+  /* How often the truck moves. This was one second, which meant the marker
+     jumped 13 m at a stroke and the drive read as a slideshow next to the
+     walkthrough — that one runs its loop every 60 ms for exactly this reason.
+     Distance per tick is scaled by the same figure below, so the truck covers
+     the ground at the same speed it always did; only the number of steps it
+     takes to get there changes. */
+  const TICK_MS = 80;
+  /* The status line is text and nobody reads it twelve times a second.
+     Redrawn about twice a second instead, which keeps the DOM out of the
+     animation's way. */
+  const STATUS_EVERY = Math.round(500 / TICK_MS);
+  let tickCount = 0;
+
   navigator.geolocation.watchPosition = function (success) {
     gpsCb = success;
     return 1;
@@ -172,7 +185,9 @@
     const dx = (to.lng - from.lng) * 85000;
     const dy = (to.lat - from.lat) * 111000;
     const legM = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-    const perTick = (13 * speed) / legM;   // ~13 m/s baseline, one tick a second
+    // ~13 m/s baseline, scaled to the tick so the pace is unchanged by how
+    // often we step — a shorter tick moves a shorter distance, not slower.
+    const perTick = (13 * speed * (TICK_MS / 1000)) / legM;
 
     legT += perTick;
     if (legT >= 1) { legT = 0; legIdx++; }
@@ -185,13 +200,13 @@
     };
 
     if (gpsCb) gpsCb(makePosition(pos));
-    renderStatusLine(r);
+    if (tickCount++ % STATUS_EVERY === 0) renderStatusLine(r);
   }
 
   function play() {
     if (playing) return;
     playing = true;
-    simTimer = setInterval(step, 1000);
+    simTimer = setInterval(step, TICK_MS);
     const b = document.getElementById('sim-play');
     if (b) b.textContent = '⏸ Pause';
   }
