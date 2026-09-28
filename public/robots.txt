@@ -1,0 +1,12 @@
+# The whole app is a private tool: driver routes, a customer queue and the
+# office board. None of it belongs in a search index.
+#
+# Disallow: / rather than a list of paths, deliberately. A list would name
+# /approval, /dispatch and /admin in a file anyone can read, which tells a
+# curious visitor exactly where to look. One line gives nothing away.
+#
+# Crawlers honour this by convention, not by force. ACCESS_CODE is what
+# actually keeps route data private.
+
+User-agent: *
+Disallow: /

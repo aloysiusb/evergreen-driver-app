@@ -190,6 +190,12 @@ export function mountGate(app) {
     // app, including the public ones, for an icon that carries nothing.
     if (req.path === "/favicon.ico" || req.path === "/favicon.svg") return next();
 
+    // A crawler that gets 401 for robots.txt never reads the rule in it. The
+    // file has to answer before the gate or it does nothing once the gate is
+    // on — which is the moment it matters most. It says "Disallow: /" and
+    // names no paths, so serving it openly gives nothing away.
+    if (req.path === "/robots.txt") return next();
+
     // The public walkthrough loads real satellite imagery, which needs this.
     // The key is already visible to any browser that opens the driver app — it
     // is a browser key, protected by an HTTP-referrer restriction in the Google
