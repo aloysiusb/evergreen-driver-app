@@ -295,7 +295,14 @@ app.get("/health", (req, res) => {
 app.get("/api/maps-key", (req, res) => {
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) return res.status(404).json({ error: "Maps key not configured" });
-  res.json({ key });
+  // A Map ID is optional, and it is the thing that decides whether the driver
+  // map can tilt and turn heading-up. Google only renders a VECTOR map when
+  // the map is created with a Map ID made with vector rendering in the Cloud
+  // console — on a raster map setTilt and setHeading do nothing at all. So the
+  // app has always asked for them and always been ignored. Set
+  // GOOGLE_MAPS_MAP_ID and the same code starts working; leave it unset and
+  // the map stays flat and north-up, exactly as it behaves today.
+  res.json({ key, mapId: process.env.GOOGLE_MAPS_MAP_ID || null });
 });
 
 // --- Style API -----------------------------------------------------------

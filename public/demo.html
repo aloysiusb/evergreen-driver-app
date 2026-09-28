@@ -579,6 +579,14 @@ let curHeading = 0;
 const DRIVING_ZOOM = 18;
 const OVERVIEW_ZOOM = 14;
 
+/* The vector Map ID, if the server has one. This page has always asked for
+   tilt: 45 and rotated the map with setHeading, and neither has ever done
+   anything — both need a vector map, and a map is only vector when it is
+   created with a Map ID made for vector rendering in the Google Cloud console.
+   Without one the demo is flat and north-up, which is what it looks like
+   today. Set GOOGLE_MAPS_MAP_ID and the tilt it already asks for arrives. */
+let mapId = null;
+
 // Maneuver → arrow glyph
 const MANEUVER_ICONS = {
   'turn-right': '↱', 'turn-left': '↰',
@@ -603,7 +611,9 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
        for ?key=undefined — leaving the map stuck on "Loading" with no reason
        given. Same checks map.js and walkthrough.html make. */
     if (!r.ok) throw new Error('maps key not configured');
-    apiKey = (await r.json()).key;
+    const cfg = await r.json();
+    apiKey = cfg.key;
+    mapId = cfg.mapId || null;
     if (!apiKey) throw new Error('maps key empty');
   } catch {
     setCaption('⚠️', 'Maps key not configured.');
@@ -612,7 +622,8 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
 
   await new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry` +
+            (mapId ? `&map_ids=${encodeURIComponent(mapId)}` : '');
     s.async = true; s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
@@ -668,6 +679,10 @@ const DEMO_TABS = ['Tues DV', 'Weds DV Res', 'Monday', 'Friday', 'Thurs UV'];
     center: stops[0].pos,
     gestureHandling: 'greedy',
     tilt: 45,
+    // Passed only when one is configured: a mapId of null or '' is not the
+    // same as no mapId, it asks Google for a map that does not exist and the
+    // map fails to load instead of falling back.
+    ...(mapId ? { mapId } : {}),
     // Full Google Maps controls
     mapTypeControl: true,
     mapTypeControlOptions: {
