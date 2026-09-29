@@ -237,7 +237,7 @@ let followMode = true;
 // Street level. This was 17, which reads the side streets fine but sits
 // further back than the walkthrough's driving view — that one is 18, and 18 is
 // what people mean when they say they want the view from the video.
-let followZoom = 18;
+let followZoom = 16;          // see ZOOM_DRIVING
 // The single point where the zoom is allowed to change. Everything else asks
 // this, and nothing calls setZoom directly.
 function goToZoom(z) {
@@ -299,7 +299,17 @@ const FOLLOW_TILT = 45;       // matches the walkthrough's driving view
  *
  * The effect is that the zoom cannot be nudged, only chosen — which is the
  * point. Nothing between the two views is a view anybody asked for. */
-const ZOOM_DRIVING = 18;
+/* The distance the map sits at when it is riding with the driver.
+ *
+ * It was 18, which is a block and a half — close enough that the next turn is
+ * off the edge of the screen and the map is a moving carpet rather than a
+ * picture of where you are. 16 shows the grid of the roads around the truck:
+ * the turn coming up, the one after it, and how the streets join. That is the
+ * distance a driver is actually reading for.
+ *
+ * One number, used by the opening view, by Default, and by Recentre, so all
+ * three agree about what "usual" means. */
+const ZOOM_DRIVING = 16;
 let zoomLocked = null;          // the level the map is currently pinned to
 let overviewOn = false;
 // fitBounds picks its own zoom and reports it back asynchronously, so the lock
@@ -1084,6 +1094,7 @@ window.setMapView = function (view) {
 
 function setFollow(on) {
   followMode = on;
+  updateRecenterBtn();
   // Choosing to ride along is choosing the driving view.
   if (on && overviewOn) { overviewOn = false; goToZoom(followZoom); }
   syncViewButtons();
@@ -1157,6 +1168,58 @@ function setOverview(on) {
     setFollow(true);               // back in the cab
   }
 }
+
+/* ── Getting back ─────────────────────────────────────────────────────────
+ *
+ * Two different problems, which is why they are two buttons.
+ *
+ * RECENTRE is for the map having drifted off. Dragging it stops the app
+ * chasing you — deliberately, because a driver looking ahead down the road
+ * does not want the map hauling itself back every second. This puts them back
+ * in the middle, at the distance the map is meant to sit at: one tap to undo
+ * a drag and a pinch at once, without having to work out which of the two
+ * left it looking wrong.
+ *
+ * It only appears once the map HAS drifted. A button that is always there is
+ * one more thing to read; a button that appears when it is the answer is a
+ * hint as well as a control.
+ *
+ * DEFAULT VIEW is for the map being wrong in ways a driver cannot quite name —
+ * zoomed oddly, still on satellite from three stops ago, stepped back to the
+ * whole round. One tap puts all of it back to how the app opens. */
+
+window.recenterMap = function () {
+  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
+  if (overviewOn) { overviewOn = false; }
+  followMode = true;
+  syncViewButtons();
+  /* snapZoom true: back to ZOOM_DRIVING, the same distance Default uses. */
+  applyFollow(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng),
+              lastGpsHeading, true);
+  updateRecenterBtn();
+};
+
+window.resetMapView = function () {
+  if (!gMap) return;
+  /* Set it, do not ask first. Reading the map type back and only acting on a
+     mismatch left the Sat button lit over a road map whenever the two had
+     drifted apart — and "put it back" is a statement, not a negotiation. */
+  gMap.setMapTypeId('roadmap');
+  document.getElementById('mode-sat')?.classList.remove('on');
+  window.setMapView('driving');   // out of the route view, riding along again
+  goToZoom(ZOOM_DRIVING);         // and back to the zoom the app opens at
+  updateRecenterBtn();
+  setOptimizeStatus('Map back to its usual view.');
+};
+
+/* Shown only while it would do something: the map is off the driver and there
+   is a position to go back to. */
+function updateRecenterBtn() {
+  const btn = document.getElementById('map-recenter');
+  if (!btn) return;
+  btn.hidden = followMode || !lastGpsPos;
+}
+window.updateRecenterBtn = updateRecenterBtn;
 
 /* toggleFollow() and toggleOverview() were here: two buttons, each flipping
    its own switch, which let a driver turn both on at once and made the pair
@@ -1591,6 +1654,7 @@ function onGpsUpdate(pos) {
   lastGpsPos = { lat, lng };
   lastGpsAccuracy = accuracy;
   updateGpsChip();
+  updateRecenterBtn();      // the first fix is what makes recentring possible
   // heading is null when stationary — keep the last good one so the view
   // doesn't snap back to north at every red light
   if (typeof pos.coords.heading === 'number' && !Number.isNaN(pos.coords.heading)

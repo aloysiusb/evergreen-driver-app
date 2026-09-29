@@ -548,7 +548,10 @@ let routeMins = null, trafficDelay = null, rerouteShown = false, trafficLayer = 
 let turnSteps = [];         // flattened maneuver steps from Directions
 let curHeading = 0;
 
-const DRIVING_ZOOM = 18;
+/* Matches ZOOM_DRIVING in map.js: far enough back to read the grid of the
+   roads, not so close the next turn is off the screen. The two are separate
+   because the demo does not load map.js; if one moves, move both. */
+const DRIVING_ZOOM = 16;
 const OVERVIEW_ZOOM = 14;
 
 /* The vector Map ID, if the server has one. This page has always asked for
