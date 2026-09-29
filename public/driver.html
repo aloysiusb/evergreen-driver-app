@@ -156,12 +156,19 @@
         <button class="nav-app-close" onclick="closeNavPicker()" aria-label="Close">✕</button>
       </div>
 
+      <!-- Appears only once the map has been dragged off the driver. Bottom
+           right of the map: clear of the dock at the top, clear of the zoom
+           slider in the middle, and above Google's own Terms link. -->
+      <button id="map-recenter" hidden onclick="recenterMap()"
+              title="Centre the map back on you"
+              aria-label="Centre the map back on you">◎</button>
+
       <!-- The zoom, as a slider on the edge of the map rather than a pinch.
            Deliberate, one-handed, and it cannot be nudged by accident the way a
            two-finger gesture can — the map's own gesture zoom stays off. -->
       <div id="map-zoom" aria-label="Zoom">
         <button class="zoom-end" onclick="nudgeZoom(1)" aria-label="Zoom in" tabindex="-1">+</button>
-        <input id="zoom-slider" type="range" min="12" max="20" step="1" value="18"
+        <input id="zoom-slider" type="range" min="12" max="20" step="1" value="16"
                oninput="setZoomFromSlider(this.value)" aria-label="Zoom level"
                orient="vertical">
         <button class="zoom-end" onclick="nudgeZoom(-1)" aria-label="Zoom out" tabindex="-1">−</button>
@@ -193,6 +200,8 @@
         <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
       <button class="dock-btn" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">
         <span class="dock-ico">🔭</span><span class="dock-cap">Route</span></button>
+      <button class="dock-btn" id="mode-reset" onclick="resetMapView()" title="Put the map back to its usual view">
+        <span class="dock-ico">⟳</span><span class="dock-cap">Default</span></button>
       <button class="dock-btn" id="mode-live" onclick="toggleRouteOrder()" title="Planned order — tap for the quickest order from here">
         <span class="dock-ico">📋</span><span class="dock-cap" id="order-cap">Plan</span></button>
       <button class="dock-btn" id="mode-sat" onclick="toggleSatellite()" title="Aerial imagery — helps spot driveways and gates">

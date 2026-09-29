@@ -335,6 +335,38 @@ body {
 }
 #live-chip[hidden] { display: none; }
 
+/* ── Recentre ──
+   Bottom right of the map, and only there when the map has drifted off the
+   driver. Round and white like the zoom slider it sits under, because it is
+   the same kind of thing: a map control, not a report. */
+#map-recenter {
+  position: absolute;
+  right: 10px;
+  bottom: 34px;            /* clears Google's Terms links along the bottom */
+  z-index: 5;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.94);
+  color: var(--route-color-dark, #166534);
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  -webkit-tap-highlight-color: transparent;
+}
+#map-recenter[hidden] { display: none; }
+#map-recenter:active { transform: scale(0.93); }
+
+/* Turned sideways there is no room below the middle of the map, and the zoom
+   slider is hidden anyway — so it takes the slider's place on the edge. */
+@media (max-height: 500px) {
+  #map-recenter { bottom: auto; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; font-size: 20px; }
+  #map-recenter:active { transform: translateY(-50%) scale(0.93); }
+}
+
 /* The dock button says the same thing in the same colour, so the two cannot
    disagree about whether it is on. */
 .dock-btn.sharing .dock-ico {
