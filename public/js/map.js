@@ -348,10 +348,24 @@ async function initMap() {
       position: google.maps.ControlPosition.TOP_LEFT,
       mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
     },
-    fullscreenControl: true,
-    streetViewControl: true,   // drop pegman to scout an unfamiliar driveway
-    scaleControl: true,
+    fullscreenControl: true,           // top right, clear of everything
+    streetViewControl: true,           // drop pegman to scout a driveway
+    /* Google puts the pegman and the rotate control at RIGHT_BOTTOM by
+       default, which is exactly where the dock's right-hand buttons now are,
+       and the scale bar at BOTTOM_LEFT, under its left-hand ones. Moved to the
+       left edge, which nothing else uses.
+
+       The two things that CANNOT be moved are the Google logo (bottom left)
+       and the Terms / "report a map error" links (bottom right). They have to
+       stay visible — that is a condition of using the API, not a preference —
+       so the dock is inset from both bottom corners rather than drawn over
+       them. See #map-dock in app.css. */
+    streetViewControlOptions: { position: google.maps.ControlPosition.LEFT_CENTER },
     rotateControl: true,
+    rotateControlOptions: { position: google.maps.ControlPosition.LEFT_CENTER },
+    // A scale bar tells a compost driver nothing they act on, and it lives in
+    // the one corner that has to stay clear for Google's logo.
+    scaleControl: false,
     clickableIcons: true,      // tap POIs — gas stations, etc.
   });
 
