@@ -721,6 +721,11 @@
       document.getElementById('ws-status').style.display = 'none';
       if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
       flushQueue();   // socket is proof we have signal again
+      /* And ask what changed while we were not listening. The socket carries
+         only what happens from now on, so without this a driver comes out of
+         a canyon missing every hazard filed in it — and still showing the
+         ones that were cleared while they were in there. */
+      if (window.refreshLiveState) window.refreshLiveState();
     };
 
     ws.onclose = () => {

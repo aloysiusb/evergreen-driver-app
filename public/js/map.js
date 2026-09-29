@@ -1308,6 +1308,17 @@ function removeHazard(id) {
 
 /* The socket only carries what happens next, so a driver opening the app
    mid-round has to be told what is already out there. */
+/* What is on the road NOW, replacing whatever we think is there.
+ *
+ * Called at startup and again whenever the socket comes back. The socket only
+ * carries what happens while you are listening, so a driver who spent twenty
+ * minutes in a canyon missed every hazard filed in them — and, just as badly,
+ * still has the ones that were cleared or expired while they were away sitting
+ * on their map.
+ *
+ * So this reconciles rather than adds: anything the server no longer lists is
+ * taken off. Catching up and not being told old news are the same operation —
+ * the server's list is the truth and this makes the map equal it. */
 async function loadHazards() {
   try {
     const res = await fetch('/api/hazards');
@@ -1315,9 +1326,28 @@ async function loadHazards() {
     const body = await res.json();
     hazardKinds = body.kinds || {};
     renderHazardPicker();
-    (body.hazards || []).forEach(drawHazard);
+
+    const live = body.hazards || [];
+    const liveIds = new Set(live.map(h => h.id));
+    for (const id of [...hazardMarkers.keys()]) {
+      if (!liveIds.has(id)) removeHazard(id);   // cleared or expired while away
+    }
+    live.forEach(drawHazard);                   // drawHazard ignores ones we have
   } catch { /* offline; the queue is for writes, and a hazard list can wait */ }
 }
+
+/* Everything this page should re-ask the server for after being out of touch.
+   One place, so a reconnect and a phone waking up do the same thing. */
+window.refreshLiveState = function () {
+  loadHazards();
+};
+
+/* A phone that has been in a pocket, or a tab that has been in the background,
+   has been listening to nothing. Coming back is the same situation as a
+   reconnect, and the socket may not have noticed it dropped. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') window.refreshLiveState();
+});
 
 function renderHazardPicker() {
   const row = document.getElementById('hz-row');
