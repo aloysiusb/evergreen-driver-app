@@ -273,17 +273,24 @@ body {
    carries its own dark backing, which also means the captions no longer depend
    on a gradient being dark enough over a pale map. */
 #map-dock {
-  position: absolute;
+  /* fixed, not absolute. Hung off the map's bottom it inherited every mistake
+     the map's height made — and on a phone, where innerHeight counts the strip
+     behind the address bar, that put the whole dock below the fold under the
+     action bar. Pinned to the visible window instead, just above that bar,
+     where it cannot be pushed off screen by anything.
+     --dock-bottom is the action bar's real height plus a gap, set by sizeMap();
+     the literal is the fallback for before that first runs. */
+  position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 26px;
+  bottom: var(--dock-bottom, 100px);
   z-index: 5;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   gap: 4px;
   padding: 8px 10px 7px;
-  max-width: calc(100% - 20px);
+  max-width: calc(100vw - 20px);
   border-radius: 20px;
   background: rgba(14, 18, 15, 0.82);
   backdrop-filter: blur(10px);
@@ -396,9 +403,9 @@ body {
    It is a toast over the map now, just above the dock: where the driver is
    already looking, and out of the layout so an empty one takes no space. */
 #optimize-status {
-  position: absolute;
+  position: fixed;
   left: 50%;
-  bottom: 122px;
+  bottom: calc(var(--dock-bottom, 100px) + 86px);
   transform: translateX(-50%);
   z-index: 6;
   max-width: calc(100% - 32px);

@@ -30,11 +30,36 @@ document.addEventListener('DOMContentLoaded', () => {
 function sizeMap() {
   const map = document.getElementById('route-map');
   if (!map || map.offsetParent === null) return;   // not on screen; nothing to size
+
+  /* visualViewport, not innerHeight.
+   *
+   * On a phone innerHeight counts the strip behind the browser's address bar.
+   * That is real layout, but it is NOT on screen while the bar is showing, so
+   * sizing the map to it made the map taller than the visible window — and the
+   * dock, which hung off the map's bottom, ended up below the fold underneath
+   * the fixed action bar. A driver saw "Start My Day" where the controls should
+   * be and no sign the dock existed at all.
+   *
+   * visualViewport.height is what is actually visible. */
+  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
   const top = map.getBoundingClientRect().top;
   const bar = document.querySelector('.action-bar');
   const barH = bar ? bar.getBoundingClientRect().height : 0;
-  const h = Math.max(window.innerHeight - top - barH, 300);
+  const h = Math.max(vh - top - barH, 260);
   map.style.height = h + 'px';
+
+  /* And the dock is anchored to the action bar rather than to the map, set
+     from here because only JS can know how tall that bar is. Belt and braces
+     with the sizing above: even if the map ends up the wrong height on some
+     browser, the dock still sits in the visible window rather than wherever
+     the map happens to end. */
+  /* 32, not 14. Google's logo and its Terms links sit about 6px up from the
+     map's bottom edge and stand roughly 17px tall, and the map's bottom edge is
+     the action bar's top. A 14px gap put the tray straight back over both of
+     them — measured, after the first attempt at this. 32 clears them with room
+     to spare and still reads as a bar at the foot of the map. */
+  document.documentElement.style.setProperty('--dock-bottom', (barH + 32) + 'px');
+
   // Google needs telling, or it keeps painting tiles for the old box.
   if (gMap && window.google?.maps?.event) {
     google.maps.event.trigger(gMap, 'resize');
@@ -42,10 +67,15 @@ function sizeMap() {
 }
 window.sizeMap = sizeMap;
 
-// Rotating the phone, a browser's address bar collapsing, or the action bar
-// gaining a button all change the sum.
+/* Rotating the phone, the action bar gaining a button, and — the one that
+   actually bites on a phone — the address bar sliding away as the driver
+   scrolls, which changes the visible height without firing a window resize. */
 window.addEventListener('resize', sizeMap);
 window.addEventListener('orientationchange', () => setTimeout(sizeMap, 250));
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', sizeMap);
+  window.visualViewport.addEventListener('scroll', sizeMap);
+}
 
 /* The header collapses to a hamburger on a phone: the links and the date go
    inside it. Stops / Map never does — that is the control, not a detail. */
