@@ -1041,6 +1041,11 @@ function connectWS() {
     document.getElementById('ws-dot').classList.add('live');
     document.getElementById('ws-label').textContent = 'Live';
     if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
+    /* Ask who is actually out there, rather than trusting what we were left
+       holding. The socket carries only what happens while it is open, so a
+       truck that started sharing during the outage is missing and one that
+       stopped is still on the map. */
+    loadLiveDrivers();
   };
   ws.onclose = () => {
     document.getElementById('ws-dot').classList.remove('live');
@@ -1579,9 +1584,22 @@ async function loadLiveDrivers() {
     if (!res.ok) return;
     const data = await res.json();
     const now = Date.now();
+
+    /* REPLACE, not merge. Merging is what leaves a truck on the map after it
+       stopped sharing during an outage: nothing arrives to remove it, and it
+       sits there looking current until it ages out five minutes later. The
+       server's list is what is true; this makes the board equal it. */
+    const fresh = new Map();
     for (const d of (data.drivers || [])) {
-      liveDrivers.set(d.tabName, { ...d, seen: now - Math.max(0, now - Date.parse(d.at || '')) });
+      /* The server's own timestamp, not 'now' — a truck that pinged three
+         minutes before the board reconnected must read as three minutes old,
+         not as just now. A missing or unparseable one is treated as this
+         moment rather than as 1970, which would age it out instantly. */
+      const at = Date.parse(d.at || '');
+      fresh.set(d.tabName, { ...d, seen: Number.isFinite(at) ? at : now });
     }
+    liveDrivers.clear();
+    for (const [k, v] of fresh) liveDrivers.set(k, v);
     renderLive();
   } catch { /* the next ping will fill it in */ }
 }
@@ -1589,6 +1607,12 @@ async function loadLiveDrivers() {
 loadLiveDrivers();
 // The ages go stale on their own; nothing arrives to redraw them.
 setInterval(renderLive, 30000);
+
+/* An office screen that locked, or a tab left in the background, has been
+   listening to nothing — and the socket may not have noticed it dropped. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') loadLiveDrivers();
+});
 
 function addFeed(entry) {
   // Showing a past day: a live event belongs to today, not to what is on
