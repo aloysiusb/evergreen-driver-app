@@ -734,7 +734,7 @@ function cardHtml(s) {
           '<div class="stop-account">' + esc(s.name) + '</div>' +
           '<div class="stop-address">' + esc(s.addr) + '</div>' +
           '<div class="stop-action-row"><span class="stop-action-btn">📍 Map</span></div>' +
-          (s.access ? '<div class="stop-access-chip">🔑 ' + esc(s.access) + '</div>' : '') +
+          (s.access ? '<div class="stop-access-chip"><span class="field-label">🔑 Access</span>' + esc(s.access) + '</div>' : '') +
           noteBlock +
         '</div>' +
         action +

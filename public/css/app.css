@@ -539,6 +539,24 @@ body {
 }
 
 /* ── Access / directions chip ── */
+/* ── Field labels ──
+   Three things on the map screen read as "directions": Google's live
+   turn-by-turn in the banner, the sheet's "Direction" column (gate codes and
+   which drive to take) and the driver note. Only the banner says where to go.
+   A small caps label in front of the two sheet fields is enough to tell them
+   apart without touching anybody's spreadsheet. */
+.field-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  margin-right: 7px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
 .nav-access-chip, .stop-access-chip {
   font-size: 12px;
   font-weight: 600;
@@ -978,6 +996,18 @@ body {
   border-radius: var(--r-panel);
 }
 #turn-banner.show { display: flex; }
+
+/* Says whose instruction this is. The banner is the only thing on screen that
+   is recalculated as the truck moves, and the only one that re-routes; the
+   sheet's fields never change while you drive. */
+.turn-source {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+  margin-bottom: 2px;
+}
 
 .turn-arrow {
   font-size: 34px;

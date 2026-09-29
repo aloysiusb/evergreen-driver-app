@@ -256,7 +256,7 @@
     );
     const dirBtn = '';  // directions shown as chip now
     const accessChip = item.directions
-      ? `<div class="stop-access-chip">🔑 ${esc(item.directions)}</div>`
+      ? `<div class="stop-access-chip"><span class="field-label">🔑 Access</span>${esc(item.directions)}</div>`
       : '';
 
     // Row color from sheet as card background

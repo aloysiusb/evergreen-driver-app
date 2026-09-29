@@ -1502,8 +1502,14 @@ function renderNavCard() {
     ? `<span class="nav-mode-badge live">⚡ Live</span>`
     : `<span class="nav-mode-badge planned">📋 Planned</span>`;
 
+  /* Labelled "Access", not left to read as directions. Three things on this
+     screen were competing for that word: Google's live turn-by-turn in the
+     banner above, this column (the sheet's "Direction" — gate codes, which
+     gravel drive, pull round the back), and the note below. Only the banner
+     tells a driver where to go; these two tell them what to expect when they
+     get there. The label is what makes that obvious at a glance. */
   const accessHtml = stop.directions
-    ? `<div class="nav-access-chip">🔑 ${escHtml(stop.directions)}</div>`
+    ? `<div class="nav-access-chip"><span class="field-label">🔑 Access</span>${escHtml(stop.directions)}</div>`
     : '';
 
   const tabName = window._routeTabName || '';
@@ -1515,7 +1521,7 @@ function renderNavCard() {
                   : 'nav-note';
 
   const noteHtmlStyled = stop.notes
-    ? `<div class="${noteClass}">${escHtml(stop.notes)}</div>`
+    ? `<div class="${noteClass}"><span class="field-label">📝 Note</span>${escHtml(stop.notes)}</div>`
     : '';
 
   const etaHtml = (!stop.done && nextEtaMins !== null)
