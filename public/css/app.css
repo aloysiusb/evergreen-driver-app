@@ -361,75 +361,102 @@ body {
 .dock-btn.waiting .dock-ico { background: rgba(255,255,255,0.12); opacity: 0.6; }
 .dock-btn.sent .dock-ico { background: #fbbf24; color: #3b2a02; }
 
-/* ── Position chip: compass + coordinates ──
+/* ── Position: a compass rose and your coordinates ──
    Top centre of the map. Google holds all four corners — map type top left,
    fullscreen top right, its logo bottom left, the terms links bottom right —
-   so the middle of the top edge is the one place a panel can sit without
-   fighting anything. */
+   so the middle of the top edge is the one place this can sit without fighting
+   anything. Translucent, and it overlaps the map on purpose. */
 #geo-chip {
   position: absolute;
-  top: 8px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 9px;
-  padding: 6px 12px 6px 8px;
+  gap: 3px;
+  pointer-events: none;      /* only the coordinates take a tap */
+}
+
+.geo-rose {
+  width: 62px;
+  height: 62px;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45));
+}
+/* Light ink on a dark wash: legible over a pale road map AND over satellite,
+   which is the whole reason this is not just dark text on glass. */
+.rose-ring {
+  fill: rgba(14,18,15,0.42);
+  stroke: rgba(255,255,255,0.65);
+  stroke-width: 1.5;
+}
+.rose-hub { fill: rgba(255,255,255,0.9); }
+.rose-pt {
+  fill: rgba(255,255,255,0.9);
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+  font-family: inherit;
+}
+.rose-n { fill: #fff; font-size: 12px; }
+/* The classic two-tone needle: the red half is the way you are travelling. */
+.rose-needle-n { fill: #ef4444; }
+.rose-needle-s { fill: rgba(255,255,255,0.72); }
+#geo-needle {
+  transform-origin: 32px 32px;
+  transition: transform 0.25s ease-out;
+}
+
+.geo-read {
+  pointer-events: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 62vw;
+  padding: 3px 9px;
   border: none;
   border-radius: var(--r-pill, 999px);
-  background: rgba(14, 18, 15, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  background: rgba(14,18,15,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #fff;
   font-family: inherit;
   cursor: pointer;
-  max-width: calc(100% - 96px);   /* clear of the two top corners */
 }
-#geo-chip:active { transform: translateX(-50%) scale(0.97); }
-
-.geo-compass {
-  position: relative;
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.45);
-}
-/* A needle, not a letter: which way the truck is pointing is a direction, and
-   a direction is quicker to read as a shape than as text. The letters beside
-   it say the same thing for anyone who would rather have the word. */
-.geo-needle {
-  position: absolute;
-  left: 50%;
-  top: 3px;
-  width: 0;
-  height: 0;
-  margin-left: -3.5px;
-  border-left: 3.5px solid transparent;
-  border-right: 3.5px solid transparent;
-  border-bottom: 9px solid #ef4444;
-  transform-origin: 50% 10px;     /* the disc's centre */
-  transition: transform 0.25s ease-out;
-}
-.geo-read { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; min-width: 0; }
-.geo-card {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  opacity: 0.85;
-}
+.geo-read:active { transform: scale(0.97); }
+.geo-card { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.8; }
 .geo-coords {
   font-family: var(--font-mono, ui-monospace, "IBM Plex Mono", monospace);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;   /* stops the digits jittering */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
+
+/* ── Folding the strip away ── */
+#dock-toggle {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 48px;
+  margin-left: 2px;
+  border: none;
+  border-radius: 13px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+}
+#dock-toggle:active { background: rgba(255,255,255,0.28); }
+/* Folded: the buttons go, the handle stays, and the tray shrinks to it. */
+#map-dock.folded .dock-btn { display: none; }
+#map-dock.folded { padding: 5px 6px; gap: 0; }
+#map-dock.folded #dock-toggle { height: 34px; width: 46px; }
 
 /* ── The zoom slider ──
    On the right edge of the map. Vertical because that is which way zoom goes,
