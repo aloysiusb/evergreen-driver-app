@@ -13,6 +13,7 @@ import { ROUTE_DAY_TABS, ROUTE_COLUMNS, EXCLUDED_TABS, NOTES_TAB } from "./confi
 import { getStyles, setStyles, DEFAULT_STYLES } from "./db.js";
 import { getAuthUrl, exchangeCodeForTokens, findCustomerByEmail, findOpenInvoiceForCustomer, getInvoicePaymentLink, ensureCustomer, createInvoice, isConfigured as qboConfigured } from "./qbo.js";
 import { uploadPhoto, photosFolderId } from "./drive.js";
+import { addHazard, liveHazards, clearHazard, sweepHazards, isHazardKind, HAZARD_KINDS } from "./hazards.js";
 import { savePhoto, pathFor, labelFor, usage as photoUsage } from "./photoStore.js";
 import { recordActivity, todaysActivity, pruneActivity } from "./activity.js";
 import { buildDigest, digestText, digestSubject, localClock, DIGEST_TZ } from "./digest.js";
@@ -319,6 +320,48 @@ app.post("/api/driver-location", (req, res) => {
   });
   res.json({ ok: true });
 });
+
+/* ── Road hazards ─────────────────────────────────────────────────────────
+ * What drivers tell each other about the road: rockslides, closures, ice,
+ * police. See hazards.js for why this is our own drivers' reports rather than
+ * Waze's — there is no public feed to borrow.
+ *
+ * Reading the list is open to anyone already past the gate, because a driver
+ * opening the app mid-round needs the ones filed before they arrived; the
+ * socket only carries what happens next.
+ */
+app.get("/api/hazards", (req, res) => {
+  res.json({ kinds: HAZARD_KINDS, hazards: liveHazards() });
+});
+
+app.post("/api/hazards", (req, res) => {
+  const { kind, lat, lng, note, tabName } = req.body || {};
+  const nLat = Number(lat), nLng = Number(lng);
+  if (!isHazardKind(kind)) {
+    return res.status(400).json({ error: "Unknown hazard kind." });
+  }
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng) ||
+      nLat < -90 || nLat > 90 || nLng < -180 || nLng > 180) {
+    return res.status(400).json({ error: "A valid lat and lng are required." });
+  }
+  const hazard = addHazard({ kind, lat: nLat, lng: nLng, note, tabName });
+  broadcast({ type: "hazard-added", hazard });
+  res.json({ ok: true, hazard });
+});
+
+/* Clearing one. Any driver can, deliberately: the person who can see that the
+ * road is open again is whoever is standing on it, not whoever filed it. */
+app.post("/api/hazards/:id/clear", (req, res) => {
+  const ok = clearHazard(req.params.id);
+  if (!ok) return res.status(404).json({ error: "Already cleared or unknown." });
+  broadcast({ type: "hazard-cleared", id: req.params.id });
+  res.json({ ok: true });
+});
+
+// Expired rows are dead weight; swept daily, and once at boot so a server that
+// is restarted more often than daily still tidies up.
+sweepHazards();
+setInterval(sweepHazards, 24 * 60 * 60 * 1000).unref?.();
 
 // --- Maps config ---------------------------------------------------------
 

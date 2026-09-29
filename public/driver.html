@@ -110,6 +110,15 @@
       </button>
     </div>
 
+    <!-- What a driver picks from after tapping Hazard. Above the dock rather
+         than a dialog: it is one tap, at the roadside, often while still
+         rolling to a stop. -->
+    <div id="hazard-picker" hidden>
+      <div class="hz-title">Tell the other drivers</div>
+      <div class="hz-row" id="hz-row"></div>
+      <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
+    </div>
+
     <!-- The zoom, as a slider on the edge of the map rather than a pinch.
          Deliberate, one-handed, and it cannot be nudged by accident the way a
          two-finger gesture can — the map's own gesture zoom stays off. -->
@@ -138,6 +147,10 @@
         <span class="dock-ico">📷</span><span class="dock-cap">Photo</span></button>
       <button class="dock-btn" id="mode-gps" onclick="shareLocation()" title="GPS — tap to send your position to dispatch">
         <span class="dock-ico">📍</span><span class="dock-cap" id="gps-cap">GPS</span></button>
+      <button class="dock-btn" id="mode-stop" onclick="goToStopInfo()" title="Open this stop's card and its report buttons">
+        <span class="dock-ico">🧾</span><span class="dock-cap">Stop</span></button>
+      <button class="dock-btn" id="mode-hazard" onclick="toggleHazardPicker()" title="Tell the other drivers about the road">
+        <span class="dock-ico">⚠️</span><span class="dock-cap">Hazard</span></button>
       <button class="dock-btn on" id="mode-alert" onclick="cycleAlertMode()" title="Arrival alert">
         <span class="dock-ico">🔔</span><span class="dock-cap">Sound</span></button>
       <!-- Folds the strip away. Stays visible when it is folded, because a
