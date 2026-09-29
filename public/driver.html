@@ -162,26 +162,29 @@
                orient="vertical">
         <button class="zoom-end" onclick="nudgeZoom(-1)" aria-label="Zoom out" tabindex="-1">−</button>
       </div>
-    </div>
 
-    <div id="nav-card" style="display:none;"></div>
+      <!-- What a driver picks from after tapping Hazard. Not a dialog: it is
+           one tap, at the roadside, often while still rolling to a stop. It
+           hangs under the dock, wherever the dock is. -->
+      <div id="hazard-picker" hidden>
+      <div class="hz-title">Tell the other drivers</div>
+      <div class="hz-row" id="hz-row"></div>
+      <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
+      </div>
 
-    <!-- Round, across the bottom, floating ON the map so they cost it no
-         height. The old bar was 166px of the screen; this is a scrim.
-         Every one is a 48px circle with its word under it, so nothing has to
-         be guessed at from an emoji alone. -->
-    <!-- Sibling of the dock, not a child of the display: it opens from the
-         dock and belongs above it, not up with the compass. -->
-    <!-- What a driver picks from after tapping Hazard. Above the dock rather
-    than a dialog: it is one tap, at the roadside, often while still
-    rolling to a stop. -->
-    <div id="hazard-picker" hidden>
-    <div class="hz-title">Tell the other drivers</div>
-    <div class="hz-row" id="hz-row"></div>
-    <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
-    </div>
+      <!-- The map's own controls, round and translucent, along the TOP of the
+           map. They were across the bottom, which is where the stop's report
+           buttons live — contamination, bear, overflow, skip — so a driver had
+           two rows of round buttons at the same end of the screen meaning
+           different things. These are the map's; those are the stop's. The two
+           ends keep them apart.
 
-    <div id="map-dock">
+           A child of #map-wrap so it is positioned against the map itself. It
+           used to be fixed to the window, with its offset measured every
+           resize, because it was a sibling of the map rather than a child of
+           it — an entire mechanism that existed only to put it back where
+           being inside the map would have put it anyway. -->
+      <div id="map-dock">
       <button class="dock-btn active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">
         <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
       <button class="dock-btn" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">
@@ -205,7 +208,13 @@
            nobody gets back. -->
       <button id="dock-toggle" onclick="toggleDock()" aria-expanded="true"
               aria-controls="map-dock" title="Hide the buttons">⌄</button>
+      </div>
     </div>
+
+    <!-- The stop you are at: its name, its access note, and the stop's OWN
+         round buttons — contamination, bear, overflow, skip. Below the map,
+         which is where they stay: they belong to the stop, not to the map. -->
+    <div id="nav-card" style="display:none;"></div>
   </div>
 </div>
 
