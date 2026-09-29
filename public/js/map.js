@@ -43,8 +43,19 @@ function sizeMap() {
    * visualViewport.height is what is actually visible. */
   const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
   const top = map.getBoundingClientRect().top;
+
+  /* Everything pinned to the foot of the screen, not just the action bar.
+     On a test drive the sim panel sits at bottom:0 on top of it, 126px of it,
+     and the map was sized as though only the action bar were there — so the
+     dock's lower row ended up buried under the sim's own controls. Both are
+     fixed and both start at the bottom, so the taller one is the clearance
+     that matters. */
   const bar = document.querySelector('.action-bar');
-  const barH = bar ? bar.getBoundingClientRect().height : 0;
+  const sim = document.getElementById('sim-panel');
+  const barH = Math.max(
+    bar ? bar.getBoundingClientRect().height : 0,
+    sim ? sim.getBoundingClientRect().height : 0
+  );
   const h = Math.max(vh - top - barH, 260);
   map.style.height = h + 'px';
 

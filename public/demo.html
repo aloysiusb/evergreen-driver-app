@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
+<!-- The same map interface the driver app draws, from the same file, so the
+     demo cannot drift into showing something the app does not. -->
+<link rel="stylesheet" href="/css/map-ui.css">
 <style>
 :root {
   --bg:       #f5faf6;
@@ -303,74 +306,8 @@ body {
 .footer-note a { color: var(--accent); font-weight: 600; }
 
 /* ── View toggle ── */
-.view-toggle {
-  display: flex;
-  gap: 4px;
-  background: var(--border);
-  border-radius: var(--r-card);
-  padding: 3px;
-}
-.vt-btn {
-  flex: 1;
-  padding: 7px 14px;
-  border: none;
-  border-radius: var(--r-card);
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-}
-.vt-btn.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
 
 /* ── Turn-by-turn banner ── */
-#turn-banner {
-  background: #1a2b1d;
-  color: #fff;
-  border-radius: var(--r-panel);
-  padding: 14px 16px;
-  display: none;
-  align-items: center;
-  gap: 14px;
-}
-#turn-banner.show { display: flex; }
-.turn-arrow {
-  font-size: 32px;
-  line-height: 1;
-  flex-shrink: 0;
-  width: 44px;
-  text-align: center;
-}
-.turn-info { flex: 1; min-width: 0; }
-.turn-dist {
-  font-family: 'Barlow Semi Condensed', sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.05;
-  font-variant-numeric: tabular-nums;
-}
-.turn-text {
-  font-size: 13px;
-  opacity: 0.85;
-  line-height: 1.35;
-  margin-top: 2px;
-}
-.turn-street {
-  font-weight: 600;
-  opacity: 1;
-}
-.turn-next {
-  font-size: 11px;
-  opacity: 0.55;
-  margin-top: 4px;
-  border-top: 1px solid rgba(255,255,255,0.15);
-  padding-top: 4px;
-}
 
 /* Speed readout */
 .speed-pill {
@@ -520,23 +457,9 @@ body {
     <span id="caption-text">Loading a real route from your Google Sheet…</span>
   </div>
 
-  <div class="view-toggle">
-    <button class="vt-btn" id="vt-overview" onclick="setView('overview')">🗺 Overview</button>
-    <button class="vt-btn active" id="vt-driving" onclick="setView('driving')">🧭 Driving</button>
-    <button class="vt-btn" id="vt-sat" onclick="toggleSatellite()">🛰 Satellite</button>
-  </div>
-
-  <div id="turn-banner" class="show">
-    <div class="turn-arrow" id="turn-arrow">↑</div>
-    <div class="turn-info">
-      <div class="turn-dist" id="turn-dist">—</div>
-      <div class="turn-text" id="turn-text">Starting route…</div>
-      <div class="turn-next" id="turn-next"></div>
-    </div>
-    <div class="speed-pill">
-      <div class="speed-num" id="speed-num">0</div>
-      <div class="speed-unit">MPH</div>
-    </div>
+  <div class="speed-pill" id="demo-speed">
+    <div class="speed-num" id="speed-num">0</div>
+    <div class="speed-unit">MPH</div>
   </div>
 
   <div class="traffic-bar" id="traffic-bar" style="display:none;">
@@ -549,7 +472,50 @@ body {
   </div>
 
   <div id="demo-loading">Loading map and route data…</div>
-  <div id="demo-map" class="driving" style="display:none;"></div>
+
+  <!-- Same shape as the driver app: the map, with its interface floating on
+       top of it rather than stacked around it. -->
+  <div id="map-wrap">
+    <div id="demo-map" class="driving" style="display:none;"></div>
+
+    <div id="map-hud">
+      <div id="geo-chip">
+        <svg class="geo-rose" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="rose-ring" cx="32" cy="32" r="29"/>
+          <circle class="rose-hub" cx="32" cy="32" r="2.5"/>
+          <text class="rose-pt rose-n" x="32" y="13">N</text>
+          <text class="rose-pt" x="56" y="36">E</text>
+          <text class="rose-pt" x="32" y="60">S</text>
+          <text class="rose-pt" x="8"  y="36">W</text>
+          <g id="geo-needle">
+            <polygon class="rose-needle-n" points="32,10 26.5,33 37.5,33"/>
+            <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
+          </g>
+        </svg>
+        <span class="geo-read"><span class="geo-coords" id="geo-coords">—</span></span>
+      </div>
+
+      <div id="turn-banner" class="show">
+        <div class="turn-arrow" id="turn-arrow">↑</div>
+        <div class="turn-info">
+          <div class="turn-source">Live directions</div>
+          <div class="turn-dist" id="turn-dist">—</div>
+          <div class="turn-text" id="turn-text">Starting route…</div>
+          <div class="turn-next" id="turn-next"></div>
+          <div class="turn-conditions" id="turn-conditions"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="map-dock">
+      <button class="dock-btn active" id="vt-driving" onclick="setView('driving')" title="Close in, riding with the truck">
+        <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
+      <button class="dock-btn" id="vt-overview" onclick="setView('overview')" title="Step back to see the whole round">
+        <span class="dock-ico">🔭</span><span class="dock-cap">Route</span></button>
+      <button class="dock-btn" id="vt-sat" onclick="toggleSatellite()" title="Aerial imagery">
+        <span class="dock-ico">🛰</span><span class="dock-cap">Sat</span></button>
+    </div>
+  </div>
 
   <div class="stop-dots" id="stop-dots"></div>
 
@@ -934,6 +900,14 @@ function step() {
   driverMarker.setPosition(p);
   driverMarker.setIcon(driverIcon(curHeading));
 
+  /* The head-up display, fed from the same heading and position the marker
+     uses — so the demo's compass is showing the demo's truck, not a decoration
+     that happens to spin. */
+  const needle = document.getElementById('geo-needle');
+  if (needle) needle.style.transform = 'rotate(' + Math.round(curHeading) + 'deg)';
+  const coords = document.getElementById('geo-coords');
+  if (coords) coords.textContent = p.lat().toFixed(5) + ', ' + p.lng().toFixed(5);
+
   if (viewMode === 'driving') {
     map.panTo(p);
     map.setHeading(curHeading);   // rotates so travel is always "up"
@@ -941,6 +915,13 @@ function step() {
     const mph = Math.round(18 + Math.sin(pathIdx / 25) * 9);
     document.getElementById('speed-num').textContent = Math.max(5, mph);
     updateTurnBanner(p);
+    /* The traffic the demo already works out, shown where the driver app shows
+       it — in the directions, not in a bar of its own. */
+    const cond = document.getElementById('turn-conditions');
+    const pill = document.getElementById('traffic-pill');
+    if (cond && pill) {
+      cond.innerHTML = '<span class="cond-chip">' + pill.textContent.trim() + '</span>';
+    }
   } else {
     map.panTo(p);
   }
