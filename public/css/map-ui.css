@@ -29,9 +29,10 @@
   right: 0;
   z-index: 6;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 10px;
-  padding: 8px 12px 26px;
+  gap: 6px 10px;
+  padding: 8px 12px 22px;
   background: linear-gradient(to bottom,
     rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.18) 78%, transparent 100%);
   pointer-events: none;      /* the scrim is decoration; the chips take taps */
@@ -55,17 +56,16 @@
    carries its own dark backing, which also means the captions no longer depend
    on a gradient being dark enough over a pale map. */
 #map-dock {
-  /* fixed, not absolute. Hung off the map's bottom it inherited every mistake
-     the map's height made — and on a phone, where innerHeight counts the strip
-     behind the address bar, that put the whole dock below the fold under the
-     action bar. Pinned to the visible window instead, just above that bar,
-     where it cannot be pushed off screen by anything.
-     --dock-bottom is the action bar's real height plus a gap, set by sizeMap();
-     the literal is the fallback for before that first runs. */
-  position: fixed;
+  /* Anchored to the map by default, which is right for a map embedded in a
+     page — the demo's is 400px tall in the middle of a scrolling page, and a
+     dock fixed to the viewport floated a hundred pixels off the bottom of the
+     window with the map nowhere near it.
+     The driver app, whose map fills the screen, overrides this to fixed in
+     app.css; see the note there for why it has to. */
+  position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: var(--dock-bottom, 100px);
+  bottom: 14px;
   z-index: 5;
   display: flex;
   /* Wraps. Seven buttons fitted one row at 390px; Stop and Hazard make nine,
@@ -155,13 +155,16 @@
    below it out of the flow: as a normal child they made the column as wide as
    themselves, which stole the room the directions needed and pushed the
    traffic and hazard chips off the side of the screen. */
+/* The compass and its coordinates, first on the top row. They may be as wide
+   as the coordinates need: the directions are on the row below now, so this
+   column is not taking width from anything. */
 #geo-chip {
   position: relative;
-  width: 62px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 3px;
   pointer-events: none;      /* only the coordinates take a tap */
 }
 
@@ -195,11 +198,6 @@
 }
 
 .geo-read {
-  position: absolute;
-  top: calc(100% + 3px);
-  /* Left-aligned to the column, not centred on it. Centred on a 62px column
-     sitting against the screen edge, half the pill hung off the side. */
-  left: 0;
   pointer-events: auto;
   display: flex;
   align-items: baseline;
@@ -366,4 +364,130 @@
   height: 116px;
   accent-color: var(--route-color, #22c55e);
   cursor: pointer;
+}
+
+
+/* Transparent: the HUD's scrim behind it is what makes the text readable, so
+   a second filled panel on top of it would just be a box floating on a map. */
+#turn-banner {
+  display: none;
+  align-items: flex-start;
+  gap: 12px;
+  /* Shares the compass's row by default — a wide screen, including a phone
+     held sideways, has the room. Below 560px it takes a row of its own; see
+     the end of this file. Squeezed onto one row on a phone it had about 140px,
+     which broke "300 ft" over two lines and the street name over three. */
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0 0;
+  background: none;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+#turn-banner.show { display: flex; }
+
+/* Conditions, under the manoeuvre. Chips rather than a sentence: a driver
+   glancing at this wants to know whether there is anything, not to read. */
+.turn-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+.turn-conditions:empty { display: none; }
+.cond-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--r-pill, 999px);
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  white-space: nowrap;
+}
+/* A hazard somebody has actually flagged outranks a traffic colour, and looks
+   like it. */
+.cond-chip.hazard { background: #b91c1c; }
+
+/* Says whose instruction this is. The banner is the only thing on screen that
+   is recalculated as the truck moves, and the only one that re-routes; the
+   sheet's fields never change while you drive. */
+.turn-source {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+  margin-bottom: 2px;
+}
+
+.turn-arrow {
+  font-size: 34px;
+  line-height: 1;
+  width: 46px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.turn-info { flex: 1; min-width: 0; }
+.turn-dist {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;   /* stops the number jittering as it counts down */
+}
+.turn-text {
+  font-size: 13.5px;
+  opacity: 0.88;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.turn-next {
+  font-size: 11.5px;
+  opacity: 0.6;
+  margin-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#turn-banner.arriving { background: #14532d; }
+
+/* ── Simulator panel (?sim=1 only) ── */
+/* Deliberately loud. Nobody should ever mistake a test drive for the real
+   app, least of all while looking over someone's shoulder in a meeting. */
+
+/* ── The map interface on a short screen ──────────────────────────────────
+   A phone held sideways leaves the map about 190px. The head-up display was
+   built for a tall screen and took most of that, so it came down on the dock.
+   Same information, less of it at once: a smaller rose, tighter type, and the
+   "then" line — which is the one thing here a driver can do without, since it
+   describes the manoeuvre AFTER the one they are being shown. */
+@media (max-height: 500px) {
+  #map-hud { padding: 5px 10px 18px; gap: 8px; }
+  .geo-rose { width: 44px; height: 44px; }
+  .geo-coords { font-size: 10.5px; }
+  .geo-read { padding: 2px 7px; }
+
+  .turn-source { font-size: 9px; margin-bottom: 0; }
+  .turn-dist { font-size: 20px; }
+  .turn-text { font-size: 13px; }
+  .turn-next { display: none; }
+  .turn-conditions { margin-top: 3px; gap: 4px; }
+  .cond-chip { font-size: 10px; padding: 2px 7px; }
+
+  /* The dock keeps its 44px targets — a gloved thumb does not get smaller
+     when the phone is turned — but loses the captions' leading and some gap. */
+  #map-dock { padding: 5px 8px 5px; gap: 3px; }
+  .dock-cap { font-size: 9px; }
+  #map-zoom { display: none; }   /* the two view buttons still change the zoom */
+}
+
+/* ── The display on a narrow screen ───────────────────────────────────────
+   A phone portrait has no horizontal room to put the compass, the traffic and
+   a turn instruction side by side. The compass and the traffic keep the top
+   row; the directions take the whole of the next one, where the distance and
+   the street name fit on a line each. */
+@media (max-width: 560px) {
+  #turn-banner { flex: 1 0 100%; }
 }

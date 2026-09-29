@@ -56,7 +56,12 @@ function sizeMap() {
     bar ? bar.getBoundingClientRect().height : 0,
     sim ? sim.getBoundingClientRect().height : 0
   );
-  const h = Math.max(vh - top - barH, 260);
+  /* The floor is 180, not 260. A phone held sideways is about 360px tall, and
+     after the bars there is roughly 190 left — forcing 260 made the map taller
+     than the room it had, so the page overflowed and the dock came to rest on
+     top of the head-up display. Better a short map that fits than a tall one
+     that does not. */
+  const h = Math.max(vh - top - barH, 180);
   map.style.height = h + 'px';
 
   /* And the dock is anchored to the action bar rather than to the map, set
@@ -1242,6 +1247,18 @@ window.toggleHazardPicker = function (force) {
   const show = typeof force === 'boolean' ? force : el.hidden;
   el.hidden = !show;
   if (btn) btn.classList.toggle('active', show);
+
+  /* Sit it clear of the dock, measured. The dock is one row on a desktop and
+     two on a phone, so a fixed offset put the picker's lower half across the
+     buttons it had just been opened from. */
+  if (show) {
+    const dock = document.getElementById('map-dock');
+    if (dock) {
+      const r = dock.getBoundingClientRect();
+      const clearance = Math.round(window.innerHeight - r.top + 10);
+      document.documentElement.style.setProperty('--picker-bottom', clearance + 'px');
+    }
+  }
 };
 
 window.fileHazard = async function (kind) {
