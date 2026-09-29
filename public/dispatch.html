@@ -1059,6 +1059,27 @@ function handleMessage(msg) {
       return;
     }
 
+    /* A road hazard one of the drivers filed. Not about a stop either, and not
+       about one route — a rockslide is everybody's business — so it is handled
+       before the per-route lookup below. */
+    if (msg.type === 'hazard-added' && msg.hazard) {
+      const h = msg.hazard;
+      const hzRoute = ROUTES.find(r => r.tabName === h.tabName);
+      addFeed({
+        key: 'hz-' + h.id,
+        kind: 'hazard',
+        icon: h.icon || '⚠️',
+        link: `https://www.google.com/maps/search/?api=1&query=${h.lat},${h.lng}`,
+        who: h.label,
+        where: h.note || '',
+        what: `${h.lat.toFixed(5)}, ${h.lng.toFixed(5)}`,
+        routeName: hzRoute ? hzRoute.name : (h.tabName || 'Road'),
+        color: hzRoute ? routeColor(hzRoute) : 'var(--d-muted)',
+      });
+      return;
+    }
+    if (msg.type === 'hazard-cleared') return;   // the feed keeps the history
+
     /* A driver answering "where are you?". Not about a stop, so it is handled
        before the lookup below would drop it, and it carries a map link —
        a pair of coordinates in a feed is no use to someone trying to picture

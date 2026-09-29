@@ -708,6 +708,13 @@
       if (msg.type === 'style-updated' && window.onStyleMessage) {
         window.onStyleMessage(msg);
       }
+      /* Road hazards. Deliberately BELOW the tabName filter above and carrying
+         no top-level tabName of their own, because a rockslide is not one
+         round's business — every driver out today wants to know. */
+      if ((msg.type === 'hazard-added' || msg.type === 'hazard-cleared')
+          && window.onHazardMessage) {
+        window.onHazardMessage(msg);
+      }
     };
   }
 

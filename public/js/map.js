@@ -432,6 +432,9 @@ async function initMap() {
   directionsRenderer.setMap(gMap);
 
   etaService = new google.maps.DistanceMatrixService();
+  // What other drivers have already reported today, before the socket starts
+  // carrying what happens next.
+  loadHazards();
   await geocodeAndPlot();
   startGpsTracking();
   startRerouteWatcher();
@@ -1076,6 +1079,158 @@ function setOverview(on) {
 }
 
 window.toggleOverview = function() { setOverview(!overviewOn); };
+
+/* ── Straight to this stop's card ─────────────────────────────────────────
+ * Asked for as "a stop info button to take the driver to where the round
+ * contamination / bear buttons are". It takes them there rather than drawing
+ * a second set on the map, which matters: those buttons open a second array of
+ * choices and re-render the list behind them, so a copy on the map would look
+ * identical and behave half as well. One set of buttons, in one place, reached
+ * from both. */
+window.goToStopInfo = function () {
+  const stop = navStops[currentIdx];
+  if (!stop) { setOptimizeStatus('No stop selected yet.'); return; }
+  switchView('stops');
+  /* A tick for the list to be laid out — it is display:none until switchView
+     runs, and an element with no box cannot be scrolled to. */
+  setTimeout(() => {
+    const card = document.querySelector('.stop-card[data-row="' + stop.rowNumber + '"]');
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Say which one, or they land in the middle of a list of forty.
+    card.classList.add('stop-card-flash');
+    setTimeout(() => card.classList.remove('stop-card-flash'), 1700);
+  }, 60);
+};
+
+/* ── Road hazards ─────────────────────────────────────────────────────────
+ * Rockslides, closures, ice, police: what the drivers know and the others are
+ * about to need. Not Waze's data — there is no public feed — but our own
+ * drivers', which on a handful of trucks covering the same valley roads every
+ * week is the half that is actually about these roads.
+ */
+let hazardKinds = {};
+const hazardMarkers = new Map();   // id → google.maps.Marker
+
+function hazardPinIcon(icon) {
+  /* Drawn rather than an image file: one less request, and it scales without
+     a second asset. A circle with the emoji on it, so a hazard never looks
+     like a stop — stops are pins, these are discs. */
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">' +
+      '<circle cx="22" cy="22" r="17" fill="#b91c1c" stroke="#fff" stroke-width="3"/>' +
+      '<text x="22" y="29" font-size="18" text-anchor="middle">' + icon + '</text>' +
+    '</svg>';
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(38, 38),
+    anchor: new google.maps.Point(19, 19),
+  };
+}
+
+function drawHazard(h) {
+  if (!gMap || hazardMarkers.has(h.id)) return;
+  const marker = new google.maps.Marker({
+    position: { lat: h.lat, lng: h.lng },
+    map: gMap,
+    icon: hazardPinIcon(h.icon || '⚠️'),
+    zIndex: 400,                      // above the stops; this is the urgent one
+    title: h.label + (h.note ? ' — ' + h.note : ''),
+  });
+  const info = new google.maps.InfoWindow({
+    content:
+      '<div style="font:600 13px/1.4 system-ui;color:#111">' +
+        (h.icon || '⚠️') + ' ' + escHtml(h.label) +
+        (h.note ? '<div style="font-weight:400">' + escHtml(h.note) + '</div>' : '') +
+        '<button onclick="clearHazard(\'' + h.id + '\')" ' +
+          'style="margin-top:8px;padding:7px 11px;border:none;border-radius:8px;' +
+          'background:#166534;color:#fff;font:600 13px system-ui;cursor:pointer">' +
+          'It is clear now</button>' +
+      '</div>',
+  });
+  marker.addListener('click', () => info.open(gMap, marker));
+  hazardMarkers.set(h.id, marker);
+}
+
+function removeHazard(id) {
+  const m = hazardMarkers.get(id);
+  if (m) { m.setMap(null); hazardMarkers.delete(id); }
+}
+
+/* The socket only carries what happens next, so a driver opening the app
+   mid-round has to be told what is already out there. */
+async function loadHazards() {
+  try {
+    const res = await fetch('/api/hazards');
+    if (!res.ok) return;
+    const body = await res.json();
+    hazardKinds = body.kinds || {};
+    renderHazardPicker();
+    (body.hazards || []).forEach(drawHazard);
+  } catch { /* offline; the queue is for writes, and a hazard list can wait */ }
+}
+
+function renderHazardPicker() {
+  const row = document.getElementById('hz-row');
+  if (!row) return;
+  row.innerHTML = Object.entries(hazardKinds).map(([kind, meta]) =>
+    '<button class="hz-btn" onclick="fileHazard(\'' + kind + '\')">' +
+      '<span class="hz-ico">' + meta.icon + '</span>' +
+      '<span>' + escHtml(meta.label) + '</span>' +
+    '</button>'
+  ).join('');
+}
+
+window.toggleHazardPicker = function (force) {
+  const el = document.getElementById('hazard-picker');
+  const btn = document.getElementById('mode-hazard');
+  if (!el) return;
+  const show = typeof force === 'boolean' ? force : el.hidden;
+  el.hidden = !show;
+  if (btn) btn.classList.toggle('active', show);
+};
+
+window.fileHazard = async function (kind) {
+  window.toggleHazardPicker(false);
+  if (!lastGpsPos) { setOptimizeStatus('No GPS fix — cannot place a hazard.'); return; }
+  try {
+    const res = await fetch('/api/hazards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind,
+        lat: lastGpsPos.lat,
+        lng: lastGpsPos.lng,
+        tabName: window._routeTabName || '',
+      }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const body = await res.json();
+    // Drawn from the broadcast like everybody else's, so there is one code
+    // path and the filer sees exactly what the others see.
+    setOptimizeStatus((hazardKinds[kind]?.label || 'Hazard') + ' shared with the other drivers.');
+  } catch {
+    setOptimizeStatus('Could not share that — try again in signal.');
+  }
+};
+
+window.clearHazard = async function (id) {
+  try {
+    const res = await fetch('/api/hazards/' + encodeURIComponent(id) + '/clear', { method: 'POST' });
+    if (!res.ok) throw new Error();
+    setOptimizeStatus('Marked clear.');
+  } catch {
+    setOptimizeStatus('Could not clear that — try again in signal.');
+  }
+};
+
+/* Live from the socket the rest of the app already uses. The driver page hands
+   unknown messages here rather than growing a second connection. */
+window.onHazardMessage = function (msg) {
+  if (!msg) return;
+  if (msg.type === 'hazard-added' && msg.hazard) drawHazard(msg.hazard);
+  if (msg.type === 'hazard-cleared') removeHazard(msg.id);
+};
 
 /* ── Route order, photo and GPS: the rest of the dock ────────────────────── */
 
