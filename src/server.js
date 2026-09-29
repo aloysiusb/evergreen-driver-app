@@ -301,24 +301,73 @@ app.get("/health", (req, res) => {
  * Not a tracking feed. It fires when a driver taps the GPS button, which is
  * the difference between answering "where are you?" and being followed all
  * day. */
+/* Where the trucks are.
+ *
+ * Held in memory and nowhere else, deliberately. A position is only worth
+ * anything while it is current, and a table of everywhere a driver has been
+ * is a different thing from a board showing where they are now — one is a
+ * dispatcher's tool, the other is a record of somebody's movements that
+ * nobody asked for. A restart forgets the lot, and the next ping refills it.
+ *
+ * Keyed by route tab: one truck runs one round. */
+const driverPositions = new Map();
+
+/* Long enough that a tunnel or a black spot does not drop a truck off the
+ * board, short enough that nobody reads a half-hour-old position as current. */
+const POSITION_STALE_MS = 5 * 60 * 1000;
+
+function livePositions() {
+  const now = Date.now();
+  const out = [];
+  for (const [tabName, p] of driverPositions) {
+    if (now - p.ms > POSITION_STALE_MS) { driverPositions.delete(tabName); continue; }
+    out.push({ ...p, ms: undefined, tabName });
+  }
+  return out;
+}
+
 app.post("/api/driver-location", (req, res) => {
-  const { lat, lng, accuracy, heading, tabName, stop } = req.body || {};
+  const { lat, lng, accuracy, heading, tabName, stop, mode } = req.body || {};
   const nLat = Number(lat), nLng = Number(lng);
   if (!Number.isFinite(nLat) || !Number.isFinite(nLng) ||
       nLat < -90 || nLat > 90 || nLng < -180 || nLng > 180) {
     return res.status(400).json({ error: "A valid lat and lng are required." });
   }
-  broadcast({
+
+  /* 'once' is a single send; 'start' and 'ping' mean the driver has sharing
+     switched on; 'stop' means they have just switched it off. Anything else
+     is treated as a single send, which is what older clients do. */
+  const kind = ["start", "ping", "stop", "once"].includes(mode) ? mode : "once";
+  const tab = String(tabName || "").slice(0, 80);
+
+  const msg = {
     type: "driver-location",
     lat: nLat,
     lng: nLng,
     accuracy: Number.isFinite(Number(accuracy)) ? Number(accuracy) : null,
     heading: Number.isFinite(Number(heading)) ? Number(heading) : null,
-    tabName: String(tabName || "").slice(0, 80),
+    tabName: tab,
     stop: String(stop || "").slice(0, 120),
+    mode: kind,
+    live: kind === "start" || kind === "ping",
     at: new Date().toISOString(),
-  });
+  };
+
+  if (kind === "stop") {
+    driverPositions.delete(tab);
+  } else if (msg.live) {
+    driverPositions.set(tab, { ...msg, ms: Date.now() });
+  }
+
+  broadcast(msg);
   res.json({ ok: true });
+});
+
+/* For a dispatcher who opens the board halfway through the round: the socket
+ * only carries what happens next, and a truck that pinged a minute ago would
+ * otherwise be invisible until it moved again. */
+app.get("/api/driver-locations", (req, res) => {
+  res.json({ drivers: livePositions(), staleAfterMs: POSITION_STALE_MS });
 });
 
 /* ── Road hazards ─────────────────────────────────────────────────────────

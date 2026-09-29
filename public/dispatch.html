@@ -223,6 +223,67 @@ body {
   margin: 0 auto 26px;
   padding: 0 20px;
 }
+
+/* ── Trucks on the road now ──
+   Above the feed, because it answers "where is everyone" and the feed
+   answers "what has happened". Hidden entirely when nobody is sharing: an
+   empty panel headed "on the road now" reads as "nobody is working". */
+.live-wrap {
+  max-width: 1400px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
+}
+.live-wrap[hidden] { display: none; }
+
+.live-rows {
+  display: grid;
+  gap: 8px;
+}
+.live-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--d-border, #2a372e);
+  border-radius: 12px;
+  background: var(--d-surface, #17201a);
+  color: inherit;
+  text-decoration: none;
+  font-size: 13px;
+}
+.live-row:hover { border-color: var(--d-muted, #8ea395); }
+
+/* Still sharing, but nothing heard for a minute and a half — a canyon, a
+   tunnel, a phone in a pocket. Dimmed rather than dropped, because a truck
+   that vanishes mid-round reads as something being wrong. */
+.live-row.is-stale { opacity: 0.55; }
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.08);
+}
+.live-name { font-weight: 700; }
+.live-where { color: var(--d-muted, #8ea395); }
+.live-pos {
+  margin-left: auto;
+  font-family: var(--font-mono, ui-monospace, "IBM Plex Mono", monospace);
+  font-size: 12px;
+  color: var(--d-muted, #8ea395);
+}
+.live-age {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--d-muted, #8ea395);
+}
+
+@media (max-width: 560px) {
+  .live-row { flex-wrap: wrap; gap: 6px 10px; }
+  .live-pos { margin-left: 0; width: 100%; }
+}
 .feed-head {
   display: flex;
   align-items: baseline;
@@ -684,6 +745,20 @@ body {
   </div>
 </header>
 
+<!-- Trucks sharing their position right now. Its own strip rather than the
+     feed: a live truck reports every twenty seconds or so, and a hundred
+     identical lines saying the same truck is still on the same road would
+     bury the things that actually happened. The feed keeps the moments a
+     driver started and stopped sharing; this keeps where they are.
+     Empty and hidden when nobody is sharing, which is the normal state. -->
+<div class="live-wrap" id="live-wrap" hidden>
+  <div class="feed-head">
+    <h2 class="feed-title">On the road now</h2>
+    <span class="feed-count" id="live-count"></span>
+  </div>
+  <div class="live-rows" id="live-rows"></div>
+</div>
+
 <div class="feed-wrap">
   <div class="feed-head">
     <h2 class="feed-title">As it happens</h2>
@@ -1087,16 +1162,30 @@ function handleMessage(msg) {
     if (msg.type === 'driver-location') {
       const locRoute = ROUTES.find(r => r.tabName === msg.tabName);
       const acc = typeof msg.accuracy === 'number' ? ` ±${Math.round(msg.accuracy)} m` : '';
+
+      /* Where they are goes to the strip above, which redraws in place. */
+      if (msg.mode === 'stop') liveDrivers.delete(msg.tabName);
+      else if (msg.live) liveDrivers.set(msg.tabName, { ...msg, seen: Date.now() });
+      renderLive();
+
+      /* The feed keeps what HAPPENED: a driver switching sharing on or off,
+         and a one-off "here I am". A ping every twenty seconds is not an
+         event — a hundred lines saying the same truck is on the same road
+         would bury everything that is. */
+      if (msg.mode === 'ping') return;
+
+      const started = msg.mode === 'start';
+      const stopped = msg.mode === 'stop';
       addFeed({
-        // Not keyed to a stop: each send is its own entry, because the whole
-        // point of sending twice is to show that the truck has moved.
         key: 'loc-' + msg.tabName + '-' + msg.at,
         kind: 'location',
-        icon: '📍',
+        icon: stopped ? '📴' : '📍',
         link: `https://www.google.com/maps/search/?api=1&query=${msg.lat},${msg.lng}`,
-        who: 'Driver position',
+        who: started ? 'Started sharing position'
+           : stopped ? 'Stopped sharing position'
+           : 'Driver position',
         where: msg.stop ? 'near ' + msg.stop : '',
-        what: `${msg.lat.toFixed(5)}, ${msg.lng.toFixed(5)}${acc}`,
+        what: stopped ? '' : `${msg.lat.toFixed(5)}, ${msg.lng.toFixed(5)}${acc}`,
         routeName: locRoute ? locRoute.name : (msg.tabName || 'Route'),
         color: locRoute ? routeColor(locRoute) : 'var(--d-muted)',
       });
@@ -1203,6 +1292,88 @@ const FEED_MERGE_MS = 15 * 60 * 1000;
    true rather than every step of getting there. Different kinds stay separate:
    marking a stop done is not an edit of the contamination report, and should
    not swallow it. */
+/* ── Trucks on the road now ───────────────────────────────────────────────
+ *
+ * One row per truck that has sharing switched on, redrawn in place rather
+ * than appended, because a live truck reports every twenty seconds and the
+ * interesting thing is where it is, not the list of places it has been.
+ *
+ * A driver switches this on and off themselves; a truck missing from here is
+ * one that is not sharing, which is not the same as a truck that is not
+ * working, and the strip says so rather than implying anything.
+ *
+ * Positions are never stored — this is whatever the board has heard since it
+ * was opened, plus whatever the server still held when it loaded. */
+const liveDrivers = new Map();
+
+/* After this long with no word, the row says so rather than quietly showing
+ * a position that may be miles out of date. It matches the server's own
+ * expiry, so a driver who drives into a black spot fades rather than
+ * vanishing mid-canyon. */
+const LIVE_STALE_MS = 5 * 60 * 1000;
+
+function ago(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 45) return 'just now';
+  const m = Math.round(s / 60);
+  return m === 1 ? '1 min ago' : m + ' min ago';
+}
+
+function renderLive() {
+  const wrap = document.getElementById('live-wrap');
+  const rows = document.getElementById('live-rows');
+  const count = document.getElementById('live-count');
+  if (!wrap || !rows) return;
+
+  const now = Date.now();
+  for (const [tab, d] of liveDrivers) {
+    if (now - d.seen > LIVE_STALE_MS) liveDrivers.delete(tab);
+  }
+
+  const list = [...liveDrivers.values()].sort((a, b) => b.seen - a.seen);
+  wrap.hidden = list.length === 0;
+  if (count) {
+    count.textContent = list.length === 1 ? '1 truck sharing' : list.length + ' trucks sharing';
+  }
+
+  rows.innerHTML = list.map(d => {
+    const route = ROUTES.find(r => r.tabName === d.tabName);
+    const color = route ? routeColor(route) : 'var(--d-muted)';
+    const age = now - d.seen;
+    const stale = age > 90000;
+    const acc = typeof d.accuracy === 'number' ? ' ±' + Math.round(d.accuracy) + ' m' : '';
+    const link = 'https://www.google.com/maps/search/?api=1&query=' + d.lat + ',' + d.lng;
+    return '<a class="live-row' + (stale ? ' is-stale' : '') + '" href="' + esc(link) +
+             '" target="_blank" rel="noopener">' +
+      '<span class="live-dot" style="background:' + color + '"></span>' +
+      '<span class="live-name">' + esc(route ? route.name : (d.tabName || 'Route')) + '</span>' +
+      (d.stop ? '<span class="live-where">near ' + esc(d.stop) + '</span>' : '') +
+      '<span class="live-pos">' + d.lat.toFixed(5) + ', ' + d.lng.toFixed(5) + esc(acc) + '</span>' +
+      '<span class="live-age">' + esc(ago(age)) + '</span>' +
+    '</a>';
+  }).join('');
+}
+
+/* Opening the board halfway through the round: the socket only carries what
+   happens next, so a truck that pinged a minute ago would be invisible until
+   it moved again. */
+async function loadLiveDrivers() {
+  try {
+    const res = await fetch('/api/driver-locations');
+    if (!res.ok) return;
+    const data = await res.json();
+    const now = Date.now();
+    for (const d of (data.drivers || [])) {
+      liveDrivers.set(d.tabName, { ...d, seen: now - Math.max(0, now - Date.parse(d.at || '')) });
+    }
+    renderLive();
+  } catch { /* the next ping will fill it in */ }
+}
+
+loadLiveDrivers();
+// The ages go stale on their own; nothing arrives to redraw them.
+setInterval(renderLive, 30000);
+
 function addFeed(entry) {
   // Showing a past day: a live event belongs to today, not to what is on
   // screen. The route cards still update; only this list is held still.

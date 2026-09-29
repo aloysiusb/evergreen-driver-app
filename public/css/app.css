@@ -314,6 +314,45 @@ body {
 }
 #optimize-status:empty { display: none; }
 
+/* ── Sharing your position ──
+   The standing reminder that dispatch can see the truck. It is on the map
+   beside the compass, not tucked in a menu, and it is only ever there while
+   sharing is actually running — a driver should never have to remember
+   whether they left it on, or hunt for a button to find out. */
+#live-chip {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill, 999px);
+  background: rgba(220, 38, 38, 0.92);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+#live-chip[hidden] { display: none; }
+
+/* The dock button says the same thing in the same colour, so the two cannot
+   disagree about whether it is on. */
+.dock-btn.sharing .dock-ico {
+  background: rgba(220, 38, 38, 0.95);
+  color: #fff;
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.62; }
+}
+
+/* Someone who has asked for less movement still gets the colour. */
+@media (prefers-reduced-motion: reduce) {
+  #live-chip, .dock-btn.sharing .dock-ico { animation: none; }
+}
+
 .nav-mode-badge {
   display: inline-block;
   font-size: 10px;
