@@ -67,6 +67,25 @@ function sizeMap() {
 }
 window.sizeMap = sizeMap;
 
+/* Where the route line sticks to.
+ *
+ * The app bar is sticky at the top and the route line sticks directly under
+ * it, so the route line has to know how tall the app bar is. That is not a
+ * constant: the bar's company name and page label come from the style editor,
+ * so a longer name or a bigger font changes it. Measured, so the two never
+ * overlap and never leave a stripe of scrolling page between them. */
+function setBarOffsets() {
+  const bar = document.querySelector('.app-bar');
+  if (!bar) return;
+  document.documentElement.style.setProperty(
+    '--appbar-h', Math.round(bar.getBoundingClientRect().height) + 'px');
+}
+window.setBarOffsets = setBarOffsets;
+document.addEventListener('DOMContentLoaded', setBarOffsets);
+window.addEventListener('resize', setBarOffsets);
+// Webfonts land after first paint and bring a different line height with them.
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(setBarOffsets);
+
 /* Rotating the phone, the action bar gaining a button, and — the one that
    actually bites on a phone — the address bar sliding away as the driver
    scrolls, which changes the visible height without firing a window resize. */

@@ -108,15 +108,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Header ──
-   One row, then a hairline progress bar. 20px of top padding and four stacked
+/* ── Headers ──
+   Both bars stay put while the stops list scrolls: the app bar at the top, the
+   route line directly under it. Stacked with a variable rather than a literal
+   because the app bar's height depends on its font, and a wrong number here
+   leaves either a gap between them or the route name tucked behind the nav.
+   setBarOffsets() in map.js measures it.
+
+   Scoped to app.css on purpose — chrome.css carries the app bar to eight other
+   pages, and making every one of them sticky is not what was asked for. */
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 110;          /* above the route line, which slides under it */
+}
+
+/* One row, then a hairline progress bar. 20px of top padding and four stacked
    blocks is what made this a quarter of a phone screen. */
 .route-header {
   background: var(--route-color);
   color: var(--route-header-text);
-  padding: 6px 12px 0;
+  padding: 3px 12px 0;
   position: sticky;
-  top: 0;
+  top: var(--appbar-h, 40px);
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
@@ -125,7 +139,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 40px;      /* was 48; the tabs inside set the real floor */
 }
 
 /* Name and day/date share a column and stay on one line, truncating rather
@@ -209,16 +223,10 @@ body {
 }
 .home-btn:hover { background: rgba(255,255,255,0.32); }
 
-/* Two buttons where there was one, kept together so the header's
-   space-between still puts the title in the middle and the date on the end. */
-.route-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 10px;
-  flex-shrink: 0;
-}
-.route-nav .home-btn { margin-right: 0; }
+/* .route-nav held a ⌂ and a 📡 at the left of the route line. Both went to
+   pages the app bar above already links to by name, and the app bar is sticky
+   now, so they were two more things to look at for no new destination.
+   .home-btn itself stays — the walkthrough still draws one. */
 
 /* ── View tabs (Stops / Map) ──
    On the header line now rather than a row of their own, so they are sized to
@@ -234,8 +242,8 @@ body {
 }
 .view-tab {
   flex: 1;
-  min-height: 38px;
-  padding: 7px 12px;
+  min-height: 34px;
+  padding: 5px 12px;
   border: none;
   border-radius: var(--r-card);
   background: rgba(255,255,255,0.15);
