@@ -1059,6 +1059,29 @@ function handleMessage(msg) {
       return;
     }
 
+    /* A driver answering "where are you?". Not about a stop, so it is handled
+       before the lookup below would drop it, and it carries a map link —
+       a pair of coordinates in a feed is no use to someone trying to picture
+       where that actually is. */
+    if (msg.type === 'driver-location') {
+      const locRoute = ROUTES.find(r => r.tabName === msg.tabName);
+      const acc = typeof msg.accuracy === 'number' ? ` ±${Math.round(msg.accuracy)} m` : '';
+      addFeed({
+        // Not keyed to a stop: each send is its own entry, because the whole
+        // point of sending twice is to show that the truck has moved.
+        key: 'loc-' + msg.tabName + '-' + msg.at,
+        kind: 'location',
+        icon: '📍',
+        link: `https://www.google.com/maps/search/?api=1&query=${msg.lat},${msg.lng}`,
+        who: 'Driver position',
+        where: msg.stop ? 'near ' + msg.stop : '',
+        what: `${msg.lat.toFixed(5)}, ${msg.lng.toFixed(5)}${acc}`,
+        routeName: locRoute ? locRoute.name : (msg.tabName || 'Route'),
+        color: locRoute ? routeColor(locRoute) : 'var(--d-muted)',
+      });
+      return;
+    }
+
     /* Everything past here is about a stop on a route. Messages that are not —
        requests, free-form notes, styles — have already returned above. */
     const route = ROUTES.find(r => r.tabName === msg.tabName);
