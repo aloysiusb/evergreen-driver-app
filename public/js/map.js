@@ -1103,8 +1103,6 @@ function setFollow(on) {
   }
 }
 
-window.toggleFollow = function() { setFollow(!followMode); };
-
 // Dragging the map by hand means the driver wants to look somewhere else —
 // stop chasing them until they ask for it back.
 function watchForManualPan() {
@@ -1160,7 +1158,10 @@ function setOverview(on) {
   }
 }
 
-window.toggleOverview = function() { setOverview(!overviewOn); };
+/* toggleFollow() and toggleOverview() were here: two buttons, each flipping
+   its own switch, which let a driver turn both on at once and made the pair
+   of them disagree about what the map was doing. The dock's Driving and Route
+   call setMapView() instead, which sets one state and lights one button. */
 
 /* ── Straight to this stop's card ─────────────────────────────────────────
  * Asked for as "a stop info button to take the driver to where the round
