@@ -43,9 +43,25 @@ function sizeMap() {
    * visualViewport.height is what is actually visible. */
   const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
   const top = map.getBoundingClientRect().top;
+
+  /* Everything pinned to the foot of the screen, not just the action bar.
+     On a test drive the sim panel sits at bottom:0 on top of it, 126px of it,
+     and the map was sized as though only the action bar were there — so the
+     dock's lower row ended up buried under the sim's own controls. Both are
+     fixed and both start at the bottom, so the taller one is the clearance
+     that matters. */
   const bar = document.querySelector('.action-bar');
-  const barH = bar ? bar.getBoundingClientRect().height : 0;
-  const h = Math.max(vh - top - barH, 260);
+  const sim = document.getElementById('sim-panel');
+  const barH = Math.max(
+    bar ? bar.getBoundingClientRect().height : 0,
+    sim ? sim.getBoundingClientRect().height : 0
+  );
+  /* The floor is 180, not 260. A phone held sideways is about 360px tall, and
+     after the bars there is roughly 190 left — forcing 260 made the map taller
+     than the room it had, so the page overflowed and the dock came to rest on
+     top of the head-up display. Better a short map that fits than a tall one
+     that does not. */
+  const h = Math.max(vh - top - barH, 180);
   map.style.height = h + 'px';
 
   /* And the dock is anchored to the action bar rather than to the map, set
@@ -1231,6 +1247,18 @@ window.toggleHazardPicker = function (force) {
   const show = typeof force === 'boolean' ? force : el.hidden;
   el.hidden = !show;
   if (btn) btn.classList.toggle('active', show);
+
+  /* Sit it clear of the dock, measured. The dock is one row on a desktop and
+     two on a phone, so a fixed offset put the picker's lower half across the
+     buttons it had just been opened from. */
+  if (show) {
+    const dock = document.getElementById('map-dock');
+    if (dock) {
+      const r = dock.getBoundingClientRect();
+      const clearance = Math.round(window.innerHeight - r.top + 10);
+      document.documentElement.style.setProperty('--picker-bottom', clearance + 'px');
+    }
+  }
 };
 
 window.fileHazard = async function (kind) {

@@ -73,6 +73,8 @@
     });
     if (writeLog.length > 40) writeLog.length = 40;
     renderLog();
+    // The panel is added after the map has already worked out its height.
+    if (typeof window.sizeMap === 'function') window.sizeMap();
   }
 
   /* The write never leaves the browser — but the dispatcher board is the
@@ -385,6 +387,10 @@
     document.getElementById('sim-toggle-log').onclick = () => {
       const log = document.getElementById('sim-log');
       log.hidden = !log.hidden;
+      /* Opening the log makes this panel taller, and the panel is what the map
+         leaves room for. Nothing fires a resize for a hidden attribute, so the
+         map has to be told or the dock slides under the log. */
+      if (typeof window.sizeMap === 'function') window.sizeMap();
     };
     renderLog();
   }

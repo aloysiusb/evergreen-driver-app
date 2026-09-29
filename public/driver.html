@@ -12,6 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/chrome.css">
+<!-- map-ui.css first: app.css overrides two of its rules for this page, where
+     the map fills the screen rather than sitting inside one. -->
+<link rel="stylesheet" href="/css/map-ui.css">
 <link rel="stylesheet" href="/css/app.css">
 <link rel="manifest" href="/manifest.json">
 </head>
@@ -107,14 +110,11 @@
           </button>
         </div>
 
-        <!-- What a driver picks from after tapping Hazard. Above the dock rather
-             than a dialog: it is one tap, at the roadside, often while still
-             rolling to a stop. -->
-        <div id="hazard-picker" hidden>
-          <div class="hz-title">Tell the other drivers</div>
-          <div class="hz-row" id="hz-row"></div>
-          <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
-        </div>
+      <!-- The route time and the traffic, on the compass's line. This used to
+           float above the dock at the foot of the map, which put the one
+           readout a driver glances at furthest from everything else they
+           glance at. -->
+      <span id="optimize-status"></span>
       <div id="turn-banner">
         <div class="turn-arrow" id="turn-arrow">↑</div>
         <div class="turn-info">
@@ -155,6 +155,17 @@
          height. The old bar was 166px of the screen; this is a scrim.
          Every one is a 48px circle with its word under it, so nothing has to
          be guessed at from an emoji alone. -->
+    <!-- Sibling of the dock, not a child of the display: it opens from the
+         dock and belongs above it, not up with the compass. -->
+    <!-- What a driver picks from after tapping Hazard. Above the dock rather
+    than a dialog: it is one tap, at the roadside, often while still
+    rolling to a stop. -->
+    <div id="hazard-picker" hidden>
+    <div class="hz-title">Tell the other drivers</div>
+    <div class="hz-row" id="hz-row"></div>
+    <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
+    </div>
+
     <div id="map-dock">
       <button class="dock-btn active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">
         <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
@@ -180,7 +191,6 @@
       <button id="dock-toggle" onclick="toggleDock()" aria-expanded="true"
               aria-controls="map-dock" title="Hide the buttons">⌄</button>
     </div>
-    <span id="optimize-status"></span>
   </div>
 </div>
 
