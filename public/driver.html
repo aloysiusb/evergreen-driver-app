@@ -82,6 +82,21 @@
     <div id="route-map"></div>
     <div id="map-loading">Loading map…</div>
     <div id="nav-card" style="display:none;"></div>
+    <!-- Where you are and which way you are pointing, on the map itself.
+         Top centre because Google owns both top corners (map type on the left,
+         fullscreen on the right) and both bottom ones. Tap copies the
+         coordinates, which is what you want when you are reading them to
+         somebody over the radio. -->
+    <button id="geo-chip" onclick="copyCoords()" title="Your position — tap to copy">
+      <span class="geo-compass" aria-hidden="true">
+        <span class="geo-needle" id="geo-needle"></span>
+      </span>
+      <span class="geo-read">
+        <span class="geo-card" id="geo-card">—</span>
+        <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
+      </span>
+    </button>
+
     <!-- The zoom, as a slider on the edge of the map rather than a pinch.
          Deliberate, one-handed, and it cannot be nudged by accident the way a
          two-finger gesture can — the map's own gesture zoom stays off. -->
