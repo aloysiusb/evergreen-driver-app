@@ -379,7 +379,30 @@ body {
 .view-tab:disabled { opacity: 0.4; cursor: default; }
 
 /* On the route colour now that the bar sits on it. */
-#optimize-status { font-size: 12px; color: rgba(255,255,255,0.8); }
+/* This used to be a line of text in the button bar. That bar is gone, which
+   left it a bare span under the map — still coloured white, so every message
+   it carries (route-mode changes, and the GPS button's "Position sent to
+   dispatch") was white-on-white and read by nobody.
+   It is a toast over the map now, just above the dock: where the driver is
+   already looking, and out of the layout so an empty one takes no space. */
+#optimize-status {
+  position: absolute;
+  left: 50%;
+  bottom: 104px;
+  transform: translateX(-50%);
+  z-index: 6;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: var(--r-pill, 999px);
+  background: rgba(17, 22, 17, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  pointer-events: none;
+}
+#optimize-status:empty { display: none; }
 
 .nav-mode-badge {
   display: inline-block;
@@ -1632,13 +1655,10 @@ textarea.note-edit {
    Deliberately at the end of the stylesheet: an earlier version of the mobile
    rules in this file sat above the rules they were meant to override and did
    nothing at all for months. Same specificity means last one wins. */
-/* No narrow-phone override for the map bar's .view-tab buttons. Two per row
-   leaves room for the words even at 360 px, and shrinking the type here would
-   make them subtly unlike the route-side tabs again — which is the whole thing
-   this bar was getting wrong. */
-@media (max-width: 360px) {
-  .switch-btn { font-size: 12px; padding: 6px 6px; }
-}
+/* .switch-btn had a rule here. Those pills were replaced by the dock's round
+   buttons, and the rule outlived the markup — dead CSS for a class nothing
+   renders, which is exactly what makes a stylesheet hard to reason about
+   later. The dock has its own narrow-phone block further up. */
 
 /* No `overflow-x: hidden` on html or body here, tempting as it is. It would
    hide this kind of bug rather than fix it, and it silently kills
