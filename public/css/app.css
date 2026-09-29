@@ -177,61 +177,61 @@ body {
 /* ── Map view ── */
 #view-map { position: relative; }
 
-/* Under the map now, not above it. It reads as a caption to the view rather
-   than a lid on it, and it puts the controls nearest the thumb rather than
-   nearest the top of the screen. */
+/* Under the map now, not above it: a caption to the view rather than a lid on
+   it, and nearest the thumb.
+
+   On the route colour, because that is what makes the buttons inside it the
+   SAME buttons as the Stops / Map tabs rather than a lookalike. .view-tab is
+   written for a coloured backdrop — translucent white when idle, solid white
+   when chosen — and on a grey panel it came out inverted, which is exactly how
+   it looked wrong. */
 #map-optimize-bar {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
   padding: 10px 16px 12px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--route-color, #22c55e);
 }
 
-/* Wraps to two rows of three rather than cramming six across a phone. Six
-   across is what forced the labels off and pushed the page sideways; three
-   across leaves room for the word. */
-.route-mode-toggle {
-  display: flex;
-  flex-wrap: wrap;
-  border-radius: var(--r-card);
-  padding: 0;
-  gap: 6px;
-  width: 100%;
-}
+/* A choice of two. Exactly one is lit, always — the Stops / Map rule. */
+.seg { display: flex; gap: 6px; }
 
-/* Same template as .view-tab on the route side: a row of equal buttons, the
-   one you are on filled in, 44px of height for a thumb. The only difference is
-   the backdrop — these sit on a light surface rather than on the coloured
-   header — so the translucent-white treatment becomes a tinted one. */
-.mode-btn {
-  flex: 1 1 30%;
+/* Independent on/off switches. Deliberately NOT tab-shaped: a full pill reads
+   as a switch, and nothing about it suggests "one of these". */
+.map-switches { display: flex; gap: 6px; }
+.switch-btn {
+  flex: 1;
   min-width: 0;
-  min-height: 44px;
-  padding: 7px 10px;
-  border: none;
-  border-radius: var(--r-card);
-  background: rgba(0,0,0,0.05);
-  color: var(--text-muted);
-  font-size: 14px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: var(--r-pill, 999px);
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  font: inherit;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, color 0.15s;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-/* The filled one is the one you are on — the same rule the route-side tabs
-   follow, so the two bars read as one system. */
-.mode-btn.active {
-  background: var(--route-color, #166534);
-  color: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+.switch-btn.on {
+  background: rgba(255,255,255,0.95);
+  border-color: transparent;
+  color: var(--route-color-dark, #166534);
 }
-.mode-btn:disabled { opacity: 0.4; cursor: default; }
 
-#optimize-status { font-size: 12px; color: var(--text-muted); flex: 1; }
+/* .mode-btn and .route-mode-toggle used to live here — a second button style
+   that only ever tried to look like .view-tab. The map bar uses .view-tab
+   itself now, so there is one template rather than two that drift apart. */
+
+.view-tab:disabled { opacity: 0.4; cursor: default; }
+
+/* On the route colour now that the bar sits on it. */
+#optimize-status { font-size: 12px; color: rgba(255,255,255,0.8); }
 
 .nav-mode-badge {
   display: inline-block;
@@ -1473,10 +1473,12 @@ textarea.note-edit {
    Deliberately at the end of the stylesheet: an earlier version of the mobile
    rules in this file sat above the rules they were meant to override and did
    nothing at all for months. Same specificity means last one wins. */
-@media (max-width: 400px) {
-  /* Narrowest phones only: keep three across by giving the text somewhere to
-     go, rather than letting a long word like "Satellite" push the row to two. */
-  .mode-btn { font-size: 13px; padding: 7px 4px; }
+/* No narrow-phone override for the map bar's .view-tab buttons. Two per row
+   leaves room for the words even at 360 px, and shrinking the type here would
+   make them subtly unlike the route-side tabs again — which is the whole thing
+   this bar was getting wrong. */
+@media (max-width: 360px) {
+  .switch-btn { font-size: 12px; padding: 6px 6px; }
 }
 
 /* No `overflow-x: hidden` on html or body here, tempting as it is. It would

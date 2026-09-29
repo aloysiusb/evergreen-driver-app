@@ -829,13 +829,30 @@ function applyFollow(latLng, heading, snapZoom) {
   setTimeout(() => { suppressFollowOff = false; }, 0);
 }
 
+/* Driving and Route are one choice with two answers, so they are painted from
+   one place and from the state itself — never toggled independently.
+   They used to be two separate booleans each lighting its own button, so
+   tapping Driving while the Route view was on lit BOTH, and the next tap of
+   Route then did the opposite of what the button said. */
+function syncViewButtons() {
+  const drive = document.getElementById('mode-follow');
+  const route = document.getElementById('mode-overview');
+  if (drive) drive.classList.toggle('active', !overviewOn);
+  if (route) route.classList.toggle('active', overviewOn);
+}
+
+/* What the two buttons call. Picking one IS leaving the other, which is the
+   whole point of a choice, and is why neither of them is a toggle. */
+window.setMapView = function (view) {
+  if (view === 'route') setOverview(true);
+  else { setOverview(false); setFollow(true); }
+};
+
 function setFollow(on) {
   followMode = on;
-  const btn = document.getElementById('mode-follow');
-  if (btn) {
-    btn.classList.toggle('active', on);
-    btn.title = on ? 'Following you — tap to stop' : 'Re-centre on your location';
-  }
+  // Choosing to ride along is choosing the driving view.
+  if (on && overviewOn) { overviewOn = false; goToZoom(followZoom); }
+  syncViewButtons();
   // Re-centres, but does NOT haul the zoom back. Tapping 🧭 after looking
   // around used to snap you to zoom 18 whatever you had chosen, which is the
   // map "jumping" for no reason a driver asked for.
@@ -878,17 +895,12 @@ function watchForManualPan() {
  * step back out of it: one tap to see the shape of the round, one tap to get
  * back in the cab. Nothing else in the app pulls the camera out on its own.
  *
- * keepZoom is for when the driver has already changed the zoom themselves —
- * then the button just stops claiming to be on, and leaves their view alone. */
-function setOverview(on, keepZoom) {
+ * Both buttons are painted by syncViewButtons from overviewOn alone, so the
+ * pair cannot disagree with each other or with what the map is showing. */
+function setOverview(on) {
   overviewOn = on;
-  const btn = document.getElementById('mode-overview');
-  if (btn) {
-    btn.classList.toggle('active', on);
-    btn.title = on ? 'Showing the route — tap to go back to driving'
-                   : 'Zoom out to see the rest of the route';
-  }
-  if (keepZoom || !gMap) return;
+  syncViewButtons();
+  if (!gMap) return;
 
   if (on) {
     setFollow(false);              // looking at the round, not riding along
@@ -923,7 +935,7 @@ window.toggleSatellite = function() {
   if (!gMap) return;
   const isSat = gMap.getMapTypeId() !== 'roadmap';
   gMap.setMapTypeId(isSat ? 'roadmap' : 'hybrid');
-  document.getElementById('mode-sat')?.classList.toggle('active', !isSat);
+  document.getElementById('mode-sat')?.classList.toggle('on', !isSat);
 };
 
 // ── GPS tracking ─────────────────────────────────────────────────────────────
@@ -1160,7 +1172,8 @@ function updateAlertChip() {
   el.textContent = mode === 'sound' ? '🔔 Sound'
                  : mode === 'silent' ? '📳 Silent'
                  : '🔕 Alerts off';
-  el.classList.toggle('active', mode !== 'off');
+  // .on, not .active: this is a switch, not one of a pair of views.
+  el.classList.toggle('on', mode !== 'off');
   el.title = 'Arrival alerts: ' + mode + ' — tap to change';
 }
 

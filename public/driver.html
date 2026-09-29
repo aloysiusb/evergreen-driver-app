@@ -68,19 +68,28 @@
     <div id="route-map"></div>
     <div id="map-loading">Loading map…</div>
     <div id="nav-card" style="display:none;"></div>
-    <!-- Under the map, not above it, and built from the same .view-tab
-         template as the Stops / Map tabs on the route side: same height, same
-         radius, same "the filled one is the one you are on" rule. Two rows of
-         three rather than six squeezed across, so every label stays readable
-         at the size a thumb needs. -->
+    <!-- Under the map, not above it, and using the route side's own .view-tab
+         buttons rather than a lookalike — same colours, same height, same
+         radius, on the same route-coloured panel.
+
+         Grouped by what the controls actually DO, because dressing three
+         different behaviours in one "selected" costume is what made them feel
+         unpredictable. The two .seg groups are choices: exactly one of each
+         pair is lit, the way Stops / Map works. The pills below are
+         independent on/off switches, so they are shaped differently — a pill,
+         not a tab — and nothing about them claims to be a selection. -->
     <div id="map-optimize-bar">
-      <div class="route-mode-toggle">
-        <button class="mode-btn active" id="mode-planned" onclick="setRouteMode('planned')" title="Planned route order">📋 Planned</button>
-        <button class="mode-btn" id="mode-live" onclick="setRouteMode('live')" title="Live optimised order">⚡ Live</button>
-        <button class="mode-btn" id="mode-sat" onclick="toggleSatellite()" title="Satellite view">🛰 Satellite</button>
-        <button class="mode-btn active" id="mode-follow" onclick="toggleFollow()" title="Following you — tap to stop">🧭 Driving</button>
-        <button class="mode-btn" id="mode-overview" onclick="toggleOverview()" title="Step back to see the rest of the route">🔭 Route</button>
-        <button class="mode-btn active" id="mode-alert" onclick="cycleAlertMode()" title="Arrival sound">🔔 Sound</button>
+      <div class="seg" role="group" aria-label="Route order">
+        <button class="view-tab active" id="mode-planned" onclick="setRouteMode('planned')" title="Follow the order on the sheet">📋 Planned</button>
+        <button class="view-tab" id="mode-live" onclick="setRouteMode('live')" title="Re-order by what is quickest from here">⚡ Live</button>
+      </div>
+      <div class="seg" role="group" aria-label="Map view">
+        <button class="view-tab active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">🧭 Driving</button>
+        <button class="view-tab" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">🔭 Route</button>
+      </div>
+      <div class="map-switches">
+        <button class="switch-btn" id="mode-sat" onclick="toggleSatellite()" title="Aerial imagery — helps spot driveways and gates">🛰 Satellite</button>
+        <button class="switch-btn on" id="mode-alert" onclick="cycleAlertMode()" title="Arrival alert">🔔 Sound</button>
       </div>
       <span id="optimize-status"></span>
     </div>
