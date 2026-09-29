@@ -137,6 +137,21 @@
       </div>
 
 
+      <!-- Hand off to Google Maps, Waze or Apple Maps. It used to be built
+           inside the stop card below the map, which is why it opened down at
+           the foot of the page, level with the report buttons. It lives on the
+           map now, on the compass's line: a driver taps Navigate and the
+           choice appears where they are already looking, over the map rather
+           than under it. It closes on a choice, on Cancel, or on a tap
+           anywhere else. -->
+      <div id="nav-app-picker" hidden>
+        <button class="nav-app-btn" onclick="navOpenIn('google')">
+          🗺 Google Maps<span class="nav-app-sub" id="nav-handoff-count"></span></button>
+        <button class="nav-app-btn" onclick="navOpenIn('waze')">🚦 Waze</button>
+        <button class="nav-app-btn" onclick="navOpenIn('apple')">🍎 Apple Maps</button>
+        <button class="nav-app-close" onclick="closeNavPicker()" aria-label="Close">✕</button>
+      </div>
+
       <!-- The zoom, as a slider on the edge of the map rather than a pinch.
            Deliberate, one-handed, and it cannot be nudged by accident the way a
            two-finger gesture can — the map's own gesture zoom stays off. -->

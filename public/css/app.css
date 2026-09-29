@@ -516,18 +516,43 @@ body {
 
 /* ── Note styles by urgency ── */
 /* ── Navigation app picker ── */
+/* On the map, on the compass's line — not at the foot of the page.
+   It was built inside the stop card, which lives below the map, so tapping
+   Navigate opened it down among the report buttons: the furthest point on the
+   screen from where the driver was looking, and right where contamination,
+   bear and skip are. Absolute inside #map-wrap puts it where the compass is,
+   over the map, with the same scrim the rest of the head-up display uses. */
 #nav-app-picker {
-  display: none;
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  right: 12px;
+  /* Above the head-up display (6) and the hazard picker (7): it is the thing
+     the driver just asked for, and it is only up while they are choosing. */
+  z-index: 8;
+  display: flex;
   gap: 6px;
-  margin-bottom: 8px;
+  align-items: stretch;
+  padding: 6px;
+  border-radius: var(--r-card);
+  background: rgb(18 26 21 / 0.82);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.35);
 }
+#nav-app-picker[hidden] { display: none; }
+
 .nav-app-btn {
   flex: 1;
-  padding: 9px 6px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: var(--r-control);
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -535,6 +560,26 @@ body {
   text-align: center;
 }
 .nav-app-btn:active { transform: scale(0.97); }
+
+/* How many stops the Google handoff covers. Quieter than the app's name,
+   because it is the answer to a second question. */
+.nav-app-sub {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.nav-app-close {
+  flex: 0 0 auto;
+  width: 34px;
+  border: none;
+  border-radius: var(--r-control);
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+}
 
 .nav-eta {
   display: inline-block;
