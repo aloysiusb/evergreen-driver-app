@@ -600,163 +600,11 @@ body {
    Both, Bear and Locked entirely. The card draws the real ones now, from the
    same builder the stop list uses — see stopReportRowHtml in driver.js. */
 
-
-/* ── Report panel ── */
-#report-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-end;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-}
-#report-overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
-#report-panel {
-  width: 100%;
-  background: var(--surface);
-  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
-  padding-bottom: env(safe-area-inset-bottom, 16px);
-  transform: translateY(100%);
-  transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
-  max-height: 90vh;
-  overflow-y: auto;
-}
-#report-overlay.open #report-panel {
-  transform: translateY(0);
-}
-#report-handle {
-  width: 40px; height: 4px;
-  background: var(--border);
-  border-radius: var(--r-pill);
-  margin: 10px auto 0;
-}
-.report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.report-title { font-size: 17px; font-weight: 700; }
-.report-close-btn {
-  background: none; border: none; font-size: 18px;
-  color: var(--text-muted); cursor: pointer; padding: 4px 8px;
-}
-.report-progress {
-  display: flex; gap: 6px; padding: 12px 16px 0; justify-content: center;
-}
-.report-dot {
-  width: 8px; height: 8px; border-radius: var(--r-circle);
-  background: var(--border); transition: background 0.2s;
-}
-.report-step-label {
-  font-size: 14px; font-weight: 600; color: var(--text-muted);
-  padding: 14px 16px 8px; text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;
-}
-.report-options {
-  display: flex; flex-direction: column; gap: 8px; padding: 0 16px;
-}
 /* Pills, to match the round buttons that opened this panel. Not circles —
    "Recyclables mixed in" has to stay readable, and a circle is a hostile
    container for a phrase. Same language, right shape for the content. */
-.report-option {
-  padding: 15px 20px;
-  border: 2px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: center;
-  transition: all 0.12s;
-}
 /* The chosen one fills with the colour of the report being filed — set
    inline by renderStep, so it is always the same colour as the circle. */
-.report-option.selected {
-  font-weight: 700;
-  border-color: transparent;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.18);
-}
-.report-option:active { transform: scale(0.98); }
-
-.report-submit, .report-next {
-  border-radius: var(--r-pill);
-  padding: 14px 26px;
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.report-free-text {
-  display: block;
-  /* The panel has no side padding of its own; every row sets its own 16px,
-     so this one matches rather than running to the edges. */
-  width: calc(100% - 32px);
-  margin: 10px 16px 0;
-  padding: 10px 12px;
-  font-family: inherit;
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--note-edit-text);
-  background: var(--note-edit-bg);
-  border: 1px solid var(--action-btn-border);
-  border-radius: var(--r-card);
-  resize: none;
-}
-.report-free-text:focus { outline: none; border-color: var(--accent, #2d7d4f); }
-
-.report-photo-row { padding: 12px 16px 0; }
-.report-photo-btn {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  border: 1.5px dashed var(--border);
-  border-radius: var(--r-panel);
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.12s;
-}
-.report-photo-btn.taken {
-  border-style: solid;
-  border-color: #22c55e;
-  color: #15803d;
-  background: #dcfce7;
-}
-
-.report-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px 8px;
-  gap: 10px;
-}
-.report-back {
-  background: none; border: none; color: var(--text-muted);
-  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; padding: 10px 0;
-}
-.report-next, .report-submit {
-  flex: 1;
-  padding: 13px;
-  border: none;
-  border-radius: var(--r-panel);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
-}
-.report-next:disabled, .report-submit:disabled { opacity: 0.35; cursor: default; }
 
 .route-header-top {
   display: flex;
@@ -1040,9 +888,6 @@ body {
 .sim-outcome.bad { color: #fca5a5; }
 .sim-body { opacity: 0.75; word-break: break-all; }
 
-/* Keep the bottom action bar clear of the panel */
-body.sim-on { padding-bottom: 60px; }
-
 /* ── Pending-writes banner ── */
 /* Calmer than #ws-status on purpose: nothing is wrong, the work is just
    waiting for signal. Red here would teach drivers to ignore real warnings. */
@@ -1209,15 +1054,9 @@ body.sim-on { padding-bottom: 60px; }
    is a note you cannot read. Its own pair, editable like the others. */
 .note-info   { background: var(--note-bg); color: var(--note-text); }
 
-.stop-directions {
-  font-size: 12px;
-  color: var(--text-muted);
-  padding: 0 12px 10px 12px;
-  line-height: 1.45;
-  border-top: 1px solid var(--border);
-  padding-top: 8px;
-  margin-top: 0;
-}
+/* .stop-directions was the sheet's Direction column as a plain grey line at
+   the foot of the card, where it read as turn-by-turn. It is .stop-access-chip
+   now, labelled Access, because that is what it is. */
 
 /* ── Done button ── */
 .done-btn {
@@ -1356,33 +1195,9 @@ textarea.note-edit {
   display: block;
 }
 
-/* ── Completed summary ── */
-#completed-summary {
-  display: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-panel);
-  margin-top: 16px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.completed-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-muted);
-  user-select: none;
-}
-
-.completed-toggle { font-size: 12px; color: var(--route-color); }
-
-#completed-list { border-top: 1px solid var(--border); }
-#completed-list .stop-card { border-radius: 0; border: none; border-bottom: 1px solid var(--border); margin: 0; }
-#completed-list .stop-card:last-child { border-bottom: none; }
+/* A '3 completed' summary box with a fold-out list lived here. Nothing has
+   built it since completed stops started staying in place in the main list,
+   greyed and struck through, which is one list to scroll instead of two. */
 
 /* ── Action bar ── */
 .action-bar {
@@ -1631,7 +1446,6 @@ textarea.note-edit {
    to override and did nothing at all for months. */
 @media (max-width: 640px) {
   .hdr-menu { display: block; }
-  .route-nav { display: none; }
   .route-meta { display: none; }        /* day and date live in the drawer */
   .progress-text { font-size: 11px; }
   .route-ident .route-title { font-size: 15px; }

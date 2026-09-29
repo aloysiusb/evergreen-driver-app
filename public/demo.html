@@ -514,6 +514,11 @@ body {
         <span class="dock-ico">🔭</span><span class="dock-cap">Route</span></button>
       <button class="dock-btn" id="vt-sat" onclick="toggleSatellite()" title="Aerial imagery">
         <span class="dock-ico">🛰</span><span class="dock-cap">Sat</span></button>
+      <!-- Folds the tray away, the same handle the driver app has. Stays
+           visible when it is folded, because a control that hides itself along
+           with everything else is a control nobody gets back. -->
+      <button id="dock-toggle" onclick="toggleDock()" aria-expanded="true"
+              aria-controls="map-dock" title="Hide the buttons">⌄</button>
     </div>
   </div>
 
@@ -530,6 +535,7 @@ body {
 <div id="arrival-toast"></div>
 <div id="reroute-alert"></div>
 
+<script src="/js/map-dock.js"></script>
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
 let map, stops = [], path = [], pathIdx = 0, curStop = 0;
