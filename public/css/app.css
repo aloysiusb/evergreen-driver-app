@@ -260,23 +260,43 @@ body {
    was a 166px block of the screen; this costs the map nothing, because it is
    positioned over it and the scrim behind it is only there so white icons stay
    readable over pale roads. */
+/* A floating tray, not a full-width scrim.
+
+   The scrim version ran corner to corner along the bottom of the map, which is
+   where Google keeps its own furniture: the logo at bottom left and the Terms /
+   "report a map error" links at bottom right, neither of which can be moved,
+   plus the pegman and rotate controls (those have been moved to the left edge
+   — see map.js). Covering the logo and the terms is not allowed, and drawing a
+   row of buttons over a pile of small grey links looks broken besides.
+
+   So the tray is inset from both bottom corners and lifted clear of them. It
+   carries its own dark backing, which also means the captions no longer depend
+   on a gradient being dark enough over a pale map. */
 #map-dock {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* fixed, not absolute. Hung off the map's bottom it inherited every mistake
+     the map's height made — and on a phone, where innerHeight counts the strip
+     behind the address bar, that put the whole dock below the fold under the
+     action bar. Pinned to the visible window instead, just above that bar,
+     where it cannot be pushed off screen by anything.
+     --dock-bottom is the action bar's real height plus a gap, set by sizeMap();
+     the literal is the fallback for before that first runs. */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: var(--dock-bottom, 100px);
   z-index: 5;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   gap: 4px;
-  padding: 30px 8px 10px;
-  /* The scrim has to be dark enough to carry white text over a PALE map, not
-     just over satellite. At 0.45 the captions were technically rendering and
-     practically invisible on a road map. */
-  background: linear-gradient(to top,
-    rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.66) 45%, rgba(0,0,0,0.30) 78%, transparent 100%);
-  pointer-events: none;   /* the gradient is decoration; only the buttons take taps */
+  padding: 8px 10px 7px;
+  max-width: calc(100vw - 20px);
+  border-radius: 20px;
+  background: rgba(14, 18, 15, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  pointer-events: auto;
 }
 
 .dock-btn {
@@ -301,10 +321,7 @@ body {
   display: grid;
   place-items: center;
   border-radius: var(--r-circle, 999px);
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  background: rgba(255,255,255,0.16);
   font-size: 21px;
   line-height: 1;
   transition: background 0.15s, transform 0.1s;
@@ -386,9 +403,9 @@ body {
    It is a toast over the map now, just above the dock: where the driver is
    already looking, and out of the layout so an empty one takes no space. */
 #optimize-status {
-  position: absolute;
+  position: fixed;
   left: 50%;
-  bottom: 104px;
+  bottom: calc(var(--dock-bottom, 100px) + 86px);
   transform: translateX(-50%);
   z-index: 6;
   max-width: calc(100% - 32px);
