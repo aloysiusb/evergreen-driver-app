@@ -114,6 +114,10 @@
            float above the dock at the foot of the map, which put the one
            readout a driver glances at furthest from everything else they
            glance at. -->
+      <!-- On while dispatch can see the truck, and only then. A driver should
+           never have to remember whether they left it on, or go looking for a
+           button to find out. -->
+      <span id="live-chip" hidden>● Dispatch can see you</span>
       <span id="optimize-status"></span>
       <div id="turn-banner">
         <div class="turn-arrow" id="turn-arrow">↑</div>
@@ -195,7 +199,7 @@
         <span class="dock-ico">🛰</span><span class="dock-cap">Sat</span></button>
       <button class="dock-btn" id="mode-photo" onclick="photoFromMap()" title="Photograph the stop you are at">
         <span class="dock-ico">📷</span><span class="dock-cap">Photo</span></button>
-      <button class="dock-btn" id="mode-gps" onclick="shareLocation()" title="GPS — tap to send your position to dispatch">
+      <button class="dock-btn" id="mode-gps" onclick="toggleLiveShare()" title="Tap to let dispatch see where you are">
         <span class="dock-ico">📍</span><span class="dock-cap" id="gps-cap">GPS</span></button>
       <button class="dock-btn" id="mode-stop" onclick="goToStopInfo()" title="Open this stop's card and its report buttons">
         <span class="dock-ico">🧾</span><span class="dock-cap">Stop</span></button>

@@ -1412,27 +1412,35 @@ window.copyCoords = async function () {
   }
 };
 
-function updateGpsChip() {
-  const btn = document.getElementById('mode-gps');
-  const cap = document.getElementById('gps-cap');
-  if (!btn || !cap) return;
-  if (btn.classList.contains('sent')) return;   // leave the confirmation alone
-  const has = Boolean(lastGpsPos);
-  btn.classList.toggle('waiting', !has);
-  btn.classList.toggle('on', has);
-  cap.textContent = has && typeof lastGpsAccuracy === 'number'
-    ? Math.round(lastGpsAccuracy) + ' m'
-    : 'GPS';
-  btn.title = has
-    ? 'GPS fix — tap to send your position to dispatch'
-    : 'Waiting for a GPS fix';
-}
+/* ── Sharing your position with dispatch ──────────────────────────────────
+ *
+ * Off until the driver turns it on, and it says so on their own screen the
+ * whole time it is running. Being followed at work is not a setting to flip
+ * quietly on somebody's behalf: the button is theirs, the state is visible
+ * from the cab, and nothing is stored — the position is broadcast to whoever
+ * has the board open at that moment and then it is gone.
+ *
+ * A tap turns it on and sends straight away, so the old behaviour — one tap,
+ * one position, done — is still there as on-then-off.
+ *
+ * Remembered per device, because a driver who turned it on for the round
+ * should not have to turn it on again at every stop. localStorage can throw
+ * outright in a private window, so every touch of it is wrapped. */
+const LIVE_SHARE_KEY = 'ev_live_share';
 
-window.shareLocation = async function () {
-  const btn = document.getElementById('mode-gps');
-  const cap = document.getElementById('gps-cap');
-  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet — nothing to send.'); return; }
+let liveShare = false;
+let lastSentAt = 0;
+let lastSentPos = null;
+/* Set when a remembered 'on' is waiting for the first fix to act on. */
+/* How often a moving truck reports in. Not every fix: watchPosition fires
+   about once a second, which is 3,600 posts an hour to say the same thing
+   about a truck sitting at a transfer station. Far enough to be a new place,
+   or long enough that silence would look like a dropout. */
+const LIVE_MIN_METRES = 25;
+const LIVE_MIN_MS = 20000;
 
+async function postLocation(mode) {
+  if (!lastGpsPos) return false;
   const body = {
     lat: lastGpsPos.lat,
     lng: lastGpsPos.lng,
@@ -1440,28 +1448,110 @@ window.shareLocation = async function () {
     heading: lastGpsHeading ?? null,
     tabName: window._routeTabName || '',
     stop: navStops[currentIdx]?.accountName || '',
+    mode,                       // 'start' | 'ping' | 'stop' | 'once'
+    live: mode !== 'stop' && mode !== 'once',
   };
+  const res = await fetch('/api/driver-location', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  lastSentAt = Date.now();
+  lastSentPos = { ...lastGpsPos };
+  return true;
+}
+
+/* Called from every GPS fix while sharing is on. */
+function maybeSendLive() {
+  if (!liveShare || !lastGpsPos) return;
+  const movedFar = !lastSentPos || haversineM(
+    lastSentPos.lat, lastSentPos.lng, lastGpsPos.lat, lastGpsPos.lng) >= LIVE_MIN_METRES;
+  const waitedLong = Date.now() - lastSentAt >= LIVE_MIN_MS;
+  if (!movedFar && !waitedLong) return;
+  postLocation('ping').catch(() => { /* a dropped ping is the next one's problem */ });
+}
+
+window.toggleLiveShare = async function () {
+  if (!liveShare && !lastGpsPos) {
+    setOptimizeStatus('No GPS fix yet — nothing to share.');
+    return;
+  }
+  liveShare = !liveShare;
+  try { localStorage.setItem(LIVE_SHARE_KEY, liveShare ? '1' : '0'); } catch {}
+  updateGpsChip();
 
   try {
-    const res = await fetch('/api/driver-location', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    if (btn && cap) {
-      btn.classList.add('sent');
-      cap.textContent = 'Sent';
-      setTimeout(() => { btn.classList.remove('sent'); updateGpsChip(); }, 2600);
+    await postLocation(liveShare ? 'start' : 'stop');
+    setOptimizeStatus(liveShare
+      ? 'Sharing your position with dispatch.'
+      : 'Stopped sharing your position.');
+  } catch {
+    /* Turning it OFF has to hold even if the message never lands: the driver
+       asked to stop, and the board marks them stale on its own before long.
+       Turning it ON is only true if dispatch heard, so that one goes back. */
+    if (liveShare) {
+      liveShare = false;
+      try { localStorage.setItem(LIVE_SHARE_KEY, '0'); } catch {}
+      updateGpsChip();
+      setOptimizeStatus('Could not reach dispatch — not sharing.');
+    } else {
+      setOptimizeStatus('Stopped sharing (dispatch may not have heard).');
     }
-    setOptimizeStatus('Position sent to dispatch.');
-  } catch (err) {
-    // The offline queue is for route writes; a location is only worth sending
-    // while it is true, so a failed send says so rather than being replayed
-    // twenty minutes later from somewhere else entirely.
-    setOptimizeStatus('Could not reach dispatch — try again in signal.');
   }
 };
+
+/* Closing the app is stopping. sendBeacon because a normal fetch is cancelled
+   when the page goes, and a truck that appears parked forever at the last
+   place it was seen is worse than one that simply drops off the board. */
+addEventListener('pagehide', () => {
+  if (!liveShare || !lastGpsPos || !navigator.sendBeacon) return;
+  navigator.sendBeacon('/api/driver-location', new Blob([JSON.stringify({
+    lat: lastGpsPos.lat, lng: lastGpsPos.lng,
+    tabName: window._routeTabName || '', mode: 'stop', live: false,
+  })], { type: 'application/json' }));
+});
+
+function updateGpsChip() {
+  const btn = document.getElementById('mode-gps');
+  const cap = document.getElementById('gps-cap');
+  const chip = document.getElementById('live-chip');
+  if (chip) chip.hidden = !liveShare;
+  if (!btn || !cap) return;
+  const has = Boolean(lastGpsPos);
+
+  /* Lit means SHARING, not "has a fix". A button that lights up merely
+     because the phone knows where it is would say the same thing whether
+     dispatch could see the truck or not, which is the one distinction this
+     button exists to make. */
+  btn.classList.toggle('waiting', !has);
+  btn.classList.toggle('on', liveShare);
+  btn.classList.toggle('sharing', liveShare);
+
+  if (liveShare) {
+    cap.textContent = 'Live';
+    btn.title = 'Dispatch can see you — tap to stop sharing';
+  } else {
+    cap.textContent = has && typeof lastGpsAccuracy === 'number'
+      ? Math.round(lastGpsAccuracy) + ' m'
+      : 'GPS';
+    btn.title = has
+      ? 'Tap to let dispatch see where you are'
+      : 'Waiting for a GPS fix';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  /* Remembered, but not resumed silently: it only comes back on once there
+     is a fix to send, and the first ping says 'start' so the board knows the
+     truck is live rather than inferring it from a position. */
+  let want = false;
+  try { want = localStorage.getItem(LIVE_SHARE_KEY) === '1'; } catch {}
+  if (want) pendingLiveResume = true;
+  updateGpsChip();
+});
+
+let pendingLiveResume = false;
 
 function setOptimizeStatus(msg) {
   const el = document.getElementById('optimize-status');
@@ -1547,6 +1637,21 @@ function onGpsUpdate(pos) {
 
   // Ride along with the driver
   applyFollow(latLng, lastGpsHeading);
+
+  /* A remembered 'on' takes effect at the first fix, not at page load —
+     there was nothing to send before this. */
+  if (pendingLiveResume) {
+    pendingLiveResume = false;
+    liveShare = true;
+    updateGpsChip();
+    postLocation('start').catch(() => {
+      liveShare = false;
+      updateGpsChip();
+      setOptimizeStatus('Could not reach dispatch — not sharing.');
+    });
+  } else {
+    maybeSendLive();
+  }
 
   // Next manoeuvre on our own screen
   updateTurnBanner(lat, lng);
