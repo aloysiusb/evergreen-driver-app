@@ -76,6 +76,11 @@ function sizeMap() {
      to spare and still reads as a bar at the foot of the map. */
   document.documentElement.style.setProperty('--dock-bottom', (barH + 32) + 'px');
 
+  /* The dock is at the TOP of the map now, and its height decides where the
+     compass, the directions and both pickers start. A narrower window wraps
+     it onto another row, so it is re-measured whenever the map is. */
+  measureDock();
+
   // Google needs telling, or it keeps painting tiles for the old box.
   if (gMap && window.google?.maps?.event) {
     google.maps.event.trigger(gMap, 'resize');
@@ -1269,17 +1274,11 @@ window.toggleHazardPicker = function (force) {
   el.hidden = !show;
   if (btn) btn.classList.toggle('active', show);
 
-  /* Sit it clear of the dock, measured. The dock is one row on a desktop and
-     two on a phone, so a fixed offset put the picker's lower half across the
-     buttons it had just been opened from. */
-  if (show) {
-    const dock = document.getElementById('map-dock');
-    if (dock) {
-      const r = dock.getBoundingClientRect();
-      const clearance = Math.round(window.innerHeight - r.top + 10);
-      document.documentElement.style.setProperty('--picker-bottom', clearance + 'px');
-    }
-  }
+  /* Clearance comes from --dock-h now, like everything else under the dock.
+     It used to be worked out here from the window's height, which was the
+     only way to place something against a dock that was fixed to the window
+     rather than to the map. */
+  if (show) measureDock();
 };
 
 window.fileHazard = async function (kind) {
@@ -1416,7 +1415,28 @@ function applyDockFolded(folded) {
   btn.textContent = folded ? '⌃' : '⌄';
   btn.title = folded ? 'Show the buttons' : 'Hide the buttons';
   btn.setAttribute('aria-expanded', String(!folded));
+  measureDock();
 }
+
+/* The dock's height, published for everything that sits under it: the compass
+   and the directions, the hazard picker, the navigation-app strip.
+ *
+ * It cannot be a constant. The tray is one row on a desktop and two on a
+ * phone, and a stub of a row when it is folded away — and folding it is the
+ * whole point of the handle, so the things below it have to come up when it
+ * does. Measured after a frame, because a fold changes the layout and
+ * offsetHeight read in the same tick is the height it had before. */
+function measureDock() {
+  const dock = document.getElementById('map-dock');
+  if (!dock) return;
+  requestAnimationFrame(() => {
+    const h = dock.offsetHeight;
+    if (h > 0) {
+      document.documentElement.style.setProperty('--dock-h', (h + 8) + 'px');
+    }
+  });
+}
+window.measureDock = measureDock;
 
 window.toggleDock = function () {
   const dock = document.getElementById('map-dock');
