@@ -867,12 +867,48 @@ function fmtDistance(m) {
   return Math.max(50, Math.round(feet / 50) * 50) + ' ft';
 }
 
+/* What is between here and the stop: the traffic Google reports, and anything
+ * a driver has flagged on the road.
+ *
+ * Only the nearest hazard, and only one that is actually near — a rockslide
+ * eleven miles away on a road nobody is taking is noise, and noise is what
+ * teaches people to stop reading the banner. Distance is straight-line, which
+ * understates road distance; that errs towards warning early, which is the
+ * right way to be wrong about a rockslide. */
+const HAZARD_ALERT_M = 8000;   // about five miles
+
+function updateConditions(lat, lng) {
+  const el = document.getElementById('turn-conditions');
+  if (!el) return;
+  const chips = [];
+
+  const traffic = typeof trafficLabel === 'function' ? trafficLabel() : '';
+  if (traffic) chips.push('<span class="cond-chip">' + escHtml(traffic) + '</span>');
+
+  let nearest = null, nearestM = Infinity;
+  for (const h of hazardData.values()) {
+    const d = haversineM(lat, lng, h.lat, h.lng);
+    if (d < nearestM) { nearest = h; nearestM = d; }
+  }
+  if (nearest && nearestM <= HAZARD_ALERT_M) {
+    chips.push('<span class="cond-chip hazard">' + (nearest.icon || '⚠️') + ' ' +
+      escHtml(nearest.label) + ' · ' + fmtDistance(nearestM) + '</span>');
+  }
+
+  el.innerHTML = chips.join('');
+}
+
 function updateTurnBanner(lat, lng) {
   const banner = document.getElementById('turn-banner');
   if (!banner) return;
 
   const stop = currentNavStop();
   if (!stop) { banner.classList.remove('show'); return; }
+
+  // Conditions are about the road, not about the manoeuvre, so they are worked
+  // out before any of the early returns below — a driver waiting on directions
+  // still wants to know there is a slide ahead.
+  updateConditions(lat, lng);
 
   // Steps are stale if they lead somewhere else — the driver advanced, or
   // reordered into Live mode. Clear the throttle too: arriving at a new stop
@@ -1111,6 +1147,7 @@ window.goToStopInfo = function () {
  */
 let hazardKinds = {};
 const hazardMarkers = new Map();   // id → google.maps.Marker
+const hazardData = new Map();      // id → the hazard itself, for distances
 
 function hazardPinIcon(icon) {
   /* Drawn rather than an image file: one less request, and it scales without
@@ -1150,11 +1187,13 @@ function drawHazard(h) {
   });
   marker.addListener('click', () => info.open(gMap, marker));
   hazardMarkers.set(h.id, marker);
+  hazardData.set(h.id, h);
 }
 
 function removeHazard(id) {
   const m = hazardMarkers.get(id);
   if (m) { m.setMap(null); hazardMarkers.delete(id); }
+  hazardData.delete(id);
 }
 
 /* The socket only carries what happens next, so a driver opening the app
@@ -1846,12 +1885,7 @@ function renderNavCard() {
     ${addrLine ? `<div class="nav-stop-addr">${escHtml(addrLine)}</div>` : ''}
     ${accessHtml}
     ${noteHtmlStyled}
-    <div class="nav-report-btns">
-      <button class="report-quick-btn contamination" onclick="reportFile('contamination',${row},'${escHtml(tabName)}')">🚫 Contamination</button>
-      <button class="report-quick-btn overflow"      onclick="reportFile('overflow',${row},'${escHtml(tabName)}')">📦 Overflow</button>
-      <button class="report-quick-btn skip"          onclick="reportFile('skip',${row},'${escHtml(tabName)}')">⏭ Skip</button>
-      <button class="report-quick-btn photo"         onclick="reportFile('photo',${row},'${escHtml(tabName)}')">📷 Photo</button>
-    </div>
+    ${typeof window.stopReportRowHtml === 'function' ? window.stopReportRowHtml(row) : ''}
     <div id="nav-app-picker">
       <button class="nav-app-btn" onclick="navOpenIn('google')">🗺 Google Maps · next ${navHandoffCount()} stops</button>
       <button class="nav-app-btn" onclick="navOpenIn('waze')">🚦 Waze</button>
@@ -1865,7 +1899,25 @@ function renderNavCard() {
         : `<button class="nav-btn nav-btn-done" onclick="navDone()">✓ Done</button>`}
       <button class="nav-btn nav-btn-next" onclick="navStep(1)" ${currentIdx === total - 1 ? 'disabled' : ''}>Next →</button>
     </div>`;
+
+  /* The report buttons here are the stop list's own, markup and behaviour
+     both, so they get the stop list's own listeners rather than a second
+     handler that would have to reimplement the drill-down. */
+  if (typeof window.attachStopReportListeners === 'function') {
+    window.attachStopReportListeners(card);
+  }
 }
+
+/* The drill-down state lives in driver.js, so when it re-renders the list —
+   after a report is filed, or a sub-choice picked — this card has to follow or
+   it sits showing the first array while the list shows the second.
+   Guarded against running before the map exists, since the list renders on
+   load whether or not anyone has opened the map. */
+window.onStopsRendered = function () {
+  if (!window._mapInitialized || !gMap) return;
+  if (!navStops.length) return;
+  renderNavCard();
+};
 
 function jumpTo(idx) {
   currentIdx = idx;
