@@ -782,15 +782,36 @@ window.navHandoffCount = function() {
   return upcomingStops(HANDOFF_MAX_STOPS).length;
 };
 
-window.toggleNavPicker = function() {
+/* The picker is part of the map now, not part of the stop card, so it is
+   written once in the page and only shown and hidden here. Rebuilding it with
+   the card is what used to anchor it to the bottom of the screen. */
+window.toggleNavPicker = function(show) {
   const el = document.getElementById('nav-app-picker');
-  if (el) el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+  if (!el) return;
+  const open = show === undefined ? el.hidden : Boolean(show);
+  if (open) {
+    // The Google handoff covers a run of stops, and how many depends on where
+    // the driver is up to — so it is worked out as the picker opens.
+    const n = navHandoffCount();
+    const cap = document.getElementById('nav-handoff-count');
+    if (cap) cap.textContent = n > 1 ? `next ${n} stops` : 'this stop';
+  }
+  el.hidden = !open;
 };
 
-function closeNavPicker() {
+window.closeNavPicker = function closeNavPicker() {
   const el = document.getElementById('nav-app-picker');
-  if (el) el.style.display = 'none';
-}
+  if (el) el.hidden = true;
+};
+
+/* Floating over the map, it needs a way out that is not a button — a driver
+   who opened it by accident should be able to tap the map and carry on. */
+document.addEventListener('click', (e) => {
+  const el = document.getElementById('nav-app-picker');
+  if (!el || el.hidden) return;
+  if (el.contains(e.target) || e.target.closest('.nav-btn-maps')) return;
+  el.hidden = true;
+}, true);
 
 function updateModeUI() {
   /* One dock button for both orders now, so it says which one it is showing
@@ -1915,11 +1936,6 @@ function renderNavCard() {
     ${accessHtml}
     ${noteHtmlStyled}
     ${typeof window.stopReportRowHtml === 'function' ? window.stopReportRowHtml(row) : ''}
-    <div id="nav-app-picker">
-      <button class="nav-app-btn" onclick="navOpenIn('google')">🗺 Google Maps · next ${navHandoffCount()} stops</button>
-      <button class="nav-app-btn" onclick="navOpenIn('waze')">🚦 Waze</button>
-      <button class="nav-app-btn" onclick="navOpenIn('apple')">🍎 Apple Maps</button>
-    </div>
     <div class="nav-actions">
       <button class="nav-btn nav-btn-prev" onclick="navStep(-1)" ${currentIdx === 0 ? 'disabled' : ''}>← Prev</button>
       <button class="nav-btn nav-btn-maps" onclick="toggleNavPicker()">↗ Navigate</button>
