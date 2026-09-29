@@ -77,58 +77,69 @@
         <div class="turn-dist" id="turn-dist">—</div>
         <div class="turn-text" id="turn-text">Getting directions…</div>
         <div class="turn-next" id="turn-next"></div>
+        <!-- What is between here and there: the traffic Google reports, and
+             anything a driver has flagged on the road ahead. -->
+        <div class="turn-conditions" id="turn-conditions"></div>
       </div>
     </div>
-    <div id="route-map"></div>
-    <div id="map-loading">Loading map…</div>
+    <!-- The map and the things that float ON it, in one positioned box.
+         Without this they were positioned against #view-map, which STARTS at
+         the turn banner — so the compass sat on top of the directions the
+         moment any were showing, and the zoom slider centred itself on the
+         banner as well as the map. -->
+    <div id="map-wrap">
+      <div id="route-map"></div>
+      <div id="map-loading">Loading map…</div>
+      <!-- Where you are and which way you are pointing, on the map itself.
+           Top centre because Google owns both top corners (map type on the left,
+           fullscreen on the right) and both bottom ones. Tap copies the
+           coordinates, which is what you want when you are reading them to
+           somebody over the radio. -->
+      <div id="geo-chip">
+        <!-- A real compass rose, not a letter. The rim is fixed with north at the
+             top, and the needle turns — so "needle pointing up" means driving
+             north, which is readable in the half-second a driver can spare.
+             Translucent on purpose: it overlaps the map and is meant to. -->
+        <svg class="geo-rose" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="rose-ring" cx="32" cy="32" r="29"/>
+          <circle class="rose-hub" cx="32" cy="32" r="2.5"/>
+          <text class="rose-pt rose-n" x="32" y="13">N</text>
+          <text class="rose-pt" x="56" y="36">E</text>
+          <text class="rose-pt" x="32" y="60">S</text>
+          <text class="rose-pt" x="8"  y="36">W</text>
+          <g id="geo-needle">
+            <polygon class="rose-needle-n" points="32,10 26.5,33 37.5,33"/>
+            <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
+          </g>
+        </svg>
+        <button class="geo-read" onclick="copyCoords()" title="Your position — tap to copy">
+          <span class="geo-card" id="geo-card">—</span>
+          <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
+        </button>
+      </div>
+
+      <!-- What a driver picks from after tapping Hazard. Above the dock rather
+           than a dialog: it is one tap, at the roadside, often while still
+           rolling to a stop. -->
+      <div id="hazard-picker" hidden>
+        <div class="hz-title">Tell the other drivers</div>
+        <div class="hz-row" id="hz-row"></div>
+        <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
+      </div>
+
+      <!-- The zoom, as a slider on the edge of the map rather than a pinch.
+           Deliberate, one-handed, and it cannot be nudged by accident the way a
+           two-finger gesture can — the map's own gesture zoom stays off. -->
+      <div id="map-zoom" aria-label="Zoom">
+        <button class="zoom-end" onclick="nudgeZoom(1)" aria-label="Zoom in" tabindex="-1">+</button>
+        <input id="zoom-slider" type="range" min="12" max="20" step="1" value="18"
+               oninput="setZoomFromSlider(this.value)" aria-label="Zoom level"
+               orient="vertical">
+        <button class="zoom-end" onclick="nudgeZoom(-1)" aria-label="Zoom out" tabindex="-1">−</button>
+      </div>
+    </div>
+
     <div id="nav-card" style="display:none;"></div>
-    <!-- Where you are and which way you are pointing, on the map itself.
-         Top centre because Google owns both top corners (map type on the left,
-         fullscreen on the right) and both bottom ones. Tap copies the
-         coordinates, which is what you want when you are reading them to
-         somebody over the radio. -->
-    <div id="geo-chip">
-      <!-- A real compass rose, not a letter. The rim is fixed with north at the
-           top, and the needle turns — so "needle pointing up" means driving
-           north, which is readable in the half-second a driver can spare.
-           Translucent on purpose: it overlaps the map and is meant to. -->
-      <svg class="geo-rose" viewBox="0 0 64 64" aria-hidden="true">
-        <circle class="rose-ring" cx="32" cy="32" r="29"/>
-        <circle class="rose-hub" cx="32" cy="32" r="2.5"/>
-        <text class="rose-pt rose-n" x="32" y="13">N</text>
-        <text class="rose-pt" x="56" y="36">E</text>
-        <text class="rose-pt" x="32" y="60">S</text>
-        <text class="rose-pt" x="8"  y="36">W</text>
-        <g id="geo-needle">
-          <polygon class="rose-needle-n" points="32,10 26.5,33 37.5,33"/>
-          <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
-        </g>
-      </svg>
-      <button class="geo-read" onclick="copyCoords()" title="Your position — tap to copy">
-        <span class="geo-card" id="geo-card">—</span>
-        <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
-      </button>
-    </div>
-
-    <!-- What a driver picks from after tapping Hazard. Above the dock rather
-         than a dialog: it is one tap, at the roadside, often while still
-         rolling to a stop. -->
-    <div id="hazard-picker" hidden>
-      <div class="hz-title">Tell the other drivers</div>
-      <div class="hz-row" id="hz-row"></div>
-      <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
-    </div>
-
-    <!-- The zoom, as a slider on the edge of the map rather than a pinch.
-         Deliberate, one-handed, and it cannot be nudged by accident the way a
-         two-finger gesture can — the map's own gesture zoom stays off. -->
-    <div id="map-zoom" aria-label="Zoom">
-      <button class="zoom-end" onclick="nudgeZoom(1)" aria-label="Zoom in" tabindex="-1">+</button>
-      <input id="zoom-slider" type="range" min="12" max="20" step="1" value="18"
-             oninput="setZoomFromSlider(this.value)" aria-label="Zoom level"
-             orient="vertical">
-      <button class="zoom-end" onclick="nudgeZoom(-1)" aria-label="Zoom out" tabindex="-1">−</button>
-    </div>
 
     <!-- Round, across the bottom, floating ON the map so they cost it no
          height. The old bar was 166px of the screen; this is a scrim.

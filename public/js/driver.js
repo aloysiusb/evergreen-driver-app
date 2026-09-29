@@ -73,6 +73,11 @@
     document.getElementById('route-date').textContent = routeDate || '';
 
     renderAllStops();
+
+    /* The map's stop card draws the SAME report buttons from the same builder,
+       and the drill-down state that decides which set to show lives here. So
+       whoever else is showing them is told to redraw whenever this does. */
+    if (typeof window.onStopsRendered === 'function') window.onStopsRendered();
   }
 
   function renderAllStops() {
@@ -199,61 +204,7 @@
 
        The label is read from settings, so the wording can be changed without
        a code change, and the same wording is what gets written to the sheet. */
-    /* The camera button is marked after a report that is worth a picture,
-       until one is taken. A reminder, not an instruction. */
-    const nudged = photoNudgeRow === item.rowNumber &&
-      !(window.photoTakenFor && window.photoTakenFor[item.rowNumber]);
-
-    const rbtn = (kind, icon, fallback, aria) =>
-      `<button class="stop-report-btn${kind === 'photo' && nudged ? ' srb-nudge' : ''}"
-                data-report="${kind}" data-row="${item.rowNumber}"
-                aria-label="${aria}">
-          <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
-        </button>`;
-
-    /* The second array, shown ONLY where a button was just tapped. Every one
-       carries the same data-report as its parent, so it inherits that report's
-       colour without a second set of settings. */
-    const subBtn = (label) =>
-      `<button class="stop-report-btn srb-sub" data-report="${drill.type}"
-                data-drill-value="${esc(label)}" data-row="${item.rowNumber}">
-          <span class="srb-label">${esc(label)}</span>
-        </button>`;
-
-    const isDrilled = !isCompleted && drill.row === item.rowNumber && drill.type;
-    const quick = isDrilled && typeof reportQuickOptions === 'function'
-      ? reportQuickOptions(drill.type, drill.level)
-      : [];
-
-    const reportBtns = isCompleted ? '' : (
-      isDrilled && quick.length
-        ? `<div class="stop-report-row is-sub">
-             ${quick.map(subBtn).join('')}
-             <button class="stop-report-btn srb-sub${nudged ? ' srb-nudge' : ''}"
-                     data-report="photo"
-                     data-drill-photo="1" data-row="${item.rowNumber}"
-                     aria-label="Take a photo of this stop">
-               <span class="srb-label">📷 Photo</span>
-             </button>
-             <button class="stop-report-btn srb-sub srb-back" data-drill-back="1"
-                     data-row="${item.rowNumber}" aria-label="Back">
-               <span class="srb-label">←</span>
-             </button>
-           </div>`
-        /* Order is by how often a driver reaches for it, not by category:
-           the two commonest first, then the combined one beside them because
-           it is the pair they go together as, then the valley-specific ones,
-           then skip and photo which end the visit. */
-        : `<div class="stop-report-row">
-             ${rbtn('contamination', '🚫', 'Contam', 'Report contamination')}
-             ${rbtn('overflow', '📦', 'Overflow', 'Report overflow')}
-             ${rbtn('combo', '⚠️', 'Both', 'Report contamination and overflow together')}
-             ${rbtn('bear', '🐻', 'Bear', 'Report a bear')}
-             ${rbtn('locked', '🔒', 'Locked', 'Report a locked gate, bin or enclosure')}
-             ${rbtn('skip', '⏭', 'Skipped', 'Report skipped')}
-             ${rbtn('photo', '📷', 'Photo', 'Take a photo of this stop')}
-           </div>`
-    );
+    const reportBtns = reportRowFor(item, isCompleted);
     const dirBtn = '';  // directions shown as chip now
     const accessChip = item.directions
       ? `<div class="stop-access-chip"><span class="field-label">🔑 Access</span>${esc(item.directions)}</div>`
@@ -313,6 +264,80 @@
     photoNudgeRow = row;
     render();
   }
+
+  /* The report buttons for one stop. Lifted out of the card renderer so the
+     map's stop card can draw the identical set — see window.stopReportRowHtml.
+     It reads the same drill state, so a driver part-way through a report sees
+     the second array wherever they are looking. */
+  function reportRowFor(item, isCompleted) {
+    /* The camera button is marked after a report that is worth a picture,
+       until one is taken. A reminder, not an instruction. */
+    const nudged = photoNudgeRow === item.rowNumber &&
+      !(window.photoTakenFor && window.photoTakenFor[item.rowNumber]);
+
+    const rbtn = (kind, icon, fallback, aria) =>
+      `<button class="stop-report-btn${kind === 'photo' && nudged ? ' srb-nudge' : ''}"
+                data-report="${kind}" data-row="${item.rowNumber}"
+                aria-label="${aria}">
+          <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
+        </button>`;
+
+    /* The second array, shown ONLY where a button was just tapped. Every one
+       carries the same data-report as its parent, so it inherits that report's
+       colour without a second set of settings. */
+    const subBtn = (label) =>
+      `<button class="stop-report-btn srb-sub" data-report="${drill.type}"
+                data-drill-value="${esc(label)}" data-row="${item.rowNumber}">
+          <span class="srb-label">${esc(label)}</span>
+        </button>`;
+
+    const isDrilled = !isCompleted && drill.row === item.rowNumber && drill.type;
+    const quick = isDrilled && typeof reportQuickOptions === 'function'
+      ? reportQuickOptions(drill.type, drill.level)
+      : [];
+
+    if (isCompleted) return '';
+    if (isDrilled && quick.length) {
+      return `<div class="stop-report-row is-sub">
+             ${quick.map(subBtn).join('')}
+             <button class="stop-report-btn srb-sub${nudged ? ' srb-nudge' : ''}"
+                     data-report="photo"
+                     data-drill-photo="1" data-row="${item.rowNumber}"
+                     aria-label="Take a photo of this stop">
+               <span class="srb-label">📷 Photo</span>
+             </button>
+             <button class="stop-report-btn srb-sub srb-back" data-drill-back="1"
+                     data-row="${item.rowNumber}" aria-label="Back">
+               <span class="srb-label">←</span>
+             </button>
+           </div>`;
+    }
+    /* Order is by how often a driver reaches for it, not by category: the two
+       commonest first, then the combined one beside them because it is the
+       pair they go together as, then the valley-specific ones, then skip and
+       photo which end the visit. */
+    return `<div class="stop-report-row">
+             ${rbtn('contamination', '🚫', 'Contam', 'Report contamination')}
+             ${rbtn('overflow', '📦', 'Overflow', 'Report overflow')}
+             ${rbtn('combo', '⚠️', 'Both', 'Report contamination and overflow together')}
+             ${rbtn('bear', '🐻', 'Bear', 'Report a bear')}
+             ${rbtn('locked', '🔒', 'Locked', 'Report a locked gate, bin or enclosure')}
+             ${rbtn('skip', '⏭', 'Skipped', 'Report skipped')}
+             ${rbtn('photo', '📷', 'Photo', 'Take a photo of this stop')}
+           </div>`;
+  }
+
+  /* The seven round report buttons for one stop, and the second array when a
+     driver is part-way through one. Exposed because the map's stop card shows
+     the same buttons: one builder, so the two cannot drift into looking alike
+     but behaving differently — which is exactly what they had done. */
+  window.stopReportRowHtml = function (rowNumber) {
+    const item = allStops.find(s => s.rowNumber === Number(rowNumber));
+    return item ? reportRowFor(item, Boolean(item.done)) : '';
+  };
+  window.attachStopReportListeners = function (container) {
+    if (container) attachReportListeners(container);
+  };
 
   function attachReportListeners(container) {
     container.querySelectorAll('.stop-report-btn').forEach(btn => {

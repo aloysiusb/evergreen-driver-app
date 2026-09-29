@@ -263,6 +263,11 @@ body {
 /* ── Map view ── */
 #view-map { position: relative; }
 
+/* The positioning context for everything that floats on the map. #view-map
+   would not do: it begins at the turn banner, so anything anchored to its top
+   lands on the directions rather than on the map. */
+#map-wrap { position: relative; }
+
 /* ── The dock ──
    Round buttons across the bottom, floating ON the map. The bar they replace
    was a 166px block of the screen; this costs the map nothing, because it is
@@ -660,7 +665,12 @@ body {
 #nav-card {
   background: var(--surface);
   border-top: 1px solid var(--border);
-  padding: 14px 16px 18px;
+  /* The foot has to clear the dock. The dock is position:fixed so it floats
+     over everything, including this card once a driver scrolls down to it —
+     and this card got a lot taller when its report buttons became the route
+     side's full-size round seven. Without the room, the last row of them sits
+     under the tray where it cannot be tapped. */
+  padding: 14px 16px calc(var(--dock-bottom, 100px) + 96px);
   position: relative;
 }
 
@@ -835,32 +845,11 @@ body {
 .nav-note.hold    { background: #fef3c7; border-left-color: #d97706; }
 
 /* ── Report quick buttons ── */
-.nav-report-btns {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
+/* .nav-report-btns and .report-quick-btn lived here: four rectangular buttons
+   that only looked like the route side's seven round ones, and were missing
+   Both, Bear and Locked entirely. The card draws the real ones now, from the
+   same builder the stop list uses — see stopReportRowHtml in driver.js. */
 
-.report-quick-btn {
-  flex: 1;
-  min-width: calc(50% - 3px);
-  padding: 9px 6px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: center;
-  transition: background 0.12s, border-color 0.12s;
-}
-.report-quick-btn.contamination:hover { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
-.report-quick-btn.overflow:hover      { background: #fef3c7; border-color: #d97706; color: #d97706; }
-.report-quick-btn.skip:hover          { background: #f3f4f6; border-color: #6b7280; color: #374151; }
-.report-quick-btn.photo:hover         { background: #dbeafe; border-color: #2563eb; color: #2563eb; }
 
 /* ── Report panel ── */
 #report-overlay {
@@ -1207,6 +1196,28 @@ body {
   border-radius: var(--r-panel);
 }
 #turn-banner.show { display: flex; }
+
+/* Conditions, under the manoeuvre. Chips rather than a sentence: a driver
+   glancing at this wants to know whether there is anything, not to read. */
+.turn-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+.turn-conditions:empty { display: none; }
+.cond-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--r-pill, 999px);
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  white-space: nowrap;
+}
+/* A hazard somebody has actually flagged outranks a traffic colour, and looks
+   like it. */
+.cond-chip.hazard { background: #b91c1c; }
 
 /* Says whose instruction this is. The banner is the only thing on screen that
    is recalculated as the truck moves, and the only one that re-routes; the
