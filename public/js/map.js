@@ -1141,6 +1141,10 @@ function updateGeoChip() {
   coords.textContent = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
   card.textContent = cardinal(lastGpsHeading);
   if (typeof lastGpsHeading === 'number' && !Number.isNaN(lastGpsHeading)) {
+    /* An SVG group, so the rotation goes on the CSS transform with a
+       transform-origin in USER UNITS (32,32 — the rose's centre), not on the
+       element's box. Setting style.transform with a px origin would spin it
+       around the wrong point. */
     needle.style.transform = 'rotate(' + lastGpsHeading + 'deg)';
   }
 }
@@ -1149,6 +1153,41 @@ function updateGeoChip() {
    puts it on the clipboard. Falls back to saying the numbers are on screen —
    clipboard access needs a secure context and a user gesture, and a driver who
    taps it and gets nothing would reasonably assume the app is broken. */
+/* Folding the button strip away.
+ *
+ * A driver who wants the map is not always a driver who wants seven buttons on
+ * it. Folded, the tray shrinks to its own handle — which stays put, because a
+ * control that hides along with everything else is one nobody gets back.
+ *
+ * Remembered per device: it is a preference, and re-folding it at every stop
+ * would be its own annoyance. localStorage can throw outright in a private
+ * window, so every touch of it is wrapped. */
+const DOCK_FOLDED_KEY = 'ev_dock_folded';
+
+function applyDockFolded(folded) {
+  const dock = document.getElementById('map-dock');
+  const btn = document.getElementById('dock-toggle');
+  if (!dock || !btn) return;
+  dock.classList.toggle('folded', folded);
+  btn.textContent = folded ? '⌃' : '⌄';
+  btn.title = folded ? 'Show the buttons' : 'Hide the buttons';
+  btn.setAttribute('aria-expanded', String(!folded));
+}
+
+window.toggleDock = function () {
+  const dock = document.getElementById('map-dock');
+  if (!dock) return;
+  const folded = !dock.classList.contains('folded');
+  applyDockFolded(folded);
+  try { localStorage.setItem(DOCK_FOLDED_KEY, folded ? '1' : '0'); } catch {}
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  let folded = false;
+  try { folded = localStorage.getItem(DOCK_FOLDED_KEY) === '1'; } catch {}
+  applyDockFolded(folded);
+});
+
 window.copyCoords = async function () {
   if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
   const text = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
