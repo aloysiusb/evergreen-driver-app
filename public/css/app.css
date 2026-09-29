@@ -177,40 +177,56 @@ body {
 /* ── Map view ── */
 #view-map { position: relative; }
 
+/* Under the map now, not above it. It reads as a caption to the view rather
+   than a lid on it, and it puts the controls nearest the thumb rather than
+   nearest the top of the screen. */
 #map-optimize-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 10px 16px 12px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
 }
 
+/* Wraps to two rows of three rather than cramming six across a phone. Six
+   across is what forced the labels off and pushed the page sideways; three
+   across leaves room for the word. */
 .route-mode-toggle {
   display: flex;
-  background: var(--border);
+  flex-wrap: wrap;
   border-radius: var(--r-card);
-  padding: 3px;
-  gap: 3px;
+  padding: 0;
+  gap: 6px;
+  width: 100%;
 }
 
+/* Same template as .view-tab on the route side: a row of equal buttons, the
+   one you are on filled in, 44px of height for a thumb. The only difference is
+   the backdrop — these sit on a light surface rather than on the coloured
+   header — so the translucent-white treatment becomes a tinted one. */
 .mode-btn {
-  flex: 1;
-  padding: 7px 14px;
+  flex: 1 1 30%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 10px;
   border: none;
   border-radius: var(--r-card);
-  background: transparent;
+  background: rgba(0,0,0,0.05);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
+/* The filled one is the one you are on — the same rule the route-side tabs
+   follow, so the two bars read as one system. */
 .mode-btn.active {
-  background: var(--surface);
-  color: var(--text);
+  background: var(--route-color, #166534);
+  color: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
 .mode-btn:disabled { opacity: 0.4; cursor: default; }
@@ -855,6 +871,16 @@ body {
 #sim-bar button.off { background: #7f1d1d; border-color: #b91c1c; color: #fecaca; }
 #sim-bar label { display: flex; align-items: center; gap: 6px; opacity: 0.9; }
 #sim-bar input[type="range"] { width: 90px; }
+/* The speed readout. Tabular figures so the number does not jiggle the bar
+   about as you drag the slider, and a fixed width for the same reason. */
+#sim-speed-read {
+  font-variant-numeric: tabular-nums;
+  min-width: 8.5ch;
+  opacity: 0.85;
+}
+/* Above about 60 mph you are fast-forwarding, not driving, and the view stops
+   looking like a truck. Say so rather than leave it a mystery. */
+#sim-speed-read.fast { color: #fbbf24; opacity: 1; }
 
 #sim-log {
   max-height: 34vh;
@@ -1430,3 +1456,30 @@ textarea.note-edit {
   font-weight: 700;
   line-height: 1.2;
 }
+
+/* ── The map's mode bar on a phone ────────────────────────────────────────
+   This bar has six buttons and it never fitted. Measured on a 390 px phone it
+   was 496 px wide with five buttons and 591 px with six, which is not a
+   cosmetic problem: it made the whole PAGE wider than the screen, so a driver
+   touching anywhere near the map dragged the page sideways under their finger
+   and the map appeared to jump around. That is a two-finger fight between the
+   page scrolling and the map panning, and the map always lost.
+
+   flex: 1 alone could not shrink them, because a flex item will not go below
+   its min-content width by default and `white-space: nowrap` makes that the
+   full label. min-width: 0 lets them shrink; dropping the words below 560 px
+   means they do not have to shrink far.
+
+   Deliberately at the end of the stylesheet: an earlier version of the mobile
+   rules in this file sat above the rules they were meant to override and did
+   nothing at all for months. Same specificity means last one wins. */
+@media (max-width: 400px) {
+  /* Narrowest phones only: keep three across by giving the text somewhere to
+     go, rather than letting a long word like "Satellite" push the row to two. */
+  .mode-btn { font-size: 13px; padding: 7px 4px; }
+}
+
+/* No `overflow-x: hidden` on html or body here, tempting as it is. It would
+   hide this kind of bug rather than fix it, and it silently kills
+   `position: sticky` — which .route-header relies on to keep the route name
+   and the Done count on screen while a driver scrolls the stop list. */
