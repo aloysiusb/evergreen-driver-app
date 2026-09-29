@@ -6,22 +6,70 @@
  * without first landing on a list of stops and hunting for the tab. The map
  * only builds itself when it is actually shown, so this waits for the page to
  * be ready rather than racing it. */
+/* The map is the default now. A driver opening their route is about to drive
+ * it, not read it, and the list is one tap away — where the map used to be.
+ * ?view=stops opens on the list; the dispatcher board's ?view=map links are
+ * unchanged. */
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(location.search);
-  if (params.get('view') === 'map') {
-    // A moment for the route data to arrive, or the map draws an empty route.
-    setTimeout(() => window.switchView('map'), 400);
-  }
+  const view = params.get('view') === 'stops' ? 'stops' : 'map';
+  // A moment for the route data to arrive, or the map draws an empty route.
+  setTimeout(() => window.switchView(view), 400);
 });
+
+/* Make the map exactly as tall as the room it has.
+ *
+ * Everything above it (app bar, header line) is in the flow, so the map's own
+ * top tells us how much is gone. What is easy to miss is the action bar at the
+ * foot: it is position:fixed, so it occupies no space and the map ran happily
+ * underneath it — which put the dock's captions behind "Start My Day" where
+ * they could be neither read nor tapped.
+ *
+ * Measured rather than guessed, because both ends move: the header's height
+ * depends on the route name, and the action bar's on which buttons it shows. */
+function sizeMap() {
+  const map = document.getElementById('route-map');
+  if (!map || map.offsetParent === null) return;   // not on screen; nothing to size
+  const top = map.getBoundingClientRect().top;
+  const bar = document.querySelector('.action-bar');
+  const barH = bar ? bar.getBoundingClientRect().height : 0;
+  const h = Math.max(window.innerHeight - top - barH, 300);
+  map.style.height = h + 'px';
+  // Google needs telling, or it keeps painting tiles for the old box.
+  if (gMap && window.google?.maps?.event) {
+    google.maps.event.trigger(gMap, 'resize');
+  }
+}
+window.sizeMap = sizeMap;
+
+// Rotating the phone, a browser's address bar collapsing, or the action bar
+// gaining a button all change the sum.
+window.addEventListener('resize', sizeMap);
+window.addEventListener('orientationchange', () => setTimeout(sizeMap, 250));
+
+/* The header collapses to a hamburger on a phone: the links and the date go
+   inside it. Stops / Map never does — that is the control, not a detail. */
+window.toggleHeaderMenu = function () {
+  const drawer = document.getElementById('hdr-drawer');
+  const btn = document.getElementById('hdr-menu');
+  if (!drawer || !btn) return;
+  const open = drawer.hidden;
+  drawer.hidden = !open;
+  btn.setAttribute('aria-expanded', String(open));
+};
 
 window.switchView = function(view) {
   document.getElementById('view-stops').style.display = view === 'stops' ? 'block' : 'none';
   document.getElementById('view-map').style.display   = view === 'map'   ? 'block' : 'none';
   document.getElementById('tab-stops').classList.toggle('active', view === 'stops');
   document.getElementById('tab-map').classList.toggle('active',   view === 'map');
-  if (view === 'map' && !window._mapInitialized) {
-    window._mapInitialized = true;
-    initMap();
+  if (view === 'map') {
+    // Size it now it is visible — a hidden element measures as nothing.
+    sizeMap();
+    if (!window._mapInitialized) {
+      window._mapInitialized = true;
+      initMap();
+    }
   }
 };
 
@@ -66,6 +114,8 @@ let gpsMarker = null;
 let gpsCircle = null;
 let lastGpsPos = null;
 let lastGpsHeading = null;
+// Kept so the dock's GPS button can show the fix rather than just implying it.
+let lastGpsAccuracy = null;
 let nextEtaMins = null;
 let etaService = null;
 const ARRIVAL_RADIUS_M = 80; // metres from stop to auto-prompt arrival
@@ -118,17 +168,39 @@ let followMode = true;
 // further back than the walkthrough's driving view — that one is 18, and 18 is
 // what people mean when they say they want the view from the video.
 let followZoom = 18;
-// The single point where the zoom is allowed to change. See the zoom notes
-// below: everything else asks this, and nothing calls setZoom directly.
+// The single point where the zoom is allowed to change. Everything else asks
+// this, and nothing calls setZoom directly.
 function goToZoom(z) {
   if (!gMap) return;
   zoomLocked = z;
   // Unpin, move, re-pin. Pinned means minZoom === maxZoom, which is what stops
-  // a pinch doing anything at all.
+  // a pinch doing anything at all — the slider is the way zoom changes.
   gMap.setOptions({ minZoom: null, maxZoom: null });
   gMap.setZoom(z);
   gMap.setOptions({ minZoom: z, maxZoom: z });
+  const slider = document.getElementById('zoom-slider');
+  if (slider && Number(slider.value) !== z) slider.value = z;
 }
+
+/* The slider. A driver dragging it is deciding, so it does exactly what it is
+   told — including leaving the route view, since a zoom they chose by hand is
+   no longer the framing the Route button set up. */
+window.setZoomFromSlider = function (v) {
+  const z = Number(v);
+  if (!Number.isFinite(z)) return;
+  if (overviewOn) { overviewOn = false; syncViewButtons(); }
+  goToZoom(z);
+};
+
+/* The + and − ends. Same thing one step at a time, for a gloved thumb that
+   would rather tap than drag. */
+window.nudgeZoom = function (delta) {
+  const slider = document.getElementById('zoom-slider');
+  if (!slider) return;
+  const z = Math.min(Math.max(Number(slider.value) + delta, Number(slider.min)), Number(slider.max));
+  slider.value = z;
+  window.setZoomFromSlider(z);
+};
 let suppressFollowOff = false; // set while WE move the map, so our own pans don't count as manual
 
 // The vector Map ID, if one is configured on the server. Null on a raster map,
@@ -635,8 +707,22 @@ function closeNavPicker() {
 }
 
 function updateModeUI() {
-  document.getElementById('mode-planned').classList.toggle('active', routeMode === 'planned');
-  document.getElementById('mode-live').classList.toggle('active',    routeMode === 'live');
+  /* One dock button for both orders now, so it says which one it is showing
+     rather than lighting one of a pair. Lit means Live, because Live is the
+     one that is doing something to the order the sheet gave you. */
+  const orderBtn = document.getElementById('mode-live');
+  const orderCap = document.getElementById('order-cap');
+  const orderIco = orderBtn && orderBtn.querySelector('.dock-ico');
+  if (orderBtn) {
+    orderBtn.classList.toggle('on', routeMode === 'live');
+    orderBtn.title = routeMode === 'live'
+      ? 'Quickest order from here — tap for the sheet order'
+      : 'Sheet order — tap for the quickest order from here';
+  }
+  // "Plan", not "Planned": the caption has a 46px circle's width to live in,
+  // and anything longer ellipsises into "Plann…". The 📋 / ⚡ carries the rest.
+  if (orderCap) orderCap.textContent = routeMode === 'live' ? 'Live' : 'Plan';
+  if (orderIco) orderIco.textContent = routeMode === 'live' ? '⚡' : '📋';
 
   const statusEl = document.getElementById('optimize-status');
   const tl = trafficLabel();
@@ -928,6 +1014,100 @@ function setOverview(on) {
 
 window.toggleOverview = function() { setOverview(!overviewOn); };
 
+/* ── Route order, photo and GPS: the rest of the dock ────────────────────── */
+
+/* Planned and Live were two buttons for one either/or. On a round dock there
+   is no room for a pair, and no need: one button that says which order it is
+   showing and swaps when tapped. */
+window.toggleRouteOrder = function () {
+  setRouteMode(routeMode === 'planned' ? 'live' : 'planned');
+};
+
+/* The camera, from the map. It was only reachable from a stop's card in the
+   list, which meant leaving the map to photograph the thing you are parked in
+   front of. This photographs the stop you are actually at — the current one —
+   and hands off to the same capture the list uses, so the upload, the Drive
+   folder and the link written back to the sheet are all unchanged. */
+window.photoFromMap = function () {
+  const stop = navStops[currentIdx];
+  if (!stop || typeof capturePhoto !== 'function') {
+    setOptimizeStatus('No stop selected to photograph.');
+    return;
+  }
+  capturePhoto(stop.rowNumber, window._routeTabName,
+               stop.accountName);
+};
+
+/* ── GPS ──────────────────────────────────────────────────────────────────
+ * Two jobs, one button.
+ *
+ * Evident: the dock button carries the fix. Dim and "GPS" before a position
+ * arrives, lit and showing the accuracy in metres once one has. A driver can
+ * tell at a glance whether the app knows where they are, which until now they
+ * could only infer from whether the blue dot had appeared.
+ *
+ * Sendable: tapping it puts that position on the dispatcher's board. Not a
+ * running feed — dispatch does not need to watch a truck all day, and the
+ * driver should be able to say "here I am" at the moment it matters. */
+function updateGpsChip() {
+  const btn = document.getElementById('mode-gps');
+  const cap = document.getElementById('gps-cap');
+  if (!btn || !cap) return;
+  if (btn.classList.contains('sent')) return;   // leave the confirmation alone
+  const has = Boolean(lastGpsPos);
+  btn.classList.toggle('waiting', !has);
+  btn.classList.toggle('on', has);
+  cap.textContent = has && typeof lastGpsAccuracy === 'number'
+    ? Math.round(lastGpsAccuracy) + ' m'
+    : 'GPS';
+  btn.title = has
+    ? 'GPS fix — tap to send your position to dispatch'
+    : 'Waiting for a GPS fix';
+}
+
+window.shareLocation = async function () {
+  const btn = document.getElementById('mode-gps');
+  const cap = document.getElementById('gps-cap');
+  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet — nothing to send.'); return; }
+
+  const body = {
+    lat: lastGpsPos.lat,
+    lng: lastGpsPos.lng,
+    accuracy: lastGpsAccuracy ?? null,
+    heading: lastGpsHeading ?? null,
+    tabName: window._routeTabName || '',
+    stop: navStops[currentIdx]?.accountName || '',
+  };
+
+  try {
+    const res = await fetch('/api/driver-location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (btn && cap) {
+      btn.classList.add('sent');
+      cap.textContent = 'Sent';
+      setTimeout(() => { btn.classList.remove('sent'); updateGpsChip(); }, 2600);
+    }
+    setOptimizeStatus('Position sent to dispatch.');
+  } catch (err) {
+    // The offline queue is for route writes; a location is only worth sending
+    // while it is true, so a failed send says so rather than being replayed
+    // twenty minutes later from somewhere else entirely.
+    setOptimizeStatus('Could not reach dispatch — try again in signal.');
+  }
+};
+
+function setOptimizeStatus(msg) {
+  const el = document.getElementById('optimize-status');
+  if (!el) return;
+  el.textContent = msg;
+  clearTimeout(setOptimizeStatus._t);
+  setOptimizeStatus._t = setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
 // ── Satellite toggle ─────────────────────────────────────────────────────────
 // Hybrid (aerial + labels) helps drivers spot driveways, bin placement and
 // gates on rural properties before they pull up.
@@ -956,6 +1136,8 @@ function onGpsUpdate(pos) {
   const lng = pos.coords.longitude;
   const accuracy = pos.coords.accuracy;
   lastGpsPos = { lat, lng };
+  lastGpsAccuracy = accuracy;
+  updateGpsChip();
   // heading is null when stationary — keep the last good one so the view
   // doesn't snap back to north at every red light
   if (typeof pos.coords.heading === 'number' && !Number.isNaN(pos.coords.heading)
@@ -1169,9 +1351,13 @@ function updateAlertChip() {
   const el = document.getElementById('mode-alert');
   if (!el) return;
   const mode = alertMode();
-  el.textContent = mode === 'sound' ? '🔔 Sound'
-                 : mode === 'silent' ? '📳 Silent'
-                 : '🔕 Alerts off';
+  /* Write into the icon and the caption, NOT into the button. Setting
+     textContent on a dock button wipes the two spans it is built from, and the
+     button loses its circle along with its label. */
+  const ico = el.querySelector('.dock-ico');
+  const cap = el.querySelector('.dock-cap');
+  if (ico) ico.textContent = mode === 'sound' ? '🔔' : mode === 'silent' ? '📳' : '🔕';
+  if (cap) cap.textContent = mode === 'sound' ? 'Sound' : mode === 'silent' ? 'Silent' : 'Off';
   // .on, not .active: this is a switch, not one of a pair of views.
   el.classList.toggle('on', mode !== 'off');
   el.title = 'Arrival alerts: ' + mode + ' — tap to change';

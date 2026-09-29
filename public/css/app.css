@@ -108,16 +108,88 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Header ── */
+/* ── Header ──
+   One row, then a hairline progress bar. 20px of top padding and four stacked
+   blocks is what made this a quarter of a phone screen. */
 .route-header {
   background: var(--route-color);
   color: var(--route-header-text);
-  padding: 20px 16px 14px;
+  padding: 6px 12px 0;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+
+.route-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+}
+
+/* Name and day/date share a column and stay on one line, truncating rather
+   than wrapping — a wrapped route name is what pushed this header to two rows. */
+.route-ident {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+.route-ident .route-title {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.route-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.85;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* The hamburger. Hidden until the line runs out of room; see the media query
+   at the end of this file. */
+.hdr-menu {
+  display: none;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--r-circle, 999px);
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+.hdr-menu:hover { background: rgba(255,255,255,0.32); }
+.hdr-menu[aria-expanded="true"] { background: rgba(255,255,255,0.95); color: var(--route-color-dark, #166534); }
+
+.hdr-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0 10px;
+}
+.hdr-drawer[hidden] { display: none; }
+.hdr-drawer a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 11px 12px;
+  border-radius: var(--r-card);
+  background: rgba(255,255,255,0.14);
+}
+.hdr-drawer a:hover { background: rgba(255,255,255,0.28); }
+.hdr-drawer-meta { font-size: 12px; opacity: 0.85; padding: 4px 12px 0; }
 
 .home-btn {
   display: flex;
@@ -148,17 +220,22 @@ body {
 }
 .route-nav .home-btn { margin-right: 0; }
 
-/* ── View tabs (Stops / Map) ── */
+/* ── View tabs (Stops / Map) ──
+   On the header line now rather than a row of their own, so they are sized to
+   the line: smaller than the full-width pair they were, and still the most
+   obvious control on it. */
 .view-tabs {
   display: flex;
-  gap: 6px;
-  padding: 10px 16px 4px;
+  gap: 4px;
+  padding: 3px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.14);
+  border-radius: var(--r-card);
 }
 .view-tab {
   flex: 1;
-  /* Was 33px tall. This is the control a driver uses more than any other. */
-  min-height: 44px;
-  padding: 7px 0;
+  min-height: 38px;
+  padding: 7px 12px;
   border: none;
   border-radius: var(--r-card);
   background: rgba(255,255,255,0.15);
@@ -167,6 +244,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
   transition: background 0.15s, color 0.15s;
 }
 .view-tab.active {
@@ -177,56 +255,126 @@ body {
 /* ── Map view ── */
 #view-map { position: relative; }
 
-/* Under the map now, not above it: a caption to the view rather than a lid on
-   it, and nearest the thumb.
+/* ── The dock ──
+   Round buttons across the bottom, floating ON the map. The bar they replace
+   was a 166px block of the screen; this costs the map nothing, because it is
+   positioned over it and the scrim behind it is only there so white icons stay
+   readable over pale roads. */
+#map-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 30px 8px 10px;
+  /* The scrim has to be dark enough to carry white text over a PALE map, not
+     just over satellite. At 0.45 the captions were technically rendering and
+     practically invisible on a road map. */
+  background: linear-gradient(to top,
+    rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.66) 45%, rgba(0,0,0,0.30) 78%, transparent 100%);
+  pointer-events: none;   /* the gradient is decoration; only the buttons take taps */
+}
 
-   On the route colour, because that is what makes the buttons inside it the
-   SAME buttons as the Stops / Map tabs rather than a lookalike. .view-tab is
-   written for a coloured backdrop — translucent white when idle, solid white
-   when chosen — and on a grey panel it came out inverted, which is exactly how
-   it looked wrong. */
-#map-optimize-bar {
+.dock-btn {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  width: 46px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  padding: 10px 16px 12px;
-  background: var(--route-color, #22c55e);
-}
-
-/* A choice of two. Exactly one is lit, always — the Stops / Map rule. */
-.seg { display: flex; gap: 6px; }
-
-/* Independent on/off switches. Deliberately NOT tab-shaped: a full pill reads
-   as a switch, and nothing about it suggests "one of these". */
-.map-switches { display: flex; gap: 6px; }
-.switch-btn {
-  flex: 1;
-  min-width: 0;
-  min-height: 38px;
-  padding: 6px 10px;
-  border: 1px solid rgba(255,255,255,0.45);
-  border-radius: var(--r-pill, 999px);
-  background: transparent;
-  color: rgba(255,255,255,0.85);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  padding: 0;
   cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+.dock-ico {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-circle, 999px);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  font-size: 21px;
+  line-height: 1;
+  transition: background 0.15s, transform 0.1s;
+}
+.dock-btn:active .dock-ico { transform: scale(0.92); }
+.dock-cap {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.75);
   white-space: nowrap;
+  /* Kept inside the button's width. Without this a caption wider than its
+     circle runs into its neighbour's — "Planned" and "Satellite" were reading
+     as one word. Labels are chosen short enough that nothing truncates; this
+     is the guard for when one is not. */
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.switch-btn.on {
-  background: rgba(255,255,255,0.95);
-  border-color: transparent;
+/* Lit: a chosen view, or a switch that is on. One treatment, because on a
+   round icon there is no room to invent two. */
+.dock-btn.active .dock-ico,
+.dock-btn.on .dock-ico {
+  background: rgba(255,255,255,0.96);
   color: var(--route-color-dark, #166534);
 }
+.dock-btn:disabled { opacity: 0.4; cursor: default; }
+/* GPS with no fix yet, and GPS mid-send. */
+.dock-btn.waiting .dock-ico { background: rgba(255,255,255,0.12); opacity: 0.6; }
+.dock-btn.sent .dock-ico { background: #fbbf24; color: #3b2a02; }
 
-/* .mode-btn and .route-mode-toggle used to live here — a second button style
-   that only ever tried to look like .view-tab. The map bar uses .view-tab
-   itself now, so there is one template rather than two that drift apart. */
+/* ── The zoom slider ──
+   On the right edge of the map. Vertical because that is which way zoom goes,
+   and because a horizontal one would eat the width the map needs. */
+#map-zoom {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: var(--r-pill, 999px);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+#map-zoom .zoom-end {
+  width: 32px;
+  height: 30px;
+  border: none;
+  background: none;
+  font-size: 19px;
+  line-height: 1;
+  font-family: inherit;
+  color: var(--text, #1d2a24);
+  cursor: pointer;
+  border-radius: var(--r-circle, 999px);
+}
+#map-zoom .zoom-end:active { background: rgba(0,0,0,0.08); }
+#zoom-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;               /* up = zoom in */
+  width: 28px;
+  height: 116px;
+  accent-color: var(--route-color, #22c55e);
+  cursor: pointer;
+}
 
 .view-tab:disabled { opacity: 0.4; cursor: default; }
 
@@ -245,10 +393,21 @@ body {
 .nav-mode-badge.planned { background: #dcfce7; color: #15803d; }
 .nav-mode-badge.live    { background: #fef3c7; color: #b45309; }
 
+/* The map fills what is actually left, which is the screen minus three things:
+   the app bar (39), the header line (60) and the FIXED action bar at the foot
+   (89). That last one is easy to forget because it is fixed and so takes no
+   space in the flow — the map happily ran 89px underneath it, which put the
+   dock's captions behind "Start My Day" where nobody could read or tap them.
+
+   This calc is the fallback. sizeMap() in map.js then sets the exact height
+   from where the map actually starts and where the action bar actually begins,
+   because those depend on the header, which depends on the route name — and a
+   magic number here goes wrong the next time any of that changes. */
 #route-map {
   width: 100%;
-  height: calc(100vh - 330px);
-  min-height: 280px;
+  height: calc(100vh - 190px);
+  height: calc(100dvh - 190px);
+  min-height: 300px;
 }
 
 #map-loading {
@@ -1485,3 +1644,30 @@ textarea.note-edit {
    hide this kind of bug rather than fix it, and it silently kills
    `position: sticky` — which .route-header relies on to keep the route name
    and the Done count on screen while a driver scrolls the stop list. */
+
+/* ── The header on a phone ────────────────────────────────────────────────
+   Below 640px the route name, the progress text and two view buttons are more
+   than one line can hold honestly, so the links and the date step aside into
+   the hamburger. What stays is what a driver is actually using: which route,
+   how far through it, and the two views.
+
+   At the end of the stylesheet on purpose — same specificity means last one
+   wins, and an earlier mobile block in this file sat above the rules it meant
+   to override and did nothing at all for months. */
+@media (max-width: 640px) {
+  .hdr-menu { display: block; }
+  .route-nav { display: none; }
+  .route-meta { display: none; }        /* day and date live in the drawer */
+  .progress-text { font-size: 11px; }
+  .route-ident .route-title { font-size: 15px; }
+}
+
+/* Narrow phones: the dock's seven circles need the width more than they need
+   the gaps, and the slider can lose a little height. */
+@media (max-width: 400px) {
+  #map-dock { gap: 3px; padding-left: 4px; padding-right: 4px; }
+  .dock-btn, .dock-ico { width: 44px; }
+  .dock-ico { height: 44px; font-size: 19px; }
+  .dock-cap { font-size: 10px; }
+  #zoom-slider { height: 96px; }
+}

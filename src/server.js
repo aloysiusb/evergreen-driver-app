@@ -290,6 +290,36 @@ app.get("/health", (req, res) => {
   });
 });
 
+/* A driver saying "here I am".
+ *
+ * Deliberately a broadcast and nothing else: it never opens the spreadsheet,
+ * writes no row, and keeps no history. The dispatcher board already watches
+ * the socket every other live event arrives on, so this reaches it the moment
+ * it is sent.
+ *
+ * Not a tracking feed. It fires when a driver taps the GPS button, which is
+ * the difference between answering "where are you?" and being followed all
+ * day. */
+app.post("/api/driver-location", (req, res) => {
+  const { lat, lng, accuracy, heading, tabName, stop } = req.body || {};
+  const nLat = Number(lat), nLng = Number(lng);
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng) ||
+      nLat < -90 || nLat > 90 || nLng < -180 || nLng > 180) {
+    return res.status(400).json({ error: "A valid lat and lng are required." });
+  }
+  broadcast({
+    type: "driver-location",
+    lat: nLat,
+    lng: nLng,
+    accuracy: Number.isFinite(Number(accuracy)) ? Number(accuracy) : null,
+    heading: Number.isFinite(Number(heading)) ? Number(heading) : null,
+    tabName: String(tabName || "").slice(0, 80),
+    stop: String(stop || "").slice(0, 120),
+    at: new Date().toISOString(),
+  });
+  res.json({ ok: true });
+});
+
 // --- Maps config ---------------------------------------------------------
 
 app.get("/api/maps-key", (req, res) => {
