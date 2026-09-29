@@ -1741,6 +1741,24 @@ wss.on("connection", (ws) => {
 
 server.listen(PORT, () => {
   console.log(`Evergreen driver app backend listening on port ${PORT}`);
+  /* Say where the database went, every boot, in the log.
+   *
+   * /health has answered this since July, but only for somebody who can reach
+   * the site — and the one thing it settles is whether a deploy quietly wipes
+   * the settings, the offline queue and the hazards. That belongs in the
+   * deploy log, where it is the first thing anybody looking at a restart
+   * sees. DATA_DIR unset means the disk is not mounted where the code
+   * writes, and the fix is one environment variable in the Render dashboard,
+   * not a change here. */
+  const dbDir = process.env.DATA_DIR || path.join(__dirname, "..", "data");
+  console.log(
+    process.env.DATA_DIR
+      ? `Database on the persistent disk at ${dbDir} — survives deploys.`
+      : `WARNING: DATA_DIR is not set, so the database is at ${dbDir}, inside ` +
+        `the container. Styles, activity, the offline queue and hazard ` +
+        `reports are LOST on every deploy. Set DATA_DIR=/data in the Render ` +
+        `dashboard.`
+  );
   auditColumns();
   pruneActivity();
   digestTick();                                  // catch a restart after the hour

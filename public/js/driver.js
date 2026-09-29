@@ -275,19 +275,30 @@
     const nudged = photoNudgeRow === item.rowNumber &&
       !(window.photoTakenFor && window.photoTakenFor[item.rowNumber]);
 
+    /* Icon in the circle, word beneath it — the pattern the map's dock uses.
+       The word used to sit INSIDE the circle, where a long one had nowhere to
+       go: "Contamination" came out as "Contamina" + "tion", and hyphens: auto
+       only helps where the browser has a hyphenation dictionary to hand.
+       Outside the circle no label can break, whatever the office types into
+       the settings — which is the point, since these words are theirs. */
     const rbtn = (kind, icon, fallback, aria) =>
       `<button class="stop-report-btn${kind === 'photo' && nudged ? ' srb-nudge' : ''}"
                 data-report="${kind}" data-row="${item.rowNumber}"
                 aria-label="${aria}">
+          <span class="srb-face">${icon}</span>
           <span class="srb-label">${esc(reportLabel(kind, fallback))}</span>
         </button>`;
 
     /* The second array, shown ONLY where a button was just tapped. Every one
        carries the same data-report as its parent, so it inherits that report's
        colour without a second set of settings. */
+    /* The second array has no icons of its own — these are quantities and
+       kinds, not report types — so the circle carries a dot and the words go
+       under it, for the same reason. */
     const subBtn = (label) =>
       `<button class="stop-report-btn srb-sub" data-report="${drill.type}"
                 data-drill-value="${esc(label)}" data-row="${item.rowNumber}">
+          <span class="srb-face">•</span>
           <span class="srb-label">${esc(label)}</span>
         </button>`;
 
@@ -304,11 +315,13 @@
                      data-report="photo"
                      data-drill-photo="1" data-row="${item.rowNumber}"
                      aria-label="Take a photo of this stop">
-               <span class="srb-label">📷 Photo</span>
+               <span class="srb-face">📷</span>
+               <span class="srb-label">Photo</span>
              </button>
              <button class="stop-report-btn srb-sub srb-back" data-drill-back="1"
                      data-row="${item.rowNumber}" aria-label="Back">
-               <span class="srb-label">←</span>
+               <span class="srb-face">←</span>
+               <span class="srb-label">Back</span>
              </button>
            </div>`;
     }
