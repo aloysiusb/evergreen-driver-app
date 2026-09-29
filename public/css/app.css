@@ -778,38 +778,55 @@ body {
      fit across, this one only pushes the note further down. */
   margin-bottom: var(--report-row-space);
 }
+/* The button is the circle AND its word: the circle carries the icon, the word
+   sits under it. It used to be one circle with the word inside, where a long
+   one had nowhere to go — "Contamination" broke into "Contamina" + "tion",
+   and hyphens: auto only helps where the browser has a hyphenation dictionary.
+   Under the circle, no label can break however long the office makes it. */
 .stop-report-btn {
-  /* A circle, not a rounded box: aspect-ratio ties the height to whatever
-     width the column works out to, so they stay perfectly round at every
-     screen size without a size being written down anywhere. */
-  aspect-ratio: 1;
-  border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding: 6px;
+  gap: 5px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
   font-family: inherit;
-  font-size: var(--report-btn-font-size);
   font-weight: var(--report-btn-font-weight);
   font-style: var(--report-btn-font-style);
-  letter-spacing: 0.01em;
-  line-height: 1.15;
-  text-align: center;
-  cursor: pointer;
-  border: none;
+  /* The word takes the colour of whatever it is sitting on. It was var(--text)
+     — which is this page's light-on-dark shell colour, near-white, and the
+     stop card is white. The captions were there and unreadable. The card sets
+     its own text colour (and the office can change it), the map's card sets a
+     different one, and inherit is right in both. */
+  color: inherit;
+}
+
+/* The circle itself. aspect-ratio ties its height to the width the column
+   works out to, so it stays perfectly round at every screen size without a
+   size being written down anywhere. */
+.srb-face {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(20px, 42cqi, 40px);
+  line-height: 1;
   background: var(--report-btn-bg);
   color: var(--report-btn-text);
+  transition: transform 0.1s;
 }
+.stop-report-btn { container-type: inline-size; }
 
 /* Colour before wording: the four are distinguishable at a glance, and each
    fill falls back to the shared one if it is ever unset. */
-.stop-report-btn[data-report="contamination"] { background: var(--report-bg-contamination, var(--report-btn-bg)); }
-.stop-report-btn[data-report="overflow"]      { background: var(--report-bg-overflow, var(--report-btn-bg)); }
-.stop-report-btn[data-report="skip"]          { background: var(--report-bg-skip, var(--report-btn-bg)); }
-.stop-report-btn[data-report="photo"]         { background: var(--report-bg-photo, var(--report-btn-bg)); }
-.stop-report-btn:active { transform: scale(0.96); }
+.stop-report-btn[data-report="contamination"] .srb-face { background: var(--report-bg-contamination, var(--report-btn-bg)); }
+.stop-report-btn[data-report="overflow"]      .srb-face { background: var(--report-bg-overflow, var(--report-btn-bg)); }
+.stop-report-btn[data-report="skip"]          .srb-face { background: var(--report-bg-skip, var(--report-btn-bg)); }
+.stop-report-btn[data-report="photo"]         .srb-face { background: var(--report-bg-photo, var(--report-btn-bg)); }
+.stop-report-btn:active .srb-face { transform: scale(0.94); }
 
 /* Inside a circle a long word has nowhere to go. 'anywhere' split
    'Contamination' into 'Contaminatio' + 'n', which reads as a bug. Hyphenate
@@ -834,18 +851,19 @@ body {
   .stop-report-row:not(.is-sub) {
     grid-template-columns: repeat(auto-fit, minmax(calc(var(--report-btn-min-width) * 0.72), 1fr));
   }
-  /* A smaller circle needs smaller words in it, or 'Overflow' comes out as
-     'Overflo' + 'w'. Scaled from the same token, so the setting still
-     governs and this only keeps the ratio. */
-  .stop-report-row:not(.is-sub) .srb-label {
-    font-size: calc(var(--report-btn-font-size) * 0.8);
-  }
+  /* The words used to be scaled down here too, because a smaller circle could
+     not hold them. They live under the circle now and size themselves from
+     the button's own width, so this breakpoint no longer has an opinion
+     about type. */
 }
 /* A report has been filed that is worth a picture. The camera button is
    ringed and breathes gently — noticeable at a glance, ignorable if the driver
    has decided otherwise. It is a reminder, not a demand: nothing is blocked
-   and nothing opens by itself. */
-.srb-nudge {
+   and nothing opens by itself.
+   The ring goes on the circle, not on the button: the button is now a column
+   with a word under it, and a ring around THAT is a rounded rectangle nobody
+   asked for. */
+.srb-nudge .srb-face {
   box-shadow: 0 0 0 3px var(--report-btn-text, #fff),
               0 0 0 6px var(--report-bg-photo, #004E2E);
   animation: srb-breathe 1.8s ease-in-out infinite;
@@ -858,19 +876,18 @@ body {
 
 /* Someone who has asked for less movement still gets the ring. */
 @media (prefers-reduced-motion: reduce) {
-  .srb-nudge { animation: none; }
+  .srb-nudge .srb-face { animation: none; }
 }
 
-.srb-sub {
-  font-size: calc(var(--report-btn-font-size) * 0.92);
+.srb-sub .srb-label {
+  font-size: clamp(10px, 11cqi, calc(var(--report-btn-font-size) * 0.92));
 }
 
 /* Back out without filing anything further. Quieter than the choices it sits
    beside, so it never looks like one of them. */
-.srb-back {
+.srb-back .srb-face {
   background: var(--action-btn-bg) !important;
   color: var(--action-btn-text);
-  font-size: 20px;
   font-weight: 700;
 }
 
@@ -878,8 +895,22 @@ body {
   display: block;
   max-width: 100%;
   text-align: center;
+  /* The setting is the CEILING, not the size. Moving the word out of the
+     circle was not enough on its own: the column is still only as wide as the
+     circle, so at 15px "Contamination" still needed 110px of a 106px column
+     and broke into "Contaminati" + "on". 11cqi is 11% of the button's own
+     width, so the longest word the office can reasonably type fits whatever
+     size the circles come out at, and min() means a short word on a big
+     screen never grows past what they asked for. */
+  font-size: clamp(10px, 11cqi, var(--report-btn-font-size));
+  /* …and where even that is not enough room, the word may use the gutter
+     between the circles rather than shrink below legible. 10px is the floor:
+     a caption smaller than that is decoration, not a label. */
+  width: max-content;
+  max-width: calc(100% + var(--report-btn-gap, 10px));
   line-height: 1.2;
-  hyphens: auto;
+  /* It may wrap onto a second line here — under the circle there is room, and
+     a line break between words reads as a line break rather than as a bug. */
   overflow-wrap: break-word;
 }
 
