@@ -390,14 +390,18 @@ async function initMap() {
     // an empty string is not the same as omitting it — it asks for a map that
     // does not exist, and the map fails to load rather than falling back.
     ...(mapId ? { mapId } : {}),
-    // Full Google Maps capability for drivers
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-      style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-      position: google.maps.ControlPosition.TOP_LEFT,
-      mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
-    },
-    fullscreenControl: true,           // top right, clear of everything
+    /* Both top corners are given over to the head-up display: where you are,
+       which way you are pointing, and the next manoeuvre. So Google's own two
+       controls up there go, and neither is a loss.
+
+       The map-type dropdown is replaced by the dock's 🛰 Sat button, which is
+       the same choice in a place a thumb can reach.
+
+       Fullscreen is worse than redundant: the map already fills the screen,
+       and going fullscreen takes the dock with it — a driver would lose every
+       control they have to get a map that is the same size. */
+    mapTypeControl: false,
+    fullscreenControl: false,
     streetViewControl: true,           // drop pegman to scout a driveway
     /* Google puts the pegman and the rotate control at RIGHT_BOTTOM by
        default, which is exactly where the dock's right-hand buttons now are,
@@ -1321,19 +1325,16 @@ function cardinal(deg) {
 
 function updateGeoChip() {
   const needle = document.getElementById('geo-needle');
-  const card = document.getElementById('geo-card');
   const coords = document.getElementById('geo-coords');
-  if (!needle || !card || !coords) return;
+  if (!needle || !coords) return;
 
   if (!lastGpsPos) {
     coords.textContent = 'waiting for GPS…';
-    card.textContent = '—';
     return;
   }
   // Five decimal places is about a metre. More is noise a driver cannot use
   // and cannot read aloud.
   coords.textContent = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
-  card.textContent = cardinal(lastGpsHeading);
   if (typeof lastGpsHeading === 'number' && !Number.isNaN(lastGpsHeading)) {
     /* An SVG group, so the rotation goes on the CSS transform with a
        transform-origin in USER UNITS (32,32 — the rose's centre), not on the

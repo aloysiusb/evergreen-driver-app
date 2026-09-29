@@ -68,64 +68,74 @@
     <div id="stops-list"></div>
   </div>
   <div id="view-map" style="display:none;">
-    <div id="turn-banner">
-      <div class="turn-arrow" id="turn-arrow">↑</div>
-      <div class="turn-info">
-        <!-- Names the source, because the stop card below carries two more
-             fields that read like directions and neither comes from here. -->
-        <div class="turn-source">Live directions</div>
-        <div class="turn-dist" id="turn-dist">—</div>
-        <div class="turn-text" id="turn-text">Getting directions…</div>
-        <div class="turn-next" id="turn-next"></div>
-        <!-- What is between here and there: the traffic Google reports, and
-             anything a driver has flagged on the road ahead. -->
-        <div class="turn-conditions" id="turn-conditions"></div>
-      </div>
-    </div>
-    <!-- The map and the things that float ON it, in one positioned box.
-         Without this they were positioned against #view-map, which STARTS at
-         the turn banner — so the compass sat on top of the directions the
-         moment any were showing, and the zoom slider centred itself on the
-         banner as well as the map. -->
     <div id="map-wrap">
       <div id="route-map"></div>
       <div id="map-loading">Loading map…</div>
-      <!-- Where you are and which way you are pointing, on the map itself.
-           Top centre because Google owns both top corners (map type on the left,
-           fullscreen on the right) and both bottom ones. Tap copies the
-           coordinates, which is what you want when you are reading them to
-           somebody over the radio. -->
-      <div id="geo-chip">
-        <!-- A real compass rose, not a letter. The rim is fixed with north at the
-             top, and the needle turns — so "needle pointing up" means driving
-             north, which is readable in the half-second a driver can spare.
-             Translucent on purpose: it overlaps the map and is meant to. -->
-        <svg class="geo-rose" viewBox="0 0 64 64" aria-hidden="true">
-          <circle class="rose-ring" cx="32" cy="32" r="29"/>
-          <circle class="rose-hub" cx="32" cy="32" r="2.5"/>
-          <text class="rose-pt rose-n" x="32" y="13">N</text>
-          <text class="rose-pt" x="56" y="36">E</text>
-          <text class="rose-pt" x="32" y="60">S</text>
-          <text class="rose-pt" x="8"  y="36">W</text>
-          <g id="geo-needle">
-            <polygon class="rose-needle-n" points="32,10 26.5,33 37.5,33"/>
-            <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
-          </g>
-        </svg>
-        <button class="geo-read" onclick="copyCoords()" title="Your position — tap to copy">
-          <span class="geo-card" id="geo-card">—</span>
-          <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
-        </button>
+      <!-- The head-up display: where you are, which way you are pointing, and
+           what is between here and the stop. Anchored over the map rather than
+           stacked above it, so it costs the map no height and a driver reads it
+           without looking away from the road. Transparent, on a scrim dark
+           enough to carry white text over a pale road map as well as satellite.
+
+           Nothing here reaches the bottom of the screen, so the report buttons
+           down there are untouched. -->
+      <div id="map-hud">
+        <!-- Where you are and which way you are pointing, on the map itself.
+             Top centre because Google owns both top corners (map type on the left,
+             fullscreen on the right) and both bottom ones. Tap copies the
+             coordinates, which is what you want when you are reading them to
+             somebody over the radio. -->
+        <div id="geo-chip">
+          <!-- A real compass rose, not a letter. The rim is fixed with north at the
+               top, and the needle turns — so "needle pointing up" means driving
+               north, which is readable in the half-second a driver can spare.
+               Translucent on purpose: it overlaps the map and is meant to. -->
+          <svg class="geo-rose" viewBox="0 0 64 64" aria-hidden="true">
+            <circle class="rose-ring" cx="32" cy="32" r="29"/>
+            <circle class="rose-hub" cx="32" cy="32" r="2.5"/>
+            <text class="rose-pt rose-n" x="32" y="13">N</text>
+            <text class="rose-pt" x="56" y="36">E</text>
+            <text class="rose-pt" x="32" y="60">S</text>
+            <text class="rose-pt" x="8"  y="36">W</text>
+            <g id="geo-needle">
+              <polygon class="rose-needle-n" points="32,10 26.5,33 37.5,33"/>
+              <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
+            </g>
+          </svg>
+          <button class="geo-read" onclick="copyCoords()" title="Your position — tap to copy">
+            <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
+          </button>
+        </div>
+
+        <!-- What a driver picks from after tapping Hazard. Above the dock rather
+             than a dialog: it is one tap, at the roadside, often while still
+             rolling to a stop. -->
+        <div id="hazard-picker" hidden>
+          <div class="hz-title">Tell the other drivers</div>
+          <div class="hz-row" id="hz-row"></div>
+          <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
+        </div>
+      <div id="turn-banner">
+        <div class="turn-arrow" id="turn-arrow">↑</div>
+        <div class="turn-info">
+          <!-- Names the source, because the stop card below carries two more
+               fields that read like directions and neither comes from here. -->
+          <div class="turn-source">Live directions</div>
+          <div class="turn-dist" id="turn-dist">—</div>
+          <div class="turn-text" id="turn-text">Getting directions…</div>
+          <div class="turn-next" id="turn-next"></div>
+          <!-- What is between here and there: the traffic Google reports, and
+               anything a driver has flagged on the road ahead. -->
+          <div class="turn-conditions" id="turn-conditions"></div>
+        </div>
+      </div>
+      <!-- The map and the things that float ON it, in one positioned box.
+           Without this they were positioned against #view-map, which STARTS at
+           the turn banner — so the compass sat on top of the directions the
+           moment any were showing, and the zoom slider centred itself on the
+           banner as well as the map. -->
       </div>
 
-      <!-- What a driver picks from after tapping Hazard. Above the dock rather
-           than a dialog: it is one tap, at the roadside, often while still
-           rolling to a stop. -->
-      <div id="hazard-picker" hidden>
-        <div class="hz-title">Tell the other drivers</div>
-        <div class="hz-row" id="hz-row"></div>
-        <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
-      </div>
 
       <!-- The zoom, as a slider on the edge of the map rather than a pinch.
            Deliberate, one-handed, and it cannot be nudged by accident the way a

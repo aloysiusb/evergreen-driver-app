@@ -263,10 +263,32 @@ body {
 /* ── Map view ── */
 #view-map { position: relative; }
 
-/* The positioning context for everything that floats on the map. #view-map
-   would not do: it begins at the turn banner, so anything anchored to its top
-   lands on the directions rather than on the map. */
+/* The positioning context for everything that floats on the map. */
 #map-wrap { position: relative; }
+
+/* ── The head-up display ──
+   The compass and the directions, over the map instead of stacked above it.
+   As a block the directions bar cost the map its own height whether or not it
+   had anything to say; as an overlay it costs nothing, and a driver reads the
+   next turn without their eye leaving the road they are looking at.
+
+   The scrim is the same trick as the dock's: white text has to hold up over a
+   pale road map, not just over satellite. Mirrored — dark at the top, fading
+   into the map. */
+#map-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px 26px;
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.18) 78%, transparent 100%);
+  pointer-events: none;      /* the scrim is decoration; the chips take taps */
+}
 
 /* ── The dock ──
    Round buttons across the bottom, floating ON the map. The bar they replace
@@ -382,16 +404,17 @@ body {
    fullscreen top right, its logo bottom left, the terms links bottom right —
    so the middle of the top edge is the one place this can sit without fighting
    anything. Translucent, and it overlaps the map on purpose. */
+/* The rose sets this column's width, and only the rose. The coordinates hang
+   below it out of the flow: as a normal child they made the column as wide as
+   themselves, which stole the room the directions needed and pushed the
+   traffic and hazard chips off the side of the screen. */
 #geo-chip {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 6;
+  position: relative;
+  width: 62px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
   pointer-events: none;      /* only the coordinates take a tap */
 }
 
@@ -425,15 +448,22 @@ body {
 }
 
 .geo-read {
+  position: absolute;
+  top: calc(100% + 3px);
+  /* Left-aligned to the column, not centred on it. Centred on a 62px column
+     sitting against the screen edge, half the pill hung off the side. */
+  left: 0;
   pointer-events: auto;
   display: flex;
   align-items: baseline;
   gap: 6px;
-  max-width: 62vw;
+  /* Wide enough for the full pair at metre precision. Narrower and the
+     longitude ellipsises, which is the one thing this must never do. */
+  max-width: none;
   padding: 3px 9px;
   border: none;
   border-radius: var(--r-pill, 999px);
-  background: rgba(14,18,15,0.7);
+  background: rgba(14,18,15,0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #fff;
@@ -441,7 +471,6 @@ body {
   cursor: pointer;
 }
 .geo-read:active { transform: scale(0.97); }
-.geo-card { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.8; }
 .geo-coords {
   font-family: var(--font-mono, ui-monospace, "IBM Plex Mono", monospace);
   font-size: 11.5px;
@@ -649,16 +678,27 @@ body {
   min-height: 300px;
 }
 
+/* A pill in the middle of the map, not a full-width opaque band 60px down.
+   The 60px was measured from the top of the old layout, where the directions
+   sat above the map; now that they are an overlay it landed across the map's
+   face. And at z-index 10 it outranked the head-up display, so while stops
+   were being located the compass and the next turn were behind it. */
 #map-loading {
   position: absolute;
-  top: 60px;
-  left: 0; right: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 12px 20px;
+  border-radius: var(--r-pill, 999px);
   text-align: center;
-  padding: 40px;
-  color: var(--text-muted);
-  font-size: 14px;
-  background: var(--bg);
-  z-index: 10;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(14, 18, 15, 0.86);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  z-index: 4;                 /* under the HUD and the dock, over the map */
 }
 
 /* ── Nav card ── */
@@ -1185,15 +1225,19 @@ body {
 /* Ported from the design already proven in demo.html. Dark plate on purpose:
    at a glance, at speed, in daylight, this has to read before anything else
    on the screen. */
+/* Transparent: the HUD's scrim behind it is what makes the text readable, so
+   a second filled panel on top of it would just be a box floating on a map. */
 #turn-banner {
   display: none;
-  align-items: center;
-  gap: 14px;
-  margin: 0 12px 8px;
-  padding: 14px 16px;
-  background: #16231a;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0 0;
+  background: none;
   color: #ffffff;
-  border-radius: var(--r-panel);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 #turn-banner.show { display: flex; }
 
