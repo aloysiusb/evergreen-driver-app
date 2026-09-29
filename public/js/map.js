@@ -79,7 +79,7 @@ function sizeMap() {
   /* The dock is at the TOP of the map now, and its height decides where the
      compass, the directions and both pickers start. A narrower window wraps
      it onto another row, so it is re-measured whenever the map is. */
-  measureDock();
+  window.measureDock?.();
 
   // Google needs telling, or it keeps painting tiles for the old box.
   if (gMap && window.google?.maps?.event) {
@@ -1279,7 +1279,7 @@ window.toggleHazardPicker = function (force) {
      It used to be worked out here from the window's height, which was the
      only way to place something against a dock that was fixed to the window
      rather than to the map. */
-  if (show) measureDock();
+  if (show) window.measureDock?.();
 };
 
 window.fileHazard = async function (kind) {
@@ -1397,61 +1397,9 @@ function updateGeoChip() {
    puts it on the clipboard. Falls back to saying the numbers are on screen —
    clipboard access needs a secure context and a user gesture, and a driver who
    taps it and gets nothing would reasonably assume the app is broken. */
-/* Folding the button strip away.
- *
- * A driver who wants the map is not always a driver who wants seven buttons on
- * it. Folded, the tray shrinks to its own handle — which stays put, because a
- * control that hides along with everything else is one nobody gets back.
- *
- * Remembered per device: it is a preference, and re-folding it at every stop
- * would be its own annoyance. localStorage can throw outright in a private
- * window, so every touch of it is wrapped. */
-const DOCK_FOLDED_KEY = 'ev_dock_folded';
-
-function applyDockFolded(folded) {
-  const dock = document.getElementById('map-dock');
-  const btn = document.getElementById('dock-toggle');
-  if (!dock || !btn) return;
-  dock.classList.toggle('folded', folded);
-  btn.textContent = folded ? '⌃' : '⌄';
-  btn.title = folded ? 'Show the buttons' : 'Hide the buttons';
-  btn.setAttribute('aria-expanded', String(!folded));
-  measureDock();
-}
-
-/* The dock's height, published for everything that sits under it: the compass
-   and the directions, the hazard picker, the navigation-app strip.
- *
- * It cannot be a constant. The tray is one row on a desktop and two on a
- * phone, and a stub of a row when it is folded away — and folding it is the
- * whole point of the handle, so the things below it have to come up when it
- * does. Measured after a frame, because a fold changes the layout and
- * offsetHeight read in the same tick is the height it had before. */
-function measureDock() {
-  const dock = document.getElementById('map-dock');
-  if (!dock) return;
-  requestAnimationFrame(() => {
-    const h = dock.offsetHeight;
-    if (h > 0) {
-      document.documentElement.style.setProperty('--dock-h', (h + 8) + 'px');
-    }
-  });
-}
-window.measureDock = measureDock;
-
-window.toggleDock = function () {
-  const dock = document.getElementById('map-dock');
-  if (!dock) return;
-  const folded = !dock.classList.contains('folded');
-  applyDockFolded(folded);
-  try { localStorage.setItem(DOCK_FOLDED_KEY, folded ? '1' : '0'); } catch {}
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  let folded = false;
-  try { folded = localStorage.getItem(DOCK_FOLDED_KEY) === '1'; } catch {}
-  applyDockFolded(folded);
-});
+/* The dock's fold, its handle and its measured height all live in
+   map-dock.js now — the demo draws the same tray and had none of it. This
+   file still calls measureDock() when the map is resized. */
 
 window.copyCoords = async function () {
   if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
