@@ -67,6 +67,25 @@ function sizeMap() {
 }
 window.sizeMap = sizeMap;
 
+/* Where the route line sticks to.
+ *
+ * The app bar is sticky at the top and the route line sticks directly under
+ * it, so the route line has to know how tall the app bar is. That is not a
+ * constant: the bar's company name and page label come from the style editor,
+ * so a longer name or a bigger font changes it. Measured, so the two never
+ * overlap and never leave a stripe of scrolling page between them. */
+function setBarOffsets() {
+  const bar = document.querySelector('.app-bar');
+  if (!bar) return;
+  document.documentElement.style.setProperty(
+    '--appbar-h', Math.round(bar.getBoundingClientRect().height) + 'px');
+}
+window.setBarOffsets = setBarOffsets;
+document.addEventListener('DOMContentLoaded', setBarOffsets);
+window.addEventListener('resize', setBarOffsets);
+// Webfonts land after first paint and bring a different line height with them.
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(setBarOffsets);
+
 /* Rotating the phone, the action bar gaining a button, and — the one that
    actually bites on a phone — the address bar sliding away as the driver
    scrolls, which changes the visible height without firing a window resize. */
@@ -1093,6 +1112,54 @@ window.photoFromMap = function () {
  * Sendable: tapping it puts that position on the dispatcher's board. Not a
  * running feed — dispatch does not need to watch a truck all day, and the
  * driver should be able to say "here I am" at the moment it matters. */
+/* The compass and the coordinates.
+ *
+ * Heading comes from the GPS and is only trustworthy while moving — a stopped
+ * receiver reports whatever noise it last saw — so onGpsUpdate already keeps
+ * the last good one rather than snapping to north at every red light, and this
+ * just draws it. */
+const COMPASS_POINTS = ['N','NE','E','SE','S','SW','W','NW'];
+
+function cardinal(deg) {
+  if (typeof deg !== 'number' || Number.isNaN(deg)) return '—';
+  return COMPASS_POINTS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
+function updateGeoChip() {
+  const needle = document.getElementById('geo-needle');
+  const card = document.getElementById('geo-card');
+  const coords = document.getElementById('geo-coords');
+  if (!needle || !card || !coords) return;
+
+  if (!lastGpsPos) {
+    coords.textContent = 'waiting for GPS…';
+    card.textContent = '—';
+    return;
+  }
+  // Five decimal places is about a metre. More is noise a driver cannot use
+  // and cannot read aloud.
+  coords.textContent = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
+  card.textContent = cardinal(lastGpsHeading);
+  if (typeof lastGpsHeading === 'number' && !Number.isNaN(lastGpsHeading)) {
+    needle.style.transform = 'rotate(' + lastGpsHeading + 'deg)';
+  }
+}
+
+/* Reading a position over the radio is the actual use, so tapping the chip
+   puts it on the clipboard. Falls back to saying the numbers are on screen —
+   clipboard access needs a secure context and a user gesture, and a driver who
+   taps it and gets nothing would reasonably assume the app is broken. */
+window.copyCoords = async function () {
+  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
+  const text = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
+  try {
+    await navigator.clipboard.writeText(text);
+    setOptimizeStatus('Copied ' + text);
+  } catch {
+    setOptimizeStatus(text);
+  }
+};
+
 function updateGpsChip() {
   const btn = document.getElementById('mode-gps');
   const cap = document.getElementById('gps-cap');
@@ -1188,6 +1255,9 @@ function onGpsUpdate(pos) {
       && pos.coords.speed > 0.5) {
     lastGpsHeading = pos.coords.heading;
   }
+  // After the heading is stored, not before, or the needle always draws the
+  // PREVIOUS fix's direction.
+  updateGeoChip();
 
   const latLng = new google.maps.LatLng(lat, lng);
 
