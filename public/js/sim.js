@@ -14,9 +14,16 @@
    Nothing in map.js or driver.js knows it is being simulated, so this file
    cannot quietly drift out of sync with them.
 
-   SAFETY: writes never reach the Google Sheet in sim mode. Every non-GET to
-   /api/routes/* is intercepted and logged on screen instead. Alyssa's live
-   route data cannot be marked done by a test drive.
+   SAFETY: a test drive never writes anything real. EVERY non-GET to the
+   app's own API is intercepted and logged on screen instead — not just the
+   route ones. That distinction mattered: when this only held back
+   /api/routes/*, a test drive put a truck on the dispatch board as a live
+   position and filed a rockslide that every other driver saw on their map
+   for eight hours. Reads still hit the real server, so you drive real stops
+   and see real hazards.
+
+   The one exception is error reporting, which is about the app rather than
+   the fleet and is worth having from a test drive like anywhere else.
    ───────────────────────────────────────────────────────────────────────── */
 
 (function () {
@@ -24,6 +31,13 @@
   if (params.get('sim') !== '1') return;   // not a test drive — do nothing
 
   const API_WRITE_PATH = '/api/routes/';
+
+  /* Writes that are still allowed out. Diagnostics only: a crash during a
+     test drive is a real crash, and /api/sim-event is how the board is told
+     that a simulated stop was completed (it goes through realFetch below, so
+     it never reaches this test — it is named here so the intent is on the
+     page rather than in the routing). */
+  const SIM_ALLOWED_WRITES = ['/api/client-errors', '/api/sim-event'];
 
   // ── Fake network ────────────────────────────────────────────────────────
   // hasSignal drives the offline queue: switch it off and writes reject the
@@ -36,7 +50,12 @@
   window.fetch = function (url, opts) {
     const method = (opts && opts.method) || 'GET';
     const u = String(url);
-    const isWrite = method !== 'GET' && u.includes(API_WRITE_PATH);
+    /* Anything that changes something on the server, whatever it is. An
+       allowlist of paths to BLOCK is a list that is always one endpoint out
+       of date — and the endpoint it is missing is the one that gets written
+       for real from a test drive. */
+    const isWrite = method !== 'GET' && u.includes('/api/') &&
+                    !SIM_ALLOWED_WRITES.some(p => u.includes(p));
 
     if (!isWrite) {
       // Reads still hit the real server so you drive your real stops, and
@@ -64,11 +83,19 @@
 
   function logWrite(outcome, url, opts) {
     const body = (opts && opts.body) || '';
+    /* Route writes read better without the long prefix; everything else is
+       shown as its own path, since there is no common stem any more. */
     const i = url.indexOf(API_WRITE_PATH);
+    let shown;
+    if (i >= 0) {
+      shown = url.slice(i + API_WRITE_PATH.length);
+    } else {
+      try { shown = new URL(url, location.origin).pathname; } catch { shown = String(url); }
+    }
     writeLog.unshift({
       t: new Date().toLocaleTimeString(),
       outcome,
-      path: i >= 0 ? url.slice(i + API_WRITE_PATH.length) : url,
+      path: shown,
       body: String(body),
     });
     if (writeLog.length > 40) writeLog.length = 40;
