@@ -235,6 +235,35 @@ body {
 }
 .live-wrap[hidden] { display: none; }
 
+/* The map. A fixed height rather than an aspect ratio: on a wide office
+   screen a 16:9 map of a valley is mostly sky-coloured nothing, and on a
+   phone it would be a letterbox. Tall enough to see a round in, short enough
+   that the rows and the feed are still on the screen under it. */
+.live-map-wrap {
+  position: relative;
+  height: 320px;
+  margin-bottom: 10px;
+  border: 1px solid var(--d-border, #2a372e);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--d-surface, #17201a);
+}
+#live-map { position: absolute; inset: 0; }
+#live-map-note {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  color: var(--d-muted, #8ea395);
+  pointer-events: none;
+}
+#live-map-note[hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .live-map-wrap { height: 240px; }
+}
+
 .live-rows {
   display: grid;
   gap: 8px;
@@ -755,6 +784,13 @@ body {
   <div class="feed-head">
     <h2 class="feed-title">On the road now</h2>
     <span class="feed-count" id="live-count"></span>
+  </div>
+  <!-- The trucks on a map, moving as the drivers drive. The rows below stay:
+       a map answers "where", a row answers "how long ago", and a dispatcher
+       reading coordinates to somebody over the phone needs the second. -->
+  <div class="live-map-wrap">
+    <div id="live-map"></div>
+    <div id="live-map-note">Loading map…</div>
   </div>
   <div class="live-rows" id="live-rows"></div>
 </div>
@@ -1319,6 +1355,184 @@ function ago(ms) {
   return m === 1 ? '1 min ago' : m + ' min ago';
 }
 
+/* ── The map ──────────────────────────────────────────────────────────────
+ *
+ * One arrow per truck, pointing the way it is driving, moving as the driver
+ * drives. The rows below it stay: a map answers "where", a row answers "how
+ * long ago", and a dispatcher reading coordinates to somebody over the phone
+ * needs the second.
+ *
+ * Loaded only when a truck is actually sharing. The board is open all day on
+ * a screen in the office and most of that day nobody is sharing; there is no
+ * reason to pay for map tiles, or for the script, until there is something to
+ * put on them. */
+let liveMap = null;
+let liveMapLoading = false;
+const liveMarkers = new Map();
+
+async function ensureLiveMap() {
+  if (liveMap || liveMapLoading) return liveMap;
+  liveMapLoading = true;
+  const note = document.getElementById('live-map-note');
+  try {
+    const res = await fetch('/api/maps-key');
+    if (!res.ok) throw new Error('no key');
+    const cfg = await res.json();
+    if (!cfg.key) throw new Error('no key');
+
+    if (!(window.google && window.google.maps)) {
+      await new Promise((resolve, reject) => {
+        const el = document.createElement('script');
+        el.src = 'https://maps.googleapis.com/maps/api/js?key=' + cfg.key;
+        el.async = true;
+        el.onload = resolve;
+        el.onerror = () => reject(new Error('maps failed'));
+        document.head.appendChild(el);
+      });
+    }
+
+    liveMap = new google.maps.Map(document.getElementById('live-map'), {
+      zoom: 12,
+      center: { lat: 39.4022, lng: -107.2117 },   // Carbondale, CO
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      clickableIcons: false,
+    });
+    if (note) note.hidden = true;
+  } catch {
+    /* No key, no network, no map. The rows below still say where everyone is,
+       which is the part that matters; this only says it better. */
+    if (note) { note.hidden = false; note.textContent = 'Map unavailable — positions are listed below.'; }
+  } finally {
+    liveMapLoading = false;
+  }
+  return liveMap;
+}
+
+/* Between two pings a marker slides rather than jumps.
+ *
+ * At 30 mph a truck covers the 25 m that triggers a ping in under two
+ * seconds, so the gaps are short — but a marker that teleports every couple
+ * of seconds reads as a glitch, while the same positions glided read as a
+ * truck driving. The glide is honest about what it is: it never runs past the
+ * last known position, so the arrow is very slightly behind the truck rather
+ * than guessing ahead of it. */
+function glideMarker(marker, to) {
+  /* Stop the previous glide FIRST, whatever happens next. Cancelling it after
+     the big-jump branch below meant a truck reappearing miles away was placed
+     correctly and then dragged straight back by an animation still running
+     towards where it used to be going. */
+  cancelAnimationFrame(marker.__anim || 0);
+
+  const from = marker.getPosition();
+  const t0 = performance.now();
+  if (!from) { marker.setPosition(new google.maps.LatLng(to.lat, to.lng)); marker.__lastAt = t0; return; }
+
+  const lat0 = from.lat(), lng0 = from.lng();
+  const dLat = to.lat - lat0, dLng = to.lng - lng0;
+
+  // A jump of more than a kilometre or so is a driver who has been out of
+  // signal, not a driver who moved. Put them there rather than animating a
+  // pretend journey across the valley.
+  if (Math.abs(dLat) > 0.01 || Math.abs(dLng) > 0.01) {
+    marker.setPosition(new google.maps.LatLng(to.lat, to.lng));
+    marker.__lastAt = t0;
+    return;
+  }
+
+  /* Glide for as long as the gap that just elapsed, because that is the best
+     guess at the next one — so the marker arrives about when the next ping
+     does. A fixed duration longer than the gap never finishes: each ping
+     restarts the ease from wherever the last one got to, and the arrow falls
+     further behind the truck with every one. */
+  const ms = Math.min(2500, Math.max(300, t0 - (marker.__lastAt ?? t0 - 1200)));
+  marker.__lastAt = t0;
+
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms);
+    marker.setPosition(new google.maps.LatLng(lat0 + dLat * k, lng0 + dLng * k));
+    if (k < 1) marker.__anim = requestAnimationFrame(step);
+  };
+  marker.__anim = requestAnimationFrame(step);
+}
+
+function truckIcon(color, heading, stale) {
+  return {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+    scale: 6,
+    fillColor: color,
+    fillOpacity: stale ? 0.4 : 1,
+    strokeColor: '#ffffff',
+    strokeWeight: 2,
+    strokeOpacity: stale ? 0.4 : 1,
+    // Heading is null below walking pace, so a parked truck keeps the way it
+    // was last pointing rather than snapping to north.
+    rotation: typeof heading === 'number' ? heading : 0,
+  };
+}
+
+async function renderLiveMap() {
+  if (!liveDrivers.size) {
+    liveMarkers.forEach(m => m.setMap(null));
+    liveMarkers.clear();
+    return;
+  }
+  const map = await ensureLiveMap();
+  if (!map) return;
+
+  const now = Date.now();
+  let added = false;
+
+  for (const [tab, d] of liveDrivers) {
+    const route = ROUTES.find(r => r.tabName === tab);
+    const color = route ? routeColor(route) : '#8ea395';
+    const stale = now - d.seen > 90000;
+    let m = liveMarkers.get(tab);
+    if (!m) {
+      m = new google.maps.Marker({
+        map,
+        position: new google.maps.LatLng(d.lat, d.lng),
+        title: route ? route.name : tab,
+        label: { text: route ? route.name : tab, color: '#ffffff',
+                 fontSize: '11px', fontWeight: '700' },
+        zIndex: 300,
+      });
+      /* The label sits under the arrow rather than on top of it, or the route
+         name covers the thing it is naming. */
+      m.setOptions({ labelOrigin: undefined });
+      liveMarkers.set(tab, m);
+      added = true;
+    } else {
+      glideMarker(m, { lat: d.lat, lng: d.lng });
+    }
+    m.setIcon(truckIcon(color, d.heading, stale));
+  }
+
+  // Trucks that have stopped sharing
+  for (const [tab, m] of liveMarkers) {
+    if (!liveDrivers.has(tab)) {
+      cancelAnimationFrame(m.__anim || 0);
+      m.setMap(null);
+      liveMarkers.delete(tab);
+    }
+  }
+
+  /* Frame them when the SET changes, not on every ping — a map that
+     re-centres every two seconds is one a dispatcher cannot look away from,
+     and cannot pan without it snapping back. */
+  if (added) {
+    const b = new google.maps.LatLngBounds();
+    liveDrivers.forEach(d => b.extend(new google.maps.LatLng(d.lat, d.lng)));
+    if (liveDrivers.size === 1) {
+      map.setCenter(b.getCenter());
+      if (map.getZoom() < 13) map.setZoom(14);
+    } else {
+      map.fitBounds(b, 60);
+    }
+  }
+}
+
 function renderLive() {
   const wrap = document.getElementById('live-wrap');
   const rows = document.getElementById('live-rows');
@@ -1335,6 +1549,8 @@ function renderLive() {
   if (count) {
     count.textContent = list.length === 1 ? '1 truck sharing' : list.length + ' trucks sharing';
   }
+
+  renderLiveMap();
 
   rows.innerHTML = list.map(d => {
     const route = ROUTES.find(r => r.tabName === d.tabName);
