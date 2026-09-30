@@ -195,7 +195,10 @@
            resize, because it was a sibling of the map rather than a child of
            it — an entire mechanism that existed only to put it back where
            being inside the map would have put it anyway. -->
-      <div id="map-dock">
+      <!-- Folded by default on this page: nine buttons in two rows is a third of
+         a phone screen sitting on top of the map a driver is trying to read.
+         It opens to a labelled pill and flies out when tapped. -->
+    <div id="map-dock" data-default-folded="1">
       <button class="dock-btn active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">
         <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
       <button class="dock-btn" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">
@@ -219,8 +222,10 @@
       <!-- Folds the strip away. Stays visible when it is folded, because a
            control that hides itself along with everything else is a control
            nobody gets back. -->
+      <!-- The label is written by map-dock.js, because it says different
+           things open and shut and the two must never disagree. -->
       <button id="dock-toggle" onclick="toggleDock()" aria-expanded="true"
-              aria-controls="map-dock" title="Hide the buttons">⌄</button>
+              aria-controls="map-dock" title="Hide the buttons"></button>
       </div>
     </div>
 

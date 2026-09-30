@@ -40,14 +40,28 @@
   function applyDockFolded(folded) {
     const el = dockEl();
     if (!el) return;
+    const wasFolded = el.classList.contains('folded');
     el.classList.toggle('folded', folded);
 
-    /* The handle is optional. The demo's dock is three buttons that never
-       need folding away, and a page without one still gets the measurement. */
+    /* Fly the buttons out, but only when they are actually arriving. Replaying
+       the animation on every measure — or when the page loads already open —
+       makes the whole tray twitch for no reason. */
+    if (wasFolded && !folded) {
+      el.classList.remove('flying');
+      void el.offsetWidth;          // restart the animation rather than ignore it
+      el.classList.add('flying');
+    }
+
+    /* The handle is optional. The demo's dock is three buttons that never need
+       folding away, and a page without one still gets the measurement. */
     const btn = document.getElementById('dock-toggle');
     if (btn) {
-      btn.textContent = folded ? '⌃' : '⌄';
-      btn.title = folded ? 'Show the buttons' : 'Hide the buttons';
+      /* Shut, it has to say what it is. A bare chevron over a map is a mystery
+         — a driver should not have to tap an unlabelled stub to find out where
+         Photo and Hazard went. Open, it only has to say how to put it away. */
+      btn.textContent = folded ? '\u2630 Map menu' : '\u2715';
+      btn.title = folded ? 'Show the map buttons' : 'Hide the map buttons';
+      btn.setAttribute('aria-label', folded ? 'Show the map buttons' : 'Hide the map buttons');
       btn.setAttribute('aria-expanded', String(!folded));
     }
     measureDock();
@@ -67,8 +81,19 @@
   window.measureDock = measureDock;
 
   function start() {
-    let folded = false;
-    try { folded = localStorage.getItem(FOLDED_KEY) === '1'; } catch {}
+    /* A page can ask to start shut. The driver app does: nine buttons in two
+       rows is a third of a phone screen laid over the map. The demo's three
+       fit on one row and are the point of the page, so it starts open.
+
+       A driver who has opened or shut it themselves keeps their choice — that
+       is a decision, and this default is only for the first time. */
+    const el = dockEl();
+    const byDefault = el ? el.dataset.defaultFolded === '1' : false;
+    let folded = byDefault;
+    try {
+      const saved = localStorage.getItem(FOLDED_KEY);
+      if (saved === '1' || saved === '0') folded = saved === '1';
+    } catch {}
     applyDockFolded(folded);
   }
 
