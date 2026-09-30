@@ -256,19 +256,35 @@ body {
   position: absolute;
   top: calc(100% - 4px);
   right: 10px;
-  width: 190px;
-  padding: 7px;
+  /* Narrower, and 10px of air all the way round the rows. The rows were
+     sitting almost on the edge of the panel. */
+  width: 172px;
+  padding: 10px;
   border-radius: 14px;
-  background: rgba(20, 26, 22, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  /* White at half strength, like the road note, rather than a dark slab. */
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
   z-index: 10;
 }
-/* With a panel behind them again, the words do not need their outline. */
-.route-header .dock-btn { text-shadow: none; opacity: 1; }
+/* Dark ink, because the panel is light now. White text on half-white is the
+   one combination that reads as nothing at all. */
+.route-header .dock-btn {
+  text-shadow: none;
+  opacity: 1;
+  color: #14201a;
+}
+.route-header .dock-btn:active { background: rgba(0,0,0,0.07); }
 .route-header .dock-btn.active,
-.route-header .dock-btn.on { background: rgba(255,255,255,0.16); }
+.route-header .dock-btn.on { background: rgba(0,0,0,0.09); }
+.route-header .dock-btn.active::before,
+.route-header .dock-btn.on::before {
+  background: #0d5c33;
+  box-shadow: none;
+}
+.route-header .dock-btn.sent    { color: #8a5a00; }
+.route-header .dock-btn.sharing { color: #b91c1c; }
 /* Open, the button is the way back out. */
 .route-header #map-dock:not(.folded) #dock-toggle {
   background: rgba(255,255,255,0.95);

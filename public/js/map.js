@@ -948,8 +948,29 @@ const HAZARD_ALERT_M = 8000;   // about five miles
  * Gone entirely when nobody has reported anything, which is most days. */
 let hazardStripOpen = false;
 
+/* On by default — a driver should not have to go looking for "there is a slide
+   on the road you are driving down". But it is their screen, so it can be put
+   away, and putting it away leaves a count behind rather than nothing: a note
+   that vanishes completely is one nobody remembers they turned off. */
+const HAZARD_NOTE_KEY = 'ev_hazard_note_hidden';
+let hazardNoteHidden = false;
+try { hazardNoteHidden = localStorage.getItem(HAZARD_NOTE_KEY) === '1'; } catch {}
+
 window.toggleHazardStrip = function () {
   hazardStripOpen = !hazardStripOpen;
+  renderHazardStrip();
+};
+
+window.hideHazardNote = function () {
+  hazardNoteHidden = true;
+  hazardStripOpen = false;
+  try { localStorage.setItem(HAZARD_NOTE_KEY, '1'); } catch {}
+  renderHazardStrip();
+};
+
+window.showHazardNote = function () {
+  hazardNoteHidden = false;
+  try { localStorage.setItem(HAZARD_NOTE_KEY, '0'); } catch {}
   renderHazardStrip();
 };
 
@@ -964,12 +985,32 @@ function renderHazardStrip() {
     return { ...h, _d: d };
   }).sort((a, b) => (a._d ?? Infinity) - (b._d ?? Infinity));
 
-  wrap.hidden = list.length === 0;
+  const badge = document.getElementById('hazard-badge');
+
   if (!list.length) {
+    wrap.hidden = true;
+    if (badge) badge.hidden = true;
     hazardStripOpen = false;
     document.documentElement.style.setProperty('--hz-strip-h', '0px');
     return;
   }
+
+  /* Put away: the note goes, a count stays. */
+  if (hazardNoteHidden) {
+    wrap.hidden = true;
+    if (badge) {
+      badge.hidden = false;
+      badge.textContent = '⚠ ' + list.length;
+      badge.title = list.length === 1
+        ? '1 road report — tap to show'
+        : list.length + ' road reports — tap to show';
+    }
+    document.documentElement.style.setProperty('--hz-strip-h', '0px');
+    return;
+  }
+
+  wrap.hidden = false;
+  if (badge) badge.hidden = true;
 
   wrap.classList.toggle('open', hazardStripOpen);
   /* Lines in a box, not buttons on the map. Seven red pills across the top
