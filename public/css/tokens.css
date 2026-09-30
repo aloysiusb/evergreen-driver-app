@@ -33,7 +33,12 @@
   --report-btn-border:      #d7e0d9;
   --report-btn-radius:      36px;
   --report-btn-height:      88px;
-  --report-btn-min-width:   104px;
+  /* 92, down from 104. A touch smaller so the stop card carries its seven
+     circles in less height, without going below what a gloved thumb can hit
+     on a moving truck — the circle still comes out around 78px on a phone,
+     well over the 44px a touch target needs. Still the one number that
+     governs them all, and still editable in settings. */
+  --report-btn-min-width:   92px;
   --report-btn-gap:         20px;
   --report-row-space:       22px;
   --note-edit-text:         #14241b;
