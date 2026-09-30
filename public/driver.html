@@ -212,9 +212,15 @@
            "more". Empty and gone when nobody has reported anything, which is
            most days. -->
       <div id="hazard-strip" hidden>
+        <button class="hz-strip-hide" id="hz-strip-hide" onclick="hideHazardNote()"
+                aria-label="Hide road reports" title="Hide road reports">−</button>
         <div class="hz-strip-row" id="hz-strip-row"></div>
         <button class="hz-strip-more" id="hz-strip-more" hidden onclick="toggleHazardStrip()"></button>
       </div>
+      <!-- What is left when a driver puts the note away: the count, so they
+           know there is something there, and a way back to it. -->
+      <button id="hazard-badge" hidden onclick="showHazardNote()"
+              aria-label="Show road reports"></button>
 
       <!-- Appears only once the map has been dragged off the driver. Bottom
            right of the map: clear of the dock at the top, clear of the zoom
