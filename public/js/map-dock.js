@@ -37,6 +37,25 @@
     });
   }
 
+  /* The compass's real height, published as --geo-h for the directions that
+     start below it.
+   *
+   * It is no more constant than the dock. The rose on its own is about 52px;
+   * where the screen is wide enough to carry them, the coordinates sit under
+   * it and the corner grows to around 76px — and a tap on the rose brings
+   * them out on a phone too, for eight seconds. Clearance written as a flat
+   * 62px was right for exactly one of those states, which is why the
+   * directions and the road conditions came down on top of the compass on
+   * anything wider than a phone. */
+  function measureGeo() {
+    const el = document.getElementById('geo-chip');
+    if (!el) return;
+    requestAnimationFrame(() => {
+      const h = el.offsetHeight;
+      if (h > 0) document.documentElement.style.setProperty('--geo-h', h + 'px');
+    });
+  }
+
   function applyDockFolded(folded) {
     const el = dockEl();
     if (!el) return;
@@ -97,6 +116,16 @@
       if (saved === '1' || saved === '0') folded = saved === '1';
     } catch {}
     applyDockFolded(folded);
+
+    /* Watched rather than measured at a few likely moments. The coordinates
+       appear on a tap, leave again on a timer, and appear on their own when a
+       phone is turned sideways past 700px — an observer catches all three
+       without every one of them having to remember to say so. */
+    const geo = document.getElementById('geo-chip');
+    if (geo && window.ResizeObserver) {
+      new ResizeObserver(measureGeo).observe(geo);
+    }
+    measureGeo();
   }
 
   if (document.readyState === 'loading') {
@@ -107,10 +136,10 @@
 
   /* A narrower window wraps the tray onto another row, and a web font
      arriving late changes the captions' height. Both move everything below. */
-  addEventListener('resize', measureDock);
-  addEventListener('orientationchange', measureDock);
+  addEventListener('resize', () => { measureDock(); measureGeo(); });
+  addEventListener('orientationchange', () => { measureDock(); measureGeo(); });
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(measureDock).catch(() => {});
+    document.fonts.ready.then(() => { measureDock(); measureGeo(); }).catch(() => {});
   }
 
 })();

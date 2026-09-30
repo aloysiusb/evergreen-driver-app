@@ -623,20 +623,30 @@ body {
 /* Incidents */
 .incidents {
   padding: 10px 16px;
+  min-height: 42px;
+}
+.incident-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  min-height: 42px;
 }
 .incident-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: var(--r-card);
   white-space: nowrap;
-  max-width: 180px;
+  /* Never squashed, only wrapped. A chip allowed to shrink kept both on one
+     line and cut "Contamination · Oliphant, Grace" off mid-name; with the
+     shrink off, a chip that will not fit moves down a line instead, and only
+     a chip too wide for the whole row trims — at its name, with an ellipsis,
+     never at the word that says what happened. */
+  flex: 0 0 auto;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 .incident-chip.contamination { background: #fee2e2; color: #dc2626; }
 .incident-chip.overflow      { background: #fef3c7; color: #d97706; }
@@ -650,6 +660,13 @@ body {
 :root[data-theme="dark"] .incident-chip.contamination { background: #450a0a; color: #fca5a5; }
 :root[data-theme="dark"] .incident-chip.overflow      { background: #451a03; color: #fcd34d; }
 :root[data-theme="dark"] .incident-chip.photo         { background: #0c1e40; color: #93c5fd; }
+
+.incident-ico  { font-size: 11px; line-height: 1; flex: 0 0 auto; }
+.incident-kind { font-weight: 800; flex: 0 0 auto; }
+/* The name reads as the place it happened, not as a second heading: same
+   size, a shade lighter, and behind a separator. */
+.incident-at   { font-weight: 600; opacity: 0.85; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.incident-at::before { content: '·'; margin: 0 4px 0 1px; opacity: 0.6; }
 
 .no-incidents {
   font-size: 11px;
@@ -850,10 +867,10 @@ const routeState = {};  // tabName → { items, error }
  * whatever came before it. */
 function parseIncidents(items) {
   const TYPES = [
-    ['🚫', 'contamination'],
-    ['📦', 'overflow'],
-    ['⏭', 'skip'],
-    ['📷', 'photo'],
+    ['🚫', 'contamination', 'Contamination'],
+    ['📦', 'overflow',      'Overflow'],
+    ['⏭', 'skip',          'Skipped'],
+    ['📷', 'photo',         'Photo'],
   ];
   const chips = [];
   for (const s of items) {
@@ -862,12 +879,15 @@ function parseIncidents(items) {
       const t = part.trim();
       const hit = TYPES.find(([icon]) => t.startsWith(icon));
       if (!hit) continue;
-      /* The colour already says WHAT kind of incident it is — red for
-         contamination, amber for overflow — so the few words that fit are
-         better spent on WHO it happened at. Reading "Contamination" on a card
-         and still having to hunt the feed for which stop was the gap. */
+      /* What happened, then where. This carried the customer's name alone, on
+         the reasoning that the chip's colour already said what kind of
+         incident it was. It does not: a bare "Oliphant, Grace" sitting under
+         a heading that reads "Current stop" looks like a second stop, not
+         like a contamination report — which is exactly how it was read. */
       chips.push({
         type: hit[1],
+        icon: hit[0],
+        kind: hit[2],
         label: s.accountName || s.address || ('Stop ' + s.rowNumber),
         detail: (s.accountName || s.address || '') + ' — ' + t,
       });
@@ -909,10 +929,20 @@ function renderCard(route) {
 
   const statusIcon = pct === 100 ? '✅' : isToday ? '🚛' : '⏸';
 
+  /* Headed, like the stop above it. The row had no heading at all when it
+     had something in it — only the words "No incidents" when it was empty —
+     so a chip appeared under "Current stop" with nothing to say it was a
+     different kind of thing. */
   const incidentHtml = incidents.length
-    ? incidents.slice(0, 4).map(c =>
-        `<span class="incident-chip ${c.type}" title="${esc(c.detail || c.label)}">${esc(c.label)}</span>`
-      ).join('')
+    ? `<div class="current-label">Reported</div>
+       <div class="incident-row">` +
+      incidents.slice(0, 4).map(c =>
+        `<span class="incident-chip ${c.type}" title="${esc(c.detail || c.label)}">` +
+          `<span class="incident-ico">${c.icon}</span>` +
+          `<b class="incident-kind">${esc(c.kind)}</b>` +
+          `<span class="incident-at">${esc(c.label)}</span></span>`
+      ).join('') +
+      `</div>`
     : `<span class="no-incidents">No incidents</span>`;
 
   const currentHtml = !current
