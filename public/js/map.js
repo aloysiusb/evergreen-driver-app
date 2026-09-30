@@ -354,6 +354,48 @@ function onSlowConnection() {
   return c.saveData === true || /^(slow-)?2g$/.test(c.effectiveType || '');
 }
 
+/* The map could not be had — so hand the driver their stops.
+ *
+ * The map is the default view, which means a map that never arrives is a black
+ * screen with "Loading map…" on it and no sign that the round is one tap away
+ * under Stops. That is how this failed in the valley: the list had loaded
+ * perfectly and read as "nothing is loading".
+ *
+ * So the app falls back to the thing it can always do. The stop list is the
+ * job; the map is how you get between stops. Failing to the list once, saying
+ * why, and leaving a way to try again is the honest behaviour.
+ *
+ * Once only: a driver who taps back to Map after this has decided to look at
+ * it, and yanking them to the list again would be the app arguing with them. */
+function mapUnavailable(why) {
+  const loadingEl = document.getElementById('map-loading');
+  if (loadingEl) {
+    loadingEl.style.display = 'block';
+    loadingEl.innerHTML =
+      '<div style="font-weight:600;margin-bottom:4px;"></div>' +
+      '<div style="font-size:12.5px;opacity:.85;margin-bottom:10px;">' +
+        'Your stops are all still here, under <strong>Stops</strong>.</div>' +
+      '<button id="map-retry" style="padding:9px 18px;border:none;' +
+      'border-radius:var(--r-control);background:var(--route-color,#22c55e);color:#fff;' +
+      'font-weight:600;font-family:inherit;font-size:14px;cursor:pointer;">Try the map again</button>';
+    /* textContent, not innerHTML, for the reason it always is: this string
+       says what went wrong and none of it is ours to trust as markup. */
+    loadingEl.firstElementChild.textContent = why;
+    const retry = document.getElementById('map-retry');
+    if (retry) retry.addEventListener('click', () => {
+      window._mapInitialized = true;   // switchView sets this; keep it honest
+      loadingEl.textContent = 'Loading map…';
+      initMap();
+    });
+  }
+
+  if (!window._mapFellBackToStops) {
+    window._mapFellBackToStops = true;
+    window.switchView('stops');
+    setOptimizeStatus(why + ' Showing your stops.');
+  }
+}
+
 async function initMap() {
   const loadingEl = document.getElementById('map-loading');
 
@@ -382,22 +424,35 @@ async function initMap() {
     const cfg = await res.json();
     apiKey = cfg.key;
     mapId = cfg.mapId || null;
+    /* An answer with no key in it is the same as no answer. Without this the
+       key went into the URL as the word "undefined", Google refused it, and a
+       missing setting was reported as a map that "could not be loaded" —
+       which sends whoever is looking to the wrong place. */
+    if (!apiKey) throw new Error('no key');
   } catch {
-    loadingEl.textContent = 'Maps not configured — add GOOGLE_MAPS_API_KEY in Render.';
+    mapUnavailable('The map is not set up on this install.');
     return;
   }
 
-  await new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    // map_ids lets Google fetch the style for this map before the map is
-    // created, so a vector map paints in one pass instead of two.
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places` +
-            (mapId ? `&map_ids=${encodeURIComponent(mapId)}` : '');
-    s.async = true;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Maps failed'));
-    document.head.appendChild(s);
-  });
+  try {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      // map_ids lets Google fetch the style for this map before the map is
+      // created, so a vector map paints in one pass instead of two.
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places` +
+              (mapId ? `&map_ids=${encodeURIComponent(mapId)}` : '');
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Maps failed'));
+      document.head.appendChild(s);
+    });
+  } catch {
+    /* Google's script did not arrive: a rejected key, a referrer restriction,
+       billing switched off, or no way through to Google from where the truck
+       is. Nothing below this line can run without it. */
+    mapUnavailable('The map could not be loaded.');
+    return;
+  }
 
   loadingEl.style.display = 'none';
 
