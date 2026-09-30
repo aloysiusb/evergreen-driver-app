@@ -337,9 +337,63 @@
 }
 #dock-toggle:active { background: rgba(255,255,255,0.28); }
 /* Folded: the buttons go, the handle stays, and the tray shrinks to it. */
+/* ── Shut ──
+   A labelled pill, not a stub. Nine buttons in two rows is a third of a phone
+   screen laid over the map, so this is how the driver app starts — and a bare
+   chevron floating on a map is a mystery a driver has to tap to solve. It says
+   what it opens.
+
+   display:none rather than a fade, because the tray has to actually shrink to
+   the pill: buttons that are merely invisible still hold the space that was
+   the whole problem. */
 #map-dock.folded .dock-btn { display: none; }
-#map-dock.folded { padding: 5px 6px; gap: 0; }
-#map-dock.folded #dock-toggle { height: 34px; width: 46px; }
+#map-dock.folded {
+  width: auto;                 /* not the full-width tray it is when open */
+  padding: 5px 6px;
+  gap: 0;
+}
+#map-dock.folded #dock-toggle {
+  width: auto;
+  height: 38px;
+  padding: 0 15px;
+  border-radius: 19px;
+  margin-left: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  background: rgba(255,255,255,0.16);
+}
+
+/* ── Opening ──
+   They fly out from behind the handle rather than appearing all at once, with
+   each one a beat behind the last. It reads as one thing unfolding, which is
+   what it is, and it tells a driver where they came from — so the way back is
+   obvious without having to hunt for it. */
+#map-dock.flying .dock-btn {
+  animation: dock-fly 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+#map-dock.flying .dock-btn:nth-child(1)  { animation-delay: 0.00s; }
+#map-dock.flying .dock-btn:nth-child(2)  { animation-delay: 0.02s; }
+#map-dock.flying .dock-btn:nth-child(3)  { animation-delay: 0.04s; }
+#map-dock.flying .dock-btn:nth-child(4)  { animation-delay: 0.06s; }
+#map-dock.flying .dock-btn:nth-child(5)  { animation-delay: 0.08s; }
+#map-dock.flying .dock-btn:nth-child(6)  { animation-delay: 0.10s; }
+#map-dock.flying .dock-btn:nth-child(7)  { animation-delay: 0.12s; }
+#map-dock.flying .dock-btn:nth-child(8)  { animation-delay: 0.14s; }
+#map-dock.flying .dock-btn:nth-child(9)  { animation-delay: 0.16s; }
+#map-dock.flying .dock-btn:nth-child(10) { animation-delay: 0.18s; }
+
+@keyframes dock-fly {
+  from { opacity: 0; transform: translateY(-8px) scale(0.82); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Someone who has asked for less movement gets the buttons, just not thrown
+   at them. */
+@media (prefers-reduced-motion: reduce) {
+  #map-dock.flying .dock-btn { animation: none; }
+}
 
 /* ── The zoom slider ──
    On the right edge of the map. Vertical because that is which way zoom goes,
