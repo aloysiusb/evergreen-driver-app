@@ -32,14 +32,20 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 6px 10px;
-  /* Below whichever is taller: the menu in its corner or the compass in the
-     other one. --dock-h is the dock's real height, measured — one row on a
-     desktop, two on a phone, a stub when it is folded away — and 58px is the
-     compass. Zero by default, so nothing depends on the script having run. */
-  /* Clears the compass in its corner, and the hazard note under it when there
-     is one — --hz-strip-h is 0 unless it is showing. The menu is off the map
-     entirely now, so it is not in this sum any more. */
-  padding: calc(62px + var(--hz-strip-h, 0px)) 12px 22px;
+  /* Below whichever of them reaches lowest, not below the three of them added
+     together: the compass in its corner, the hazard note beside it, and on the
+     demo the dock in the other corner all start at the same 6px from the top,
+     so they are alternatives, not a stack.
+   *
+     Every one of the heights is measured rather than assumed. A flat 62px was
+     right for the rose alone and wrong the moment the coordinates appeared
+     under it — which is every screen past 700px, and any phone where the rose
+     has been tapped — and that is what put the directions and the road
+     conditions on top of the compass. The fallbacks are the bare rose, so a
+     page renders sensibly before any of it has been measured. */
+  padding: calc(6px + max(var(--geo-h, 52px),
+                          var(--hz-strip-h, 0px),
+                          var(--dock-h, 0px)) + 10px) 12px 22px;
   background: linear-gradient(to bottom,
     rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.18) 78%, transparent 100%);
   pointer-events: none;      /* the scrim is decoration; the chips take taps */
@@ -758,10 +764,15 @@
    "then" line — which is the one thing here a driver can do without, since it
    describes the manoeuvre AFTER the one they are being shown. */
 @media (max-height: 500px) {
-  /* Tighter, but it still has to start below the dock — writing a flat
-     padding here was what put the dock back on top of the compass when the
-     phone was turned on its side. */
-  #map-hud { padding: calc(5px + var(--dock-h, 0px)) 10px 18px; gap: 8px; }
+  /* Tighter, but the clearance is worked out the same way — a flat padding
+     here is what put the directions back on the compass when the phone was
+     turned on its side. Only the air above and below it is smaller. */
+  #map-hud {
+    padding: calc(4px + max(var(--geo-h, 48px),
+                            var(--hz-strip-h, 0px),
+                            var(--dock-h, 0px)) + 6px) 10px 18px;
+    gap: 8px;
+  }
   .geo-rose { width: 44px; height: 44px; }
   .geo-coords { font-size: 10.5px; }
   .geo-read { padding: 2px 7px; }

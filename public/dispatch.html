@@ -41,32 +41,52 @@
   --d-danger:   var(--dispatch-danger, #dc2626);
   --d-ws-ok:    #22c55e;
   --d-ws-bad:   #ef4444;
+  /* Every other row of a list, so a long one can be read across without
+     losing the line. Barely there by design: a stripe you notice is a stripe
+     competing with the words on it. */
+  --d-stripe:   var(--dispatch-stripe, #f4f8f5);
 }
+/* ── Dark, lifted off the floor ──
+ *
+ * This ran at #0c160e on #141f16 — very nearly black, and the card only about
+ * 9% brighter than the page behind it, which is under the 1.1 or so where an
+ * edge stops reading as an edge at all. On an office screen in daylight the
+ * cards simply dissolved into the background.
+ *
+ * Everything moves up a step and the two greys are pulled apart to roughly
+ * 1.25 — still a dark theme, and still the same green, but the cards sit ON
+ * the page rather than in it. The muted green also comes up, because at
+ * #6b9070 the addresses under each stop were the hardest thing here to read.
+ *
+ * Both blocks below have to stay identical: one answers the system setting,
+ * the other the button in the corner. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --d-bg:       var(--dispatch-dark-bg, #0c160e);
-    --d-surface:  var(--dispatch-dark-surface, #141f16);
-    --d-border:   var(--dispatch-dark-border, #1e3022);
+    --d-bg:       var(--dispatch-dark-bg, #18231b);
+    --d-surface:  var(--dispatch-dark-surface, #26352a);
+    --d-border:   var(--dispatch-dark-border, #3a4d3f);
     --d-accent:   var(--dispatch-dark-accent, #4ade80);
-    --d-text:     var(--dispatch-dark-text, #e2ede4);
-    --d-muted:    var(--dispatch-dark-muted, #6b9070);
-    --d-muted-bg: var(--dispatch-dark-muted-bg, #1a2e1d);
+    --d-text:     var(--dispatch-dark-text, #e8f1ea);
+    --d-muted:    var(--dispatch-dark-muted, #94b399);
+    --d-muted-bg: var(--dispatch-dark-muted-bg, #2f4034);
     --d-done:     var(--d-accent);
     --d-warn:     var(--dispatch-dark-warn, #fbbf24);
     --d-danger:   var(--dispatch-dark-danger, #f87171);
+    --d-stripe:   var(--dispatch-dark-stripe, #2c3d31);
   }
 }
 :root[data-theme="dark"] {
-  --d-bg:       var(--dispatch-dark-bg, #0c160e);
-  --d-surface:  var(--dispatch-dark-surface, #141f16);
-  --d-border:   var(--dispatch-dark-border, #1e3022);
+  --d-bg:       var(--dispatch-dark-bg, #18231b);
+  --d-surface:  var(--dispatch-dark-surface, #26352a);
+  --d-border:   var(--dispatch-dark-border, #3a4d3f);
   --d-accent:   var(--dispatch-dark-accent, #4ade80);
-  --d-text:     var(--dispatch-dark-text, #e2ede4);
-  --d-muted:    var(--dispatch-dark-muted, #6b9070);
-  --d-muted-bg: var(--dispatch-dark-muted-bg, #1a2e1d);
+  --d-text:     var(--dispatch-dark-text, #e8f1ea);
+  --d-muted:    var(--dispatch-dark-muted, #94b399);
+  --d-muted-bg: var(--dispatch-dark-muted-bg, #2f4034);
   --d-done:     var(--d-accent);
   --d-warn:     var(--dispatch-dark-warn, #fbbf24);
   --d-danger:   var(--dispatch-dark-danger, #f87171);
+  --d-stripe:   var(--dispatch-dark-stripe, #2c3d31);
 }
 
 /* ── Reset ── */
@@ -353,6 +373,9 @@ body {
   max-height: 310px;
   overflow-y: auto;
 }
+/* Opened out: no cap at all, so the whole day is there to scroll through on
+   the page itself rather than inside a 310px window. */
+.feed.tall { max-height: none; overflow-y: visible; }
 .feed-empty { padding: 20px; color: var(--d-muted); font-size: 13.5px; line-height: 1.55; }
 
 .feed-item {
@@ -364,6 +387,12 @@ body {
   border-bottom: 1px solid var(--d-border);
 }
 .feed-item:last-child { border-bottom: 0; }
+
+/* Ledger ruling. Every second row takes a shade off the surface — the thing a
+   spreadsheet does, and for the same reason: three columns of small type run
+   top to bottom, and without it the eye loses which time belongs to which
+   stop halfway across. Subtle on purpose; it is a guide, not a highlight. */
+.feed-item:nth-child(even) { background: var(--d-stripe); }
 
 /* A stripe carries the kind, so a wall of text is scannable at a glance. */
 .feed-item.done   { border-left: 3px solid var(--d-done); }
@@ -398,18 +427,94 @@ body {
   word-break: break-word;
   margin-top: 3px;
 }
-.feed-photo { display: block; }
+/* Two lines, then it stops. A row holding a driver's paragraph used to be six
+   times the height of the one above it, and the list lost its rhythm — which
+   is the whole reason the ruling above exists. The rest is one click away. */
+.feed-item:not(.open) .feed-what {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The photo sits IN the row at a thumbnail's size and opens out with it. Full
+   width, every photo pushed the times and the stops apart by 200px of picture
+   nobody had asked to see yet. */
+.feed-photo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--d-accent);
+  text-decoration: none;
+}
+.feed-photo:hover { text-decoration: underline; }
 .feed-thumb {
   display: block;
-  min-height: 60px;          /* never collapse to a sliver while loading */
-  max-width: 260px;
-  width: 100%;
-  height: auto;
-  margin: 8px 0 4px;
-  border-radius: var(--r-card);
+  width: 46px;
+  height: 46px;
+  object-fit: cover;         /* a square crop, not a squashed photo */
+  flex: 0 0 auto;
+  border-radius: var(--r-chip, 6px);
   border: 1px solid var(--d-border);
   background: var(--d-muted-bg);
 }
+.feed-item.open .feed-photo { display: block; }
+.feed-item.open .feed-thumb {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  min-height: 60px;          /* never collapse to a sliver while loading */
+  object-fit: contain;
+  margin: 2px 0 6px;
+  border-radius: var(--r-card);
+}
+
+/* Only rows with something folded away are clickable, and they say so. */
+.feed-item.can-open { cursor: pointer; }
+.feed-item.can-open:hover { background: var(--d-muted-bg); }
+.feed-item.can-open:focus-visible {
+  outline: 2px solid var(--d-accent);
+  outline-offset: -2px;
+}
+/* A chevron beside the time, rather than a "Show more" line of its own. The
+   line cost every openable row 21px of height — on a photo row, half again
+   what the thumbnail costs — which is the opposite of rows that hold their
+   size. */
+.feed-more {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1;
+  text-align: right;
+  color: var(--d-muted);
+  transition: transform 0.15s ease;
+}
+/* A filled triangle rather than '⌄', which several fonts draw as a hairline
+   caret two pixels tall and which read as a speck of dust beside the time. */
+.feed-more::after { content: '▾'; }
+.feed-item.open .feed-more { transform: rotate(180deg); }
+
+/* The whole list's own handle, under it. Only drawn when the list is actually
+   taller than its window — an "expand" on a three-line feed is furniture. */
+.feed-expand {
+  display: none;
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--d-muted);
+  background: var(--d-surface);
+  border: 1px solid var(--d-border);
+  border-radius: var(--r-card);
+  cursor: pointer;
+}
+.feed-expand.shown { display: block; }
+.feed-expand:hover { color: var(--d-text); background: var(--d-muted-bg); }
 
 .feed-sim {
   margin-left: 6px;
@@ -425,6 +530,7 @@ body {
 }
 .feed-item.is-sim { opacity: 0.88; }
 
+.feed-meta { text-align: right; }
 .feed-time {
   font-size: 11.5px;
   color: var(--d-muted);
@@ -623,20 +729,30 @@ body {
 /* Incidents */
 .incidents {
   padding: 10px 16px;
+  min-height: 42px;
+}
+.incident-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  min-height: 42px;
 }
 .incident-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: var(--r-card);
   white-space: nowrap;
-  max-width: 180px;
+  /* Never squashed, only wrapped. A chip allowed to shrink kept both on one
+     line and cut "Contamination · Oliphant, Grace" off mid-name; with the
+     shrink off, a chip that will not fit moves down a line instead, and only
+     a chip too wide for the whole row trims — at its name, with an ellipsis,
+     never at the word that says what happened. */
+  flex: 0 0 auto;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 .incident-chip.contamination { background: #fee2e2; color: #dc2626; }
 .incident-chip.overflow      { background: #fef3c7; color: #d97706; }
@@ -650,6 +766,13 @@ body {
 :root[data-theme="dark"] .incident-chip.contamination { background: #450a0a; color: #fca5a5; }
 :root[data-theme="dark"] .incident-chip.overflow      { background: #451a03; color: #fcd34d; }
 :root[data-theme="dark"] .incident-chip.photo         { background: #0c1e40; color: #93c5fd; }
+
+.incident-ico  { font-size: 11px; line-height: 1; flex: 0 0 auto; }
+.incident-kind { font-weight: 800; flex: 0 0 auto; }
+/* The name reads as the place it happened, not as a second heading: same
+   size, a shade lighter, and behind a separator. */
+.incident-at   { font-weight: 600; opacity: 0.85; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.incident-at::before { content: '·'; margin: 0 4px 0 1px; opacity: 0.6; }
 
 .no-incidents {
   font-size: 11px;
@@ -807,6 +930,8 @@ body {
       moment a driver taps them. Nothing to refresh.
     </div>
   </div>
+  <button type="button" class="feed-expand" id="feed-expand"
+          onclick="toggleFeedHeight()" aria-expanded="false">Show the whole day</button>
 </div>
 
 <div class="grid-wrap" id="grid">
@@ -850,10 +975,10 @@ const routeState = {};  // tabName → { items, error }
  * whatever came before it. */
 function parseIncidents(items) {
   const TYPES = [
-    ['🚫', 'contamination'],
-    ['📦', 'overflow'],
-    ['⏭', 'skip'],
-    ['📷', 'photo'],
+    ['🚫', 'contamination', 'Contamination'],
+    ['📦', 'overflow',      'Overflow'],
+    ['⏭', 'skip',          'Skipped'],
+    ['📷', 'photo',         'Photo'],
   ];
   const chips = [];
   for (const s of items) {
@@ -862,12 +987,15 @@ function parseIncidents(items) {
       const t = part.trim();
       const hit = TYPES.find(([icon]) => t.startsWith(icon));
       if (!hit) continue;
-      /* The colour already says WHAT kind of incident it is — red for
-         contamination, amber for overflow — so the few words that fit are
-         better spent on WHO it happened at. Reading "Contamination" on a card
-         and still having to hunt the feed for which stop was the gap. */
+      /* What happened, then where. This carried the customer's name alone, on
+         the reasoning that the chip's colour already said what kind of
+         incident it was. It does not: a bare "Oliphant, Grace" sitting under
+         a heading that reads "Current stop" looks like a second stop, not
+         like a contamination report — which is exactly how it was read. */
       chips.push({
         type: hit[1],
+        icon: hit[0],
+        kind: hit[2],
         label: s.accountName || s.address || ('Stop ' + s.rowNumber),
         detail: (s.accountName || s.address || '') + ' — ' + t,
       });
@@ -909,10 +1037,20 @@ function renderCard(route) {
 
   const statusIcon = pct === 100 ? '✅' : isToday ? '🚛' : '⏸';
 
+  /* Headed, like the stop above it. The row had no heading at all when it
+     had something in it — only the words "No incidents" when it was empty —
+     so a chip appeared under "Current stop" with nothing to say it was a
+     different kind of thing. */
   const incidentHtml = incidents.length
-    ? incidents.slice(0, 4).map(c =>
-        `<span class="incident-chip ${c.type}" title="${esc(c.detail || c.label)}">${esc(c.label)}</span>`
-      ).join('')
+    ? `<div class="current-label">Reported</div>
+       <div class="incident-row">` +
+      incidents.slice(0, 4).map(c =>
+        `<span class="incident-chip ${c.type}" title="${esc(c.detail || c.label)}">` +
+          `<span class="incident-ico">${c.icon}</span>` +
+          `<b class="incident-kind">${esc(c.kind)}</b>` +
+          `<span class="incident-at">${esc(c.label)}</span></span>`
+      ).join('') +
+      `</div>`
     : `<span class="no-incidents">No incidents</span>`;
 
   const currentHtml = !current
@@ -1686,7 +1824,15 @@ function renderFeed() {
     /* A test drive is marked, every time. Someone glancing at this screen
        during a demo must never take a simulated stop for a real one. */
     const simTag = f.sim ? '<span class="feed-sim">Test drive</span>' : '';
-    return '<div class="feed-item ' + f.kind + (f.sim ? ' is-sim' : '') + '">' +
+    /* Which rows are worth opening, decided from the entry rather than from
+       the layout: a photo, or a note past roughly the two lines a row shows.
+       Measuring every row after render would mean a second pass over a list
+       that repaints on every event coming off the socket. */
+    const canOpen = !!f.link || (f.what && f.what.length > 90);
+    const cls = ['feed-item', f.kind, f.sim ? 'is-sim' : '', canOpen ? 'can-open' : '']
+      .filter(Boolean).join(' ');
+    const opens = canOpen ? ' tabindex="0" role="button" aria-expanded="false"' : '';
+    return '<div class="' + cls + '"' + opens + '>' +
       '<span class="feed-icon">' + f.icon + '</span>' +
       '<div class="feed-body">' +
         '<div class="feed-who">' + esc(f.who) + routeChip + simTag + '</div>' +
@@ -1694,10 +1840,64 @@ function renderFeed() {
         (f.what ? '<div class="feed-what">' + esc(f.what) + '</div>' : '') +
         (f.link ? photoHtml(f.link) : '') +
       '</div>' +
-      '<span class="feed-time">' + time + '</span>' +
+      '<div class="feed-meta">' +
+        '<span class="feed-time">' + time + '</span>' +
+        (canOpen ? '<span class="feed-more" aria-hidden="true"></span>' : '') +
+      '</div>' +
     '</div>';
   }).join('');
+
+  syncFeedExpand();
 }
+
+/* One row opens. Delegated, because the list is rewritten wholesale every time
+   anything happens and per-row listeners would go with it.
+ *
+ * A click on the photo link is left alone: that opens the full picture in its
+ * own tab, which is a different thing from unfolding the row. */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.feed-photo')) return;
+  const row = e.target.closest('.feed-item.can-open');
+  if (!row) return;
+  const open = row.classList.toggle('open');
+  row.setAttribute('aria-expanded', String(open));
+  syncFeedExpand();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const row = e.target.closest && e.target.closest('.feed-item.can-open');
+  if (!row) return;
+  e.preventDefault();             // Space scrolls the page otherwise
+  const open = row.classList.toggle('open');
+  row.setAttribute('aria-expanded', String(open));
+  syncFeedExpand();
+});
+
+/* The whole list's handle. Offered only when the list really is taller than
+   the window it sits in — which changes as rows are opened, as the day fills
+   up, and when the window is resized, so it is re-asked each time rather than
+   decided once from the number of entries. */
+function syncFeedExpand() {
+  const el = document.getElementById('feed');
+  const btn = document.getElementById('feed-expand');
+  if (!el || !btn) return;
+  const tall = el.classList.contains('tall');
+  const overflowing = el.scrollHeight > el.clientHeight + 2;
+  btn.classList.toggle('shown', tall || overflowing);
+  btn.textContent = tall ? 'Show less' : 'Show the whole day';
+  btn.setAttribute('aria-expanded', String(tall));
+}
+
+function toggleFeedHeight() {
+  const el = document.getElementById('feed');
+  if (!el) return;
+  const tall = el.classList.toggle('tall');
+  /* Coming back to the short view from somewhere down the list leaves you
+     looking at the middle of the page with the feed off the top. */
+  if (!tall) el.scrollIntoView({ block: 'nearest' });
+  syncFeedExpand();
+}
+addEventListener('resize', syncFeedExpand);
 
 // ── Theme toggle ──────────────────────────────────────────────────────────
 function toggleTheme() {

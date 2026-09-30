@@ -1035,9 +1035,12 @@ function renderHazardStrip() {
       more.textContent = hazardStripOpen ? 'Show less' : 'More';
     }
     /* Publish the height so the directions, when a driver has them on, start
-       below the warnings rather than behind them. */
+       below the warnings rather than behind them. The note's own height and
+       nothing else: where it sits and how much air it wants underneath are
+       the stylesheet's to decide, and it now weighs this against the compass
+       standing beside it rather than adding the two together. */
     document.documentElement.style.setProperty(
-      '--hz-strip-h', (wrap.offsetHeight + 6) + 'px');
+      '--hz-strip-h', wrap.offsetHeight + 'px');
   });
 }
 window.renderHazardStrip = renderHazardStrip;

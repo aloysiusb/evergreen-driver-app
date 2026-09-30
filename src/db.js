@@ -220,15 +220,23 @@ export const DEFAULT_STYLES = {
   "--dispatch-card-header-text": "#14241b",
   "--dispatch-warn":          "#d97706",
   "--dispatch-danger":        "#dc2626",
-  "--dispatch-dark-bg":       "#0c160e",
-  "--dispatch-dark-surface":  "#141f16",
-  "--dispatch-dark-border":   "#1e3022",
-  "--dispatch-dark-text":     "#e2ede4",
-  "--dispatch-dark-muted":    "#6b9070",
-  "--dispatch-dark-muted-bg": "#1a2e1d",
+  // Lifted a step off black. The board ran at #0c160e behind #141f16 cards —
+  // a difference of about 9%, under the point where an edge reads as an edge,
+  // so on an office screen in daylight the cards dissolved into the page
+  // behind them. The two are about 25% apart now and everything sits higher;
+  // still a dark theme, still the same green.
+  "--dispatch-dark-bg":       "#18231b",
+  "--dispatch-dark-surface":  "#26352a",
+  "--dispatch-dark-border":   "#3a4d3f",
+  "--dispatch-dark-text":     "#e8f1ea",
+  "--dispatch-dark-muted":    "#94b399",
+  "--dispatch-dark-muted-bg": "#2f4034",
   "--dispatch-dark-accent":   "#4ade80",
   "--dispatch-dark-warn":     "#fbbf24",
   "--dispatch-dark-danger":   "#f87171",
+  // Every other row of the day's feed, so a long list reads across cleanly.
+  "--dispatch-stripe":        "#f4f8f5",
+  "--dispatch-dark-stripe":   "#2c3d31",
 
   // ── Toast notification ───────────────────────────────────
   "--toast-bg":          "#e5ece7",
