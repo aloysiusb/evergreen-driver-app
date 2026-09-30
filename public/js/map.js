@@ -972,12 +972,15 @@ function renderHazardStrip() {
   }
 
   wrap.classList.toggle('open', hazardStripOpen);
+  /* Lines in a box, not buttons on the map. Seven red pills across the top
+     read as an alarm going off — which is wrong for "somebody saw ice up the
+     valley this morning". This is a note, so it looks like one. */
   row.innerHTML = list.map(h =>
-    '<button class="hz-strip-chip" onclick="focusHazard(\'' + h.id + '\')">' +
-      '<span class="hz-strip-ico">' + (h.icon || '⚠️') + '</span>' +
-      escHtml(h.label) +
-      (h._d !== null ? '<span class="hz-strip-dist">' + fmtDistance(h._d) + '</span>' : '') +
-    '</button>'
+    '<div class="hz-line">' +
+      '<span class="hz-line-ico">' + (h.icon || '⚠️') + '</span>' +
+      '<span class="hz-line-what">' + escHtml(h.label) + '</span>' +
+      (h._d !== null ? '<span class="hz-line-dist">' + fmtDistance(h._d) + '</span>' : '') +
+    '</div>'
   ).join('');
 
   /* Whether "more" is needed is a question about the rendered height, not
@@ -998,15 +1001,9 @@ function renderHazardStrip() {
 }
 window.renderHazardStrip = renderHazardStrip;
 
-/* Tapping one puts the map on it, so "rockslide 2.1 miles" becomes a place
-   rather than a number. It is a look, not a change of view: following stops
-   the way it does for any other pan and comes back on its own. */
-window.focusHazard = function (id) {
-  const h = hazardData.get(id);
-  if (!h || !gMap) return;
-  pauseFollow();
-  gMap.setCenter(new google.maps.LatLng(h.lat, h.lng));
-};
+/* focusHazard() lived here — each hazard was a button that put the map on
+   it. The list is plain text now, so there is nothing to click and nothing to
+   send anywhere. */
 
 function updateConditions(lat, lng) {
   const el = document.getElementById('turn-conditions');
