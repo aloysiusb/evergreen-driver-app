@@ -45,6 +45,47 @@
       <button class="view-tab" id="tab-stops" onclick="switchView('stops')">Stops</button>
       <button class="view-tab active" id="tab-map" onclick="switchView('map')">Map</button>
     </div>
+    <!-- The map's controls, on the header rather than on the map. They were a
+         button in the corner of the map itself, which is a piece of road; up
+         here they cost the map nothing at all and sit where the page's other
+         controls are. Shut it is a hamburger; open it drops a list below. -->
+    <div id="map-dock" data-default-folded="1">
+      <!-- The rows live in their own box so the button can stay in the
+           header when the list drops out of it. Without this the whole
+           dock left the flow on opening and the Stops / Map tabs shuffled
+           sideways every time. -->
+      <div class="dock-list">
+      <button class="dock-btn active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">
+        <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
+      <button class="dock-btn" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">
+        <span class="dock-ico">🔭</span><span class="dock-cap">Whole round</span></button>
+      <button class="dock-btn" id="mode-directions" onclick="toggleDirections()" title="Turn-by-turn and traffic — off by default, because it is a lot of text over the map">
+        <span class="dock-ico">🧾</span><span class="dock-cap">Directions</span></button>
+      <button class="dock-btn" id="mode-reset" onclick="resetMapView()" title="Put the map back to its usual view">
+        <span class="dock-ico">⟳</span><span class="dock-cap">Default</span></button>
+      <button class="dock-btn" id="mode-live" onclick="toggleRouteOrder()" title="Planned order — tap for the quickest order from here">
+        <span class="dock-ico">📋</span><span class="dock-cap" id="order-cap">Sheet order</span></button>
+      <button class="dock-btn" id="mode-sat" onclick="toggleSatellite()" title="Aerial imagery — helps spot driveways and gates">
+        <span class="dock-ico">🛰</span><span class="dock-cap">Satellite</span></button>
+      <button class="dock-btn" id="mode-photo" onclick="photoFromMap()" title="Photograph the stop you are at">
+        <span class="dock-ico">📷</span><span class="dock-cap">Take a photo</span></button>
+      <button class="dock-btn" id="mode-gps" onclick="toggleLiveShare()" title="Tap to let dispatch see where you are">
+        <span class="dock-ico">📍</span><span class="dock-cap" id="gps-cap">Share my position</span></button>
+      <button class="dock-btn" id="mode-stop" onclick="goToStopInfo()" title="Open this stop's card and its report buttons">
+        <span class="dock-ico">🧾</span><span class="dock-cap">This stop</span></button>
+      <button class="dock-btn" id="mode-hazard" onclick="toggleHazardPicker()" title="Tell the other drivers about the road">
+        <span class="dock-ico">⚠️</span><span class="dock-cap">Report a hazard</span></button>
+      <button class="dock-btn on" id="mode-alert" onclick="cycleAlertMode()" title="Arrival alert">
+        <span class="dock-ico">🔔</span><span class="dock-cap">Arrival sound</span></button>
+      </div>
+      <!-- Folds the strip away. Stays visible when it is folded, because a
+           control that hides itself along with everything else is a control
+           nobody gets back. -->
+      <!-- The label is written by map-dock.js, because it says different
+           things open and shut and the two must never disagree. -->
+      <button id="dock-toggle" onclick="toggleDock()" aria-expanded="true"
+              aria-controls="map-dock" title="Hide the buttons"></button>
+      </div>
   </div>
   <div class="progress-wrap">
     <div class="progress-bar" id="progress-bar"></div>
@@ -202,52 +243,6 @@
       <button class="hz-cancel" onclick="toggleHazardPicker(false)">Cancel</button>
       </div>
 
-      <!-- The map's own controls, round and translucent, along the TOP of the
-           map. They were across the bottom, which is where the stop's report
-           buttons live — contamination, bear, overflow, skip — so a driver had
-           two rows of round buttons at the same end of the screen meaning
-           different things. These are the map's; those are the stop's. The two
-           ends keep them apart.
-
-           A child of #map-wrap so it is positioned against the map itself. It
-           used to be fixed to the window, with its offset measured every
-           resize, because it was a sibling of the map rather than a child of
-           it — an entire mechanism that existed only to put it back where
-           being inside the map would have put it anyway. -->
-      <!-- Folded by default on this page: nine buttons in two rows is a third of
-         a phone screen sitting on top of the map a driver is trying to read.
-         It opens to a labelled pill and flies out when tapped. -->
-    <div id="map-dock" data-default-folded="1">
-      <button class="dock-btn active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">
-        <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
-      <button class="dock-btn" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">
-        <span class="dock-ico">🔭</span><span class="dock-cap">Whole round</span></button>
-      <button class="dock-btn" id="mode-directions" onclick="toggleDirections()" title="Turn-by-turn and traffic — off by default, because it is a lot of text over the map">
-        <span class="dock-ico">🧾</span><span class="dock-cap">Directions</span></button>
-      <button class="dock-btn" id="mode-reset" onclick="resetMapView()" title="Put the map back to its usual view">
-        <span class="dock-ico">⟳</span><span class="dock-cap">Default</span></button>
-      <button class="dock-btn" id="mode-live" onclick="toggleRouteOrder()" title="Planned order — tap for the quickest order from here">
-        <span class="dock-ico">📋</span><span class="dock-cap" id="order-cap">Sheet order</span></button>
-      <button class="dock-btn" id="mode-sat" onclick="toggleSatellite()" title="Aerial imagery — helps spot driveways and gates">
-        <span class="dock-ico">🛰</span><span class="dock-cap">Satellite</span></button>
-      <button class="dock-btn" id="mode-photo" onclick="photoFromMap()" title="Photograph the stop you are at">
-        <span class="dock-ico">📷</span><span class="dock-cap">Take a photo</span></button>
-      <button class="dock-btn" id="mode-gps" onclick="toggleLiveShare()" title="Tap to let dispatch see where you are">
-        <span class="dock-ico">📍</span><span class="dock-cap" id="gps-cap">Share my position</span></button>
-      <button class="dock-btn" id="mode-stop" onclick="goToStopInfo()" title="Open this stop's card and its report buttons">
-        <span class="dock-ico">🧾</span><span class="dock-cap">This stop</span></button>
-      <button class="dock-btn" id="mode-hazard" onclick="toggleHazardPicker()" title="Tell the other drivers about the road">
-        <span class="dock-ico">⚠️</span><span class="dock-cap">Report a hazard</span></button>
-      <button class="dock-btn on" id="mode-alert" onclick="cycleAlertMode()" title="Arrival alert">
-        <span class="dock-ico">🔔</span><span class="dock-cap">Arrival sound</span></button>
-      <!-- Folds the strip away. Stays visible when it is folded, because a
-           control that hides itself along with everything else is a control
-           nobody gets back. -->
-      <!-- The label is written by map-dock.js, because it says different
-           things open and shut and the two must never disagree. -->
-      <button id="dock-toggle" onclick="toggleDock()" aria-expanded="true"
-              aria-controls="map-dock" title="Hide the buttons"></button>
-      </div>
     </div>
 
     <!-- The stop you are at: its name, its access note, and the stop's OWN

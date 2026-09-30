@@ -129,6 +129,8 @@ body {
   background: var(--route-color);
   color: var(--route-header-text);
   padding: 3px 12px 0;
+  /* sticky is a containing block for the absolutely-positioned map menu that
+     drops out of it. */
   position: sticky;
   top: var(--appbar-h, 40px);
   z-index: 100;
@@ -184,6 +186,96 @@ body {
   font-family: inherit;
 }
 .hdr-menu:hover { background: rgba(255,255,255,0.32); }
+
+/* ── The map's controls, on the header ──
+   They lived in the corner of the map, which is a piece of road. Up here they
+   cost the map nothing and sit where the page's other controls already are.
+   Shut, a hamburger beside the Stops / Map tabs; open, a list dropped below
+   the header. The one on the LEFT is the page's menu (routes, dispatch, start
+   the day); this one is the map's, which is why it carries a word on any
+   screen with room for one. */
+/* The dock never leaves the header row — open or shut it is the button, and
+   the list drops out of it. Its own background and padding belong to the list
+   now, not to this. */
+.route-header #map-dock {
+  position: static;
+  flex-shrink: 0;
+  margin-left: 2px;
+  width: auto;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: auto;
+}
+.route-header #dock-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 11px;
+  /* Fixed, not minimum. The glyph changes on opening and the tabs beside it
+     slid sideways every time somebody looked at the menu — 87px shut against
+     78 open. A button that moves the things next to it is a button people
+     stop trusting. */
+  width: 88px;
+  border: none;
+  border-radius: var(--r-pill, 999px);
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  text-shadow: none;
+  box-shadow: none;
+}
+.route-header #dock-toggle:hover { background: rgba(255,255,255,0.32); }
+.route-header #dock-toggle::after {
+  content: 'Tools';
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+/* On the narrowest phones the route name and the tabs need the width more
+   than this word does. */
+@media (max-width: 380px) {
+  .route-header #dock-toggle::after { display: none; }
+  .route-header #dock-toggle { padding: 0 9px; width: 40px; }
+}
+
+/* The list: dropped under the header, right-aligned to the button it came
+   from. Dark, because up here it is over the map rather than part of it and
+   the words have no scrim of their own. */
+.route-header .dock-list { display: none; }
+.route-header #map-dock:not(.folded) .dock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 10px;
+  width: 190px;
+  padding: 7px;
+  border-radius: 14px;
+  background: rgba(20, 26, 22, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+/* With a panel behind them again, the words do not need their outline. */
+.route-header .dock-btn { text-shadow: none; opacity: 1; }
+.route-header .dock-btn.active,
+.route-header .dock-btn.on { background: rgba(255,255,255,0.16); }
+/* Open, the button is the way back out. */
+.route-header #map-dock:not(.folded) #dock-toggle {
+  background: rgba(255,255,255,0.95);
+  color: var(--route-color-dark, #166534);
+}
+/* The word stays when it is open — "✕ Tools" says what is closing, and a
+   label that vanishes is half of why the width moved. */
 .hdr-menu[aria-expanded="true"] { background: rgba(255,255,255,0.95); color: var(--route-color-dark, #166534); }
 
 .hdr-drawer {

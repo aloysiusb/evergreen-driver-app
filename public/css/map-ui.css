@@ -36,8 +36,9 @@
      other one. --dock-h is the dock's real height, measured — one row on a
      desktop, two on a phone, a stub when it is folded away — and 58px is the
      compass. Zero by default, so nothing depends on the script having run. */
-  /* Clears the compass in its corner, and the hazard strip under it when
-     there is one — --hz-strip-h is 0 unless the strip is showing. */
+  /* Clears the compass in its corner, and the hazard note under it when there
+     is one — --hz-strip-h is 0 unless it is showing. The menu is off the map
+     entirely now, so it is not in this sum any more. */
   padding: calc(62px + var(--hz-strip-h, 0px)) 12px 22px;
   background: linear-gradient(to bottom,
     rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.18) 78%, transparent 100%);
@@ -313,28 +314,35 @@
 #map-hud:not(.with-directions) { padding-bottom: 0; background: none; }
 
 /* ── What is on the road, across the top of the map ──
-   Two lines by default. The clamp is a max-height rather than a line count so
-   it holds whatever mix of long and short labels turns up; "More" appears only
-   when the row actually overflows it, measured. */
+   A quiet white note, not an alarm. It was a row of red pills, which is the
+   right loudness for a bin on fire and the wrong one for "somebody saw ice up
+   the valley this morning" — and seven of them across the top of a map is the
+   clutter this whole pass has been removing.
+
+   Two lines showing, the rest behind "more". The clamp is a max-height rather
+   than a line count so it holds whether the labels are short or long. */
 #hazard-strip {
   position: absolute;
   top: 58px;                 /* under the compass and the menu button */
   left: 8px;
-  right: 8px;
   z-index: 8;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  pointer-events: none;      /* the chips take taps, the gaps do not */
+  width: max-content;
+  max-width: calc(100% - 16px);
+  padding: 8px 12px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.22);
+  color: #1c2a21;
 }
 #hazard-strip[hidden] { display: none; }
 
 .hz-strip-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  max-height: 68px;          /* two rows of chips */
+  flex-direction: column;
+  gap: 3px;
+  max-height: 44px;          /* two lines */
   overflow: hidden;
 }
 #hazard-strip.open .hz-strip-row {
@@ -342,56 +350,41 @@
   overflow-y: auto;
 }
 
-.hz-strip-chip {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: var(--r-pill, 999px);
-  /* Dark enough to read against, unlike the menu: this is a warning and it
-     has to survive a bright screen in a cab, not stay out of the way. */
-  background: rgba(120, 25, 25, 0.82);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
+.hz-line {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13px;
+  line-height: 19px;
   white-space: nowrap;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
-.hz-strip-chip:active { transform: scale(0.97); }
-.hz-strip-ico { font-size: 14px; line-height: 1; }
-.hz-strip-dist {
+.hz-line-ico { font-size: 13px; }
+.hz-line-what { font-weight: 600; }
+.hz-line-dist {
+  margin-left: auto;
+  padding-left: 10px;
   font-weight: 500;
-  opacity: 0.85;
+  opacity: 0.6;
   font-variant-numeric: tabular-nums;
 }
 
 .hz-strip-more {
-  pointer-events: auto;
-  align-self: flex-start;
-  padding: 3px 10px;
-  border: 1px solid rgba(255,255,255,0.45);
-  border-radius: var(--r-pill, 999px);
-  background: rgba(14,18,15,0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
+  margin-top: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--route-color-dark, #166534);
   font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
 }
 .hz-strip-more[hidden] { display: none; }
 
-/* Turned sideways there is barely a map, let alone two lines of warnings. */
+/* Turned sideways there is barely a map, let alone two lines of it. */
 @media (max-height: 500px) {
-  .hz-strip-row { max-height: 32px; }
-  #hazard-strip { top: 52px; }
+  .hz-strip-row { max-height: 22px; }
+  #hazard-strip { top: 52px; padding: 6px 10px; }
 }
 
 /* ── The hazard picker ── */

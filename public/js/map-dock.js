@@ -61,7 +61,7 @@
          Not "Google" anything — Driving, Photo, Hazard, GPS and the rest are
          this app's, and only the Directions row comes from Google, so that
          label would send somebody to the wrong app to find them. */
-      btn.textContent = folded ? '\u2630 Map tools' : '\u2715';
+      btn.textContent = folded ? '\u2630' : '\u2715';   // the word is added in CSS
       btn.title = folded ? 'Show the map buttons' : 'Hide the map buttons';
       btn.setAttribute('aria-label', folded ? 'Show the map buttons' : 'Hide the map buttons');
       btn.setAttribute('aria-expanded', String(!folded));
