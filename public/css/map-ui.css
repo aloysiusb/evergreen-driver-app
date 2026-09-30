@@ -434,13 +434,23 @@
 }
 #map-dock.folded #dock-toggle {
   margin-bottom: 0;
-  padding: 6px 4px;
-  font-size: 13px;
+  /* Obvious, without a grey slab. It was words alone at 13px, which reads as
+     a label somebody left on the map rather than a thing to press — you could
+     not tell it was a button at all. It is bigger now, and ringed: an outline
+     says "press me" while a fill says "I am covering the road". The ring is
+     white over a dark drop shadow so it holds on a pale map and on satellite,
+     and the whole thing is still see-through. */
+  padding: 9px 15px;
+  font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   background: none;
-  box-shadow: none;
+  border: 1.5px solid rgba(255,255,255,0.85);
+  border-radius: 21px;
+  box-shadow: 0 1px 7px rgba(0,0,0,0.5);
 }
+#map-dock.folded #dock-toggle:active { background: rgba(255,255,255,0.18); }
 
 /* ── Opening ──
    They fly out from behind the handle rather than appearing all at once, with
