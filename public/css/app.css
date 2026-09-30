@@ -792,6 +792,12 @@ body {
    size being written down anywhere. */
 .srb-face {
   width: 100%;
+  /* A ceiling, because the column below is 1fr and 1fr STRETCHES. Lowering
+     --report-btn-min-width only changes how many fit across; whatever fits
+     then fills the row, so the circles came out the same size as before. This
+     is the number that actually makes them smaller, and on a narrow phone
+     they are under it anyway and nothing changes. */
+  max-width: 88px;
   aspect-ratio: 1;
   border-radius: 50%;
   display: grid;
