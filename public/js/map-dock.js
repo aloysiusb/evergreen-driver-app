@@ -56,10 +56,12 @@
        folding away, and a page without one still gets the measurement. */
     const btn = document.getElementById('dock-toggle');
     if (btn) {
-      /* Shut, it has to say what it is. A bare chevron over a map is a mystery
-         — a driver should not have to tap an unlabelled stub to find out where
-         Photo and Hazard went. Open, it only has to say how to put it away. */
-      btn.textContent = folded ? '\u2630 Menu' : '\u2715';
+      /* Shut, it has to say what it is, and "Menu" did not: a driver glancing
+         down could not tell what it opened. "Map tools" names the contents.
+         Not "Google" anything — Driving, Photo, Hazard, GPS and the rest are
+         this app's, and only the Directions row comes from Google, so that
+         label would send somebody to the wrong app to find them. */
+      btn.textContent = folded ? '\u2630 Map tools' : '\u2715';
       btn.title = folded ? 'Show the map buttons' : 'Hide the map buttons';
       btn.setAttribute('aria-label', folded ? 'Show the map buttons' : 'Hide the map buttons');
       btn.setAttribute('aria-expanded', String(!folded));
