@@ -99,7 +99,8 @@
                top, and the needle turns — so "needle pointing up" means driving
                north, which is readable in the half-second a driver can spare.
                Translucent on purpose: it overlaps the map and is meant to. -->
-          <svg class="geo-rose" viewBox="0 0 64 64" aria-hidden="true">
+          <svg class="geo-rose" viewBox="0 0 64 64" role="button" tabindex="0"
+               onclick="showCoords()" aria-label="Show and copy your coordinates">
             <circle class="rose-ring" cx="32" cy="32" r="29"/>
             <circle class="rose-hub" cx="32" cy="32" r="2.5"/>
             <text class="rose-pt rose-n" x="32" y="13">N</text>
@@ -111,6 +112,11 @@
               <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
             </g>
           </svg>
+          <!-- Shown outright when the screen has room for it, and on a tap on
+               the rose when it has not. A phone has not. -->
+          <button class="geo-read" onclick="copyCoords()" title="Your position — tap to copy">
+            <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
+          </button>
         </div>
 
       <!-- The route time and the traffic, on the compass's line. This used to
@@ -157,6 +163,16 @@
         <button class="nav-app-btn" onclick="navOpenIn('waze')">🚦 Waze</button>
         <button class="nav-app-btn" onclick="navOpenIn('apple')">🍎 Apple Maps</button>
         <button class="nav-app-close" onclick="closeNavPicker()" aria-label="Close">✕</button>
+      </div>
+
+      <!-- What other drivers have reported on the road, across the top of the
+           map. Two lines of it, because two is what you can take in at a
+           glance and the rest is reference — anything past that is behind
+           "more". Empty and gone when nobody has reported anything, which is
+           most days. -->
+      <div id="hazard-strip" hidden>
+        <div class="hz-strip-row" id="hz-strip-row"></div>
+        <button class="hz-strip-more" id="hz-strip-more" hidden onclick="toggleHazardStrip()"></button>
       </div>
 
       <!-- Appears only once the map has been dragged off the driver. Bottom

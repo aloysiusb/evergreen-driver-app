@@ -934,6 +934,80 @@ function fmtDistance(m) {
  * right way to be wrong about a rockslide. */
 const HAZARD_ALERT_M = 8000;   // about five miles
 
+/* ── What is on the road, across the top of the map ───────────────────────
+ *
+ * The Waze half of this app: what the other drivers have reported, where a
+ * driver will see it without asking. It was only ever a single chip inside the
+ * directions panel, which is off by default — so a rockslide two miles ahead
+ * was behind a setting.
+ *
+ * Two lines, because two is what you take in at a glance and the rest is
+ * reference. Anything past that sits behind "more". Nearest first: a slide you
+ * are about to reach matters more than one at the far end of the round.
+ *
+ * Gone entirely when nobody has reported anything, which is most days. */
+let hazardStripOpen = false;
+
+window.toggleHazardStrip = function () {
+  hazardStripOpen = !hazardStripOpen;
+  renderHazardStrip();
+};
+
+function renderHazardStrip() {
+  const wrap = document.getElementById('hazard-strip');
+  const row = document.getElementById('hz-strip-row');
+  const more = document.getElementById('hz-strip-more');
+  if (!wrap || !row) return;
+
+  const list = [...hazardData.values()].map(h => {
+    const d = lastGpsPos ? haversineM(lastGpsPos.lat, lastGpsPos.lng, h.lat, h.lng) : null;
+    return { ...h, _d: d };
+  }).sort((a, b) => (a._d ?? Infinity) - (b._d ?? Infinity));
+
+  wrap.hidden = list.length === 0;
+  if (!list.length) {
+    hazardStripOpen = false;
+    document.documentElement.style.setProperty('--hz-strip-h', '0px');
+    return;
+  }
+
+  wrap.classList.toggle('open', hazardStripOpen);
+  row.innerHTML = list.map(h =>
+    '<button class="hz-strip-chip" onclick="focusHazard(\'' + h.id + '\')">' +
+      '<span class="hz-strip-ico">' + (h.icon || '⚠️') + '</span>' +
+      escHtml(h.label) +
+      (h._d !== null ? '<span class="hz-strip-dist">' + fmtDistance(h._d) + '</span>' : '') +
+    '</button>'
+  ).join('');
+
+  /* Whether "more" is needed is a question about the rendered height, not
+     about how many there are: three short ones fit on two lines and two long
+     ones may not. Measured after a frame, for the same reason the dock's
+     height is. */
+  requestAnimationFrame(() => {
+    const overflowing = row.scrollHeight > row.clientHeight + 2;
+    if (more) {
+      more.hidden = !overflowing && !hazardStripOpen;
+      more.textContent = hazardStripOpen ? 'Show less' : 'More';
+    }
+    /* Publish the height so the directions, when a driver has them on, start
+       below the warnings rather than behind them. */
+    document.documentElement.style.setProperty(
+      '--hz-strip-h', (wrap.offsetHeight + 6) + 'px');
+  });
+}
+window.renderHazardStrip = renderHazardStrip;
+
+/* Tapping one puts the map on it, so "rockslide 2.1 miles" becomes a place
+   rather than a number. It is a look, not a change of view: following stops
+   the way it does for any other pan and comes back on its own. */
+window.focusHazard = function (id) {
+  const h = hazardData.get(id);
+  if (!h || !gMap) return;
+  pauseFollow();
+  gMap.setCenter(new google.maps.LatLng(h.lat, h.lng));
+};
+
 function updateConditions(lat, lng) {
   const el = document.getElementById('turn-conditions');
   if (!el) return;
@@ -966,6 +1040,8 @@ function updateTurnBanner(lat, lng) {
   // out before any of the early returns below — a driver waiting on directions
   // still wants to know there is a slide ahead.
   updateConditions(lat, lng);
+  /* The distances on the strip are only true for where the truck is now. */
+  renderHazardStrip();
 
   // Steps are stale if they lead somewhere else — the driver advanced, or
   // reordered into Live mode. Clear the throttle too: arriving at a new stop
@@ -1318,6 +1394,7 @@ function hazardPinIcon(icon) {
 }
 
 function drawHazard(h) {
+  setTimeout(renderHazardStrip, 0);
   if (!gMap || hazardMarkers.has(h.id)) return;
   const marker = new google.maps.Marker({
     position: { lat: h.lat, lng: h.lng },
@@ -1343,6 +1420,8 @@ function drawHazard(h) {
 }
 
 function removeHazard(id) {
+  /* Redrawn after the delete below, not before — the strip reads hazardData. */
+  setTimeout(renderHazardStrip, 0);
   const m = hazardMarkers.get(id);
   if (m) { m.setMap(null); hazardMarkers.delete(id); }
   hazardData.delete(id);
@@ -1375,6 +1454,7 @@ async function loadHazards() {
       if (!liveIds.has(id)) removeHazard(id);   // cleared or expired while away
     }
     live.forEach(drawHazard);                   // drawHazard ignores ones we have
+    renderHazardStrip();
   } catch { /* offline; the queue is for writes, and a hazard list can wait */ }
 }
 
@@ -1579,9 +1659,34 @@ document.addEventListener('DOMContentLoaded', () => {
   applyDirections(want);
 });
 
-/* copyCoords() and showCoords() lived here. The map shows no coordinates
-   any more — a driver who needs a position reads it off Google Maps, which is
-   one tap away in the menu and is where they would look anyway. */
+/* Reading a position over the radio is the actual use, so tapping puts it on
+   the clipboard. Falls back to showing the numbers — clipboard access needs a
+   secure context and a user gesture, and a driver who taps and gets nothing
+   would reasonably assume the app is broken. */
+window.copyCoords = async function () {
+  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
+  const text = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
+  try {
+    await navigator.clipboard.writeText(text);
+    setOptimizeStatus('Copied ' + text);
+  } catch {
+    setOptimizeStatus(text);
+  }
+};
+
+/* On a wide screen the coordinates are simply there, beside the rose. On a
+   phone they are not, because a line of digits is the longest thing on the
+   map and a driver needs it about once a week — so a tap on the rose brings
+   them out, copies them, and lets them go again. */
+window.showCoords = function () {
+  const chip = document.getElementById('geo-chip');
+  if (!chip) return;
+  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
+  chip.classList.add('show-coords');
+  window.copyCoords();
+  clearTimeout(window.showCoords._t);
+  window.showCoords._t = setTimeout(() => chip.classList.remove('show-coords'), 8000);
+};
 
 /* ── Sharing your position with dispatch ──────────────────────────────────
  *
