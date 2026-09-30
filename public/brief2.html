@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en" data-radius="tight" data-palette="report">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EverGreen Driver App — Brief Two</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/chrome.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap { max-width: 50rem; margin: 0 auto; padding: 38px 22px 90px; }
+
+  header.doc { margin-bottom: 36px; }
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(27px, 5vw, 38px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--forest);
+  }
+  .standfirst { color: var(--muted); font-size: 16.5px; margin-top: 11px; max-width: 60ch; }
+  .byline {
+    display: flex; flex-wrap: wrap; gap: 6px 18px;
+    margin-top: 18px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  section { margin-bottom: 42px; }
+  h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 23px; font-weight: 700; color: var(--forest);
+    padding-bottom: 9px; margin-bottom: 16px;
+    border-bottom: 2px solid var(--accent);
+  }
+  h3 { font-size: 16px; font-weight: 600; margin: 20px 0 6px; }
+  p { margin-bottom: 12px; max-width: 70ch; }
+  ul { margin: 0 0 14px 20px; }
+  li { margin-bottom: 7px; max-width: 68ch; }
+  strong { font-weight: 600; color: var(--forest); }
+  em { color: var(--muted); }
+
+  a { color: var(--accent); }
+
+  .lede { color: var(--muted); font-size: 15px; margin-bottom: 18px; max-width: 66ch; }
+
+  .callout {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-card); padding: 15px 18px; margin: 18px 0;
+  }
+  .callout.warn { border-left-color: #b4791f; }
+  .callout h3 { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .step {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card); padding: 16px 18px; margin-bottom: 14px;
+  }
+  .step h3 { margin-top: 0; display: flex; align-items: baseline; gap: 10px; }
+  .step .mins {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); font-weight: 400;
+  }
+
+  .links { border-top: 1px solid var(--border); }
+  .link-row {
+    display: flex; flex-wrap: wrap; gap: 4px 14px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .link-row a { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 15rem; }
+  .link-row .what { color: var(--muted); font-size: 14px; flex: 1; }
+
+  .try {
+    display: block; margin: 14px 0;
+    font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-card); padding: 12px 15px;
+    word-break: break-all;
+  }
+
+  footer { margin-top: 46px; padding-top: 18px; border-top: 1px solid var(--border);
+           color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <h1><span class="app-mark"></span><span class="app-name"></span> <span class="app-page">Brief two</span></h1>
+  <nav><a href="/">Routes</a><a href="/dispatch">Dispatch</a><a href="/brief">Brief one</a></nav>
+</header>
+
+<div class="wrap">
+
+<header class="doc">
+  <h1>The driver app — what it does now</h1>
+  <p class="standfirst">
+    Everything the app can do as it stands, the jobs it runs on its own, and
+    where to look to check each one. The first brief covered the stop list and
+    the incident buttons; the map, live tracking and road reports are all new
+    since then.
+  </p>
+  <div class="byline">
+    <span>Prepared by Virginia Payson</span>
+    <span>For Alyssa &amp; Dave</span>
+    <span>30 September 2026</span>
+  </div>
+</header>
+
+<section>
+  <h2>In brief</h2>
+  <p>
+    The app now does the whole round: the stop list, a live map that follows
+    the truck, road reports shared between drivers, and a dispatcher's board
+    that shows all of it as it happens.
+  </p>
+  <p>
+    <strong>The route sheet is still the source of truth.</strong> The app
+    reads from it and writes back to it, and nothing here replaces it.
+  </p>
+  <div class="callout warn">
+    <h3>Two things to know before testing</h3>
+    <p>
+      <strong>The access code is off</strong>, so anyone with a link can open
+      the app — deliberate for now, while it is being tried out, and one
+      setting to turn back on.
+    </p>
+    <p>
+      <strong>A test drive cannot touch real data.</strong> Every write it
+      makes is blocked before it leaves the phone, so you can demonstrate the
+      app beside a live shift with no risk to the day's numbers.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>The driver's day</h2>
+  <p class="lede">
+    One link for the round, and the driver stays on it. Nothing to install,
+    nothing to sign into.
+  </p>
+  <ul>
+    <li><strong>Open the route.</strong> From the home screen they pick their round, or open the link straight to it. Adding it to the phone's home screen makes it behave like an app.</li>
+    <li><strong>Work the list.</strong> Every stop shows the customer, the address, and whatever the office wrote in Notes and Directions. Tapping a stop marks it done; tapping again undoes it.</li>
+    <li><strong>Report a problem in one tap.</strong> Four buttons sit under each stop — Contamination, Overflow, Skip and Photo by default — and a second row of choices gives the detail. All of that wording is yours to set.</li>
+    <li><strong>Add a note or a photo.</strong> A note lands in Driver Notes on the sheet. A photo opens the camera and appears on the dispatcher's board within seconds.</li>
+  </ul>
+  <p>
+    Everything a driver taps is written back to the route sheet. Nothing is
+    held only inside the app.
+  </p>
+</section>
+
+<section>
+  <h2>The map</h2>
+  <p class="lede">
+    On the <strong>🗺 Map</strong> tab. It opens at a height that shows the
+    grid of streets rather than one driveway.
+  </p>
+  <p>The map is kept as clear as possible, so nearly everything is tucked away:</p>
+  <ul>
+    <li><strong>☰ Map tools</strong>, in the green header on the right. It opens downward over the page, not over the map, and holds the eleven controls: Driving view, Whole round, Directions, Default view, Sheet order, Satellite and the rest.</li>
+    <li><strong>A compass</strong>, small and see-through in the top-left corner. The needle's red half is the way the truck is pointing. Tapping it shows the GPS coordinates for eight seconds and copies them — which is what you want when reading a position over the radio. On a wide screen the coordinates are simply there.</li>
+    <li><strong>Road reports</strong>, in a half-transparent white box across the top: two lines by default, <strong>More</strong> if there are others, and a button to put it away. A small ⚠ count stays in the corner and brings it back.</li>
+    <li><strong>Recentre</strong> puts the map back on the truck. <strong>Default view</strong> pulls back out to the whole round.</li>
+  </ul>
+  <p>
+    <strong>Directions are off until asked for.</strong> Turning them on in Map
+    tools brings up the turn-by-turn banner and the traffic line. That was
+    deliberate: the Google wording was the loudest thing on the screen, and a
+    driver needs it rarely.
+  </p>
+  <p>
+    <strong>Navigation hands off.</strong> A stop's navigate button offers
+    Google Maps, Waze or Apple Maps and opens the chosen one with the stop
+    loaded. The app does not try to be a satnav.
+  </p>
+</section>
+
+<section>
+  <h2>Live tracking</h2>
+  <p class="lede">
+    Dispatch can see where a truck is — but only while the driver has switched
+    it on. That is a design decision, not an oversight.
+  </p>
+  <ul>
+    <li><strong>The driver controls it.</strong> A button in Map tools turns sharing on and off, and a green line reading <em>Dispatch can see you</em> sits on their own screen the whole time it runs. Nobody is followed without it being visible from the cab.</li>
+    <li><strong>The choice is remembered per phone</strong>, so a driver who turns it on for the round does not turn it on again at every stop.</li>
+    <li><strong>Updates go out only when the truck has moved</strong> — at least 25 metres, and at most one every 20 seconds. A parked truck stops sending.</li>
+    <li><strong>Nothing is stored.</strong> Positions live in memory only and are dropped after five minutes. A restart forgets every truck. There is no record of where anyone has been.</li>
+  </ul>
+  <p>
+    On the board the trucks glide between updates rather than jumping. If the
+    board loses its connection, it asks who is actually out there when it comes
+    back rather than trusting what it was left holding — so a truck that
+    started sharing during the outage appears, and one that stopped disappears.
+  </p>
+</section>
+
+<section>
+  <h2>Road reports</h2>
+  <p class="lede">
+    A driver who finds ice, a closure or a rockslide can put it on the map for
+    everyone else. It reaches the other drivers within seconds.
+  </p>
+  <ul>
+    <li><strong>Rockslide</strong> and <strong>road closed</strong> — 8 hours. Still there unless somebody moved it.</li>
+    <li><strong>Ice</strong> and <strong>general hazard</strong> — 4 hours. Ice is a morning thing; it melts.</li>
+    <li><strong>Police</strong> — 45 minutes. Usually gone, and a stale one teaches drivers to ignore the whole layer.</li>
+  </ul>
+  <p>
+    Reports are listed nearest first, with the distance to each, as plain lines
+    of text rather than buttons. Seven red pills across the top of the map read
+    as an alarm going off, which is wrong for "somebody saw ice up the valley
+    this morning".
+  </p>
+  <p>
+    <strong>Any driver can clear any report</strong>, deliberately: the person
+    who can see that the road is open again is whoever is standing on it. The
+    times above are the backstop for when nobody does.
+  </p>
+</section>
+
+<section>
+  <h2>Working without signal</h2>
+  <p class="lede">The valley has holes in coverage, so the app carries on through them.</p>
+  <p>
+    Work done with no signal is parked on the phone and goes out when signal
+    returns. A badge shows how many changes are waiting, so a driver can see
+    nothing has been lost. Repeated edits to the same field collapse into one,
+    so what replays is the driver's final intent rather than every toggle along
+    the way.
+  </p>
+  <p>
+    Every queued write is safe to retry, because each states the whole answer
+    rather than a change to it — "this stop is done", not "add one to the
+    count". Sending the same one twice cannot double anything.
+  </p>
+  <div class="callout warn">
+    <p>
+      This is the part most worth testing in a <strong>real</strong> dead zone.
+      It has been proven against a clean simulated cut, never against an actual
+      hole in coverage.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Alyssa — the dispatcher board</h2>
+  <p class="lede">
+    The screen to leave open. Everything on it updates as drivers tap, with no
+    refreshing.
+  </p>
+
+  <h3>Down the page, in order</h3>
+  <ul>
+    <li><strong>On the road now</strong> — a map of the trucks currently sharing their position.</li>
+    <li><strong>As it happens</strong> — the day's feed: every stop done, note, photo and report, newest first, each with the customer's name and address. Photos appear as pictures, not links.</li>
+    <li><strong>The route cards</strong> — one per round: stops done out of total, a progress bar, the current stop by customer name, and the reports filed on that round.</li>
+  </ul>
+
+  <h3>Reading the feed</h3>
+  <ul>
+    <li>Rows are <strong>ruled in alternating shades like a spreadsheet</strong>, so a long list reads across without losing the line.</li>
+    <li>Long notes stop at two lines and photos sit in the row as a small thumbnail, so no single entry swallows the list.</li>
+    <li>A <strong>chevron beside the time</strong> marks the rows with more folded away. Click one to open it out.</li>
+    <li><strong>Show the whole day</strong> underneath lifts the height limit when you want all of it.</li>
+  </ul>
+
+  <h3>Reading the cards</h3>
+  <p>
+    Reports now say <em>what</em> happened as well as <em>where</em> —
+    <strong>🚫 Contamination · Oliphant, Grace</strong> under a
+    <strong>Reported</strong> heading — instead of a bare name that looked like
+    a second stop.
+  </p>
+
+  <h3>Also</h3>
+  <ul>
+    <li>A <strong>day picker</strong> for any of the last seven days, with a past day clearly labelled</li>
+    <li>A <strong>light/dark switch</strong> that remembers your choice. Dark mode has just been lightened, because the cards were too close in shade to the page behind them to read as cards.</li>
+    <li>A warning naming any route that <strong>could not be saved to</strong></li>
+    <li>A <strong>Test drive</strong> tag on anything done in test mode, which never moves the real counts</li>
+  </ul>
+</section>
+
+<section>
+  <h2>The automation — customer requests</h2>
+  <p class="lede">
+    A customer fills in a form on the website and, if you approve it, they are
+    written onto the route sheet. No retyping.
+  </p>
+  <div class="step">
+    <h3>1 · The customer submits</h3>
+    <p>Four kinds are accepted: <strong>new customer</strong>, <strong>service hold</strong>, <strong>missed pickup</strong> and <strong>update details</strong>.</p>
+  </div>
+  <div class="step">
+    <h3>2 · It lands in the queue</h3>
+    <p>The office is notified by email, and it appears on the dispatcher board at the same moment — name, address, and a line saying it is waiting.</p>
+  </div>
+  <div class="step">
+    <h3>3 · You decide it</h3>
+    <p>On <strong>/approval</strong>: approve or decline. Approving a hold, a missed pickup or a details change means <em>handled</em>. Only a new customer is added to a sheet.</p>
+  </div>
+  <div class="step">
+    <h3>4 · A new customer is appended to the route</h3>
+    <p>Right tab, right columns, once you have picked which round they go on.</p>
+  </div>
+  <div class="callout">
+    <h3>The safety rule worth knowing</h3>
+    <p>
+      The sheet is written <strong>first</strong>, and the request is only
+      marked approved if that write actually landed. A failed write leaves the
+      request still waiting — so nobody can be quietly lost between the queue
+      and the route.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>The automation — what runs on its own</h2>
+  <p class="lede">Four jobs run without anyone starting them.</p>
+  <ul>
+    <li><strong>The evening digest</strong> — once a day, at the hour you set, valley time. Emails a summary: what was done, what was skipped, what needs following up, and what came in from the website.</li>
+    <li><strong>The road-report sweep</strong> — daily, and once at every restart. Clears reports past their time so the map stays honest.</li>
+    <li><strong>Photo pruning</strong> — keeps photos under 700 MB, dropping the oldest first, so a full disk can never take the app down.</li>
+    <li><strong>The stray-link tidy</strong> — on request, per route. Clears photo links that landed in the wrong column of a sheet, leaving the real column alone.</li>
+  </ul>
+
+  <h3>How to review the digest</h3>
+  <p>
+    The digest is the one you control, and it lives on the
+    <strong>/approval</strong> page alongside the requests.
+  </p>
+  <ul>
+    <li><strong>A switch</strong> turns it on and off</li>
+    <li><strong>An hour picker</strong> sets when it goes, in valley time, not the server's</li>
+    <li><strong>A Preview button</strong> shows exactly what tonight's email would say, <em>without sending it</em>. This is the one to press — it is read-only, and it is the fastest way to see what the app thinks happened today.</li>
+  </ul>
+  <p>
+    If nothing happened that day, nothing is sent. The digest only ever
+    <strong>reads</strong>: a failed digest cannot damage a day's work, and the
+    worst case is an email that does not arrive.
+  </p>
+  <p>
+    It is checked every minute against the valley's clock rather than scheduled
+    a day ahead, because a deploy restarts the app and would throw a day-long
+    timer away. A restart at five past six still sends that evening's.
+  </p>
+</section>
+
+<section>
+  <h2>Where everything lives</h2>
+  <ul>
+    <li><strong>Stops, customers, notes, done-ticks and photo links</strong> — the Google route sheet. The source of truth.</li>
+    <li><strong>Photos</strong> — the app's own disk. They survive deploys.</li>
+    <li><strong>Road reports, the day's feed, customer requests, and all the colours and wording</strong> — the app's database, on the same disk. They survive deploys.</li>
+    <li><strong>Truck positions</strong> — memory only. Forgotten on restart, refilled by the next update.</li>
+    <li><strong>A phone's own settings and any queued work</strong> — that phone's browser, until its site data is cleared.</li>
+  </ul>
+  <p>
+    The app keeps nothing about a customer that the sheet does not already
+    hold. What it stores of its own is the machinery: reports, the day's
+    record, the request queue and the styling.
+  </p>
+</section>
+
+<section>
+  <h2>Every page, and what it is for</h2>
+  <div class="links">
+    <div class="link-row"><a href="/dispatch">/dispatch</a><span class="what">The board to leave open — trucks, the day's feed, every route's progress</span></div>
+    <div class="link-row"><a href="/approval">/approval</a><span class="what">Decide customer requests; switch the evening digest on or off, set its hour, preview tonight's email</span></div>
+    <div class="link-row"><a href="/admin">/admin</a><span class="what">The style editor — colours, wording, incident buttons, button sizes. Asks for a code</span></div>
+    <div class="link-row"><a href="/">/</a><span class="what">The driver's home screen — pick a round</span></div>
+    <div class="link-row"><a href="/errors">/errors</a><span class="what">Anything that went wrong in a driver's browser, so a fault doesn't depend on someone remembering it</span></div>
+    <div class="link-row"><a href="/demo.html">/demo</a><span class="what">The map on its own, with nothing real behind it</span></div>
+    <div class="link-row"><a href="/walkthrough">/walkthrough</a><span class="what">A two-minute demonstration. Safe to send to anyone</span></div>
+    <div class="link-row"><a href="/brief">/brief</a><span class="what">The first brief</span></div>
+  </div>
+
+  <h3>What you can change yourselves, without a developer</h3>
+  <p>
+    On <strong>/admin</strong>: the wording on all four incident buttons and
+    the choices that follow each one, the colours, the button sizes, and
+    whether the camera button lights up after a report. Press
+    <strong>Save &amp; Push</strong> and every driver's phone updates within
+    seconds — no reinstalling, no reloading.
+  </p>
+  <p>
+    On <strong>/approval</strong>: whether the evening digest is sent, and at
+    what hour.
+  </p>
+  <div class="callout">
+    <p>
+      <strong>One note on colours.</strong> If anyone has previously saved
+      dispatch colours by hand in the style editor, that saved set is kept —
+      pressing <strong>Reset</strong> there picks up the new lighter dark mode.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Try it without a truck</h2>
+  <a class="try" href="https://evergreen-driver-app.onrender.com/driver/tues-dv/?sim=1">https://evergreen-driver-app.onrender.com/driver/tues-dv/?sim=1</a>
+  <ul>
+    <li><strong>Drive the round</strong> from the Map tab — tap <strong>▶ Drive</strong> and watch the truck move and the map follow it.</li>
+    <li><strong>File a report</strong> from the Stops tab — Contamination on any stop, then 2 bags.</li>
+    <li><strong>Turn the signal off</strong> with <strong>📶 Signal</strong>, mark a stop done, and watch it say <em>waiting for signal</em>. Turn it back on and it saves itself. <strong>That's the one worth seeing.</strong></li>
+  </ul>
+  <p>
+    Open the dispatcher board in a second window and everything arrives there
+    as you go, tagged <strong>Test drive</strong>.
+  </p>
+  <div class="callout">
+    <p>
+      <strong>A test drive cannot touch anything real.</strong> Every write it
+      attempts is blocked in the browser before it leaves the phone — not just
+      writes to the route sheet, but road reports and truck positions too.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Known limits</h2>
+  <p class="lede">Stated plainly, so none of these is a surprise later.</p>
+  <ul>
+    <li><strong>There is no access code.</strong> Anyone with a link can open the app, including the dispatcher board. Switched off deliberately while it is being tested, and one setting to turn back on.</li>
+    <li><strong>No "start service" form on the website.</strong> The new-customer path is built and tested end to end, and nothing reaches it — the website has forms for hold, missed pickup, update details and pay, but not for starting service. That one form is the whole remaining gap between someone finding you online and their bin appearing on a driver's screen.</li>
+    <li><strong>Confirmation emails to customers are not sent.</strong> The office notification works; the customer-facing one needs a verified sending domain first, which is a one-time setup.</li>
+    <li><strong>Live tracking has never run at real driving speed.</strong> It works in the simulator and on a desk. A truck on the road is the test.</li>
+    <li><strong>The arrival alert has the same caveat</strong> — it is meant to fire once per stop as you pull up.</li>
+    <li><strong>Nothing deletes test data for you.</strong> Road reports expire on their own and truck positions vanish in five minutes, but notes and done-ticks typed during testing live in the route sheet and have to be tidied there.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>What to test next</h2>
+
+  <div class="step">
+    <h3>At a desk <span class="mins">15 minutes, either of you</span></h3>
+    <ul>
+      <li>Run a test drive and watch the truck move on the map</li>
+      <li>Turn the signal off mid-round, mark a stop, and watch it recover</li>
+      <li>Open the board in a second window and check everything arrives</li>
+      <li>Open <strong>/approval</strong>, press <strong>Preview</strong>, and read what tonight's digest would say</li>
+      <li>Look at the board in dark mode and say whether it is still too heavy</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h3>On a phone, parked <span class="mins">15 minutes, Dave</span></h3>
+    <ul>
+      <li>Open <strong>☰ Map tools</strong> and check the controls are readable and tappable with gloves on</li>
+      <li>Tap the compass and check the coordinates appear and copy</li>
+      <li>Turn live sharing on, and confirm the green <em>Dispatch can see you</em> line is obvious</li>
+      <li>File a road report and check it reaches another phone</li>
+      <li>Take a photo and check it reaches the board</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h3>One real round, one day <span class="mins">the real test</span></h3>
+    <ul>
+      <li>Does the <strong>arrival alert</strong> fire once per stop at driving speed?</li>
+      <li>Does a <strong>real dead zone</strong> recover the way the simulated one does?</li>
+      <li>Does the <strong>map keep up</strong> while the truck is moving?</li>
+    </ul>
+    <p><strong>Please keep whatever you normally do running alongside the app on the first real day.</strong></p>
+  </div>
+
+  <div class="callout warn">
+    <h3>What's worth reporting</h3>
+    <p>
+      Anything slow, wrong, awkward or surprising — and above all, anything
+      that <strong>looked like it saved but didn't</strong>. That matters more
+      than any missing feature.
+    </p>
+  </div>
+</section>
+
+<footer>
+  The route sheet remains the source of truth. The app reads from it and writes
+  back to it, and nothing described here replaces it.
+</footer>
+
+</div>
+</body>
+</html>
