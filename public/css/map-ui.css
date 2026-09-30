@@ -36,7 +36,9 @@
      other one. --dock-h is the dock's real height, measured — one row on a
      desktop, two on a phone, a stub when it is folded away — and 58px is the
      compass. Zero by default, so nothing depends on the script having run. */
-  padding: 62px 12px 22px;   /* clears the compass in its corner */
+  /* Clears the compass in its corner, and the hazard strip under it when
+     there is one — --hz-strip-h is 0 unless the strip is showing. */
+  padding: calc(62px + var(--hz-strip-h, 0px)) 12px 22px;
   background: linear-gradient(to bottom,
     rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.18) 78%, transparent 100%);
   pointer-events: none;      /* the scrim is decoration; the chips take taps */
@@ -208,7 +210,11 @@
   z-index: 7;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* Left, not centred. Centred, the rose slid sideways the moment the
+     coordinates appeared under it — the needle jumping across the corner
+     because a readout arrived is exactly the kind of movement a driver
+     notices and cannot explain. */
+  align-items: flex-start;
   gap: 2px;
   opacity: 0.82;
   pointer-events: none;      /* only the rose and the coordinates take a tap */
@@ -256,12 +262,16 @@
   transition: transform 0.25s ease-out;
 }
 
-/* The coordinates are hidden until asked for. They are the longest piece of
-   text on the map and a driver needs them about once a week — when somebody on
-   the radio asks where they are. Tapping the rose shows them and copies them,
-   and they fade again on their own. */
+/* Where the screen has room, the coordinates are simply there. Where it has
+   not — a phone, which is most of the time — they are the longest piece of
+   text on the map for something a driver needs about once a week, so the rose
+   brings them out on a tap and they fade again on their own. */
 #geo-chip .geo-read { display: none; }
 #geo-chip.show-coords .geo-read { display: flex; }
+
+@media (min-width: 700px) {
+  #geo-chip .geo-read { display: flex; }
+}
 
 .geo-read {
   pointer-events: auto;
@@ -301,6 +311,88 @@
 /* With the words off, the display is two small things in two corners and
    nothing in between — so it must not sit over the map soaking up taps. */
 #map-hud:not(.with-directions) { padding-bottom: 0; background: none; }
+
+/* ── What is on the road, across the top of the map ──
+   Two lines by default. The clamp is a max-height rather than a line count so
+   it holds whatever mix of long and short labels turns up; "More" appears only
+   when the row actually overflows it, measured. */
+#hazard-strip {
+  position: absolute;
+  top: 58px;                 /* under the compass and the menu button */
+  left: 8px;
+  right: 8px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: none;      /* the chips take taps, the gaps do not */
+}
+#hazard-strip[hidden] { display: none; }
+
+.hz-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 68px;          /* two rows of chips */
+  overflow: hidden;
+}
+#hazard-strip.open .hz-strip-row {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.hz-strip-chip {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: var(--r-pill, 999px);
+  /* Dark enough to read against, unlike the menu: this is a warning and it
+     has to survive a bright screen in a cab, not stay out of the way. */
+  background: rgba(120, 25, 25, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+.hz-strip-chip:active { transform: scale(0.97); }
+.hz-strip-ico { font-size: 14px; line-height: 1; }
+.hz-strip-dist {
+  font-weight: 500;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-strip-more {
+  pointer-events: auto;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: var(--r-pill, 999px);
+  background: rgba(14,18,15,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hz-strip-more[hidden] { display: none; }
+
+/* Turned sideways there is barely a map, let alone two lines of warnings. */
+@media (max-height: 500px) {
+  .hz-strip-row { max-height: 32px; }
+  #hazard-strip { top: 52px; }
+}
 
 /* ── The hazard picker ── */
 #hazard-picker {
