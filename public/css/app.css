@@ -335,6 +335,33 @@ body {
 }
 #live-chip[hidden] { display: none; }
 
+/* ── The route actions, now in the header menu ──
+   They were a bar pinned across the foot of every screen: 89px of chrome
+   under the map for two things a driver touches once a day and once a week. */
+.hdr-drawer-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control, 10px);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hdr-drawer-btn:active { transform: scale(0.99); }
+.hdr-drawer-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
 /* ── Recentre ──
    Bottom right of the map, and only there when the map has drifted off the
    driver. Round and white like the zoom slider it sits under, because it is
