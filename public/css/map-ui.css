@@ -32,11 +32,11 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 6px 10px;
-  /* Starts below the dock, which is now at the top of the map. --dock-h is
-     the dock's real height, measured: it is one row on a desktop and two on a
-     phone, and a stub of a row when it is folded away. Zero by default, so
-     nothing depends on the script having run. */
-  padding: calc(8px + var(--dock-h, 0px)) 12px 22px;
+  /* Below whichever is taller: the menu in its corner or the compass in the
+     other one. --dock-h is the dock's real height, measured — one row on a
+     desktop, two on a phone, a stub when it is folded away — and 58px is the
+     compass. Zero by default, so nothing depends on the script having run. */
+  padding: 62px 12px 22px;   /* clears the compass in its corner */
   background: linear-gradient(to bottom,
     rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.18) 78%, transparent 100%);
   pointer-events: none;      /* the scrim is decoration; the chips take taps */
@@ -72,91 +72,86 @@
      the map in the document — a whole mechanism for putting it back where
      being a child of the map puts it for nothing. */
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  /* The right-hand corner, shut or open. It used to be a tray across the top
+     because it was nine circles that needed the width; as a list of words it
+     needs none, and a menu that opens where its button is is a menu you can
+     follow. */
+  left: auto;
+  right: 8px;
+  transform: none;
   top: 8px;
-  z-index: 5;
+  /* Above the head-up display, so an open menu is never underneath the
+     directions it can turn off. */
+  z-index: 9;
   display: flex;
   /* Wraps. Seven buttons fitted one row at 390px; Stop and Hazard make nine,
      which does not — and a tray that overflows just clips its end buttons
      behind its own rounded corner, which is how "Driving" and "Sound" went
      missing. Two rows costs a little height and keeps every button reachable
      without a swipe, which on a dashboard mount is the right trade. */
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 4px 4px;
-  padding: 8px 10px 7px;
-  /* An explicit width, not shrink-to-fit. A wrapping flex container collapses
-     to its narrowest sensible column when left to size itself, which turned
-     nine buttons into three cramped rows instead of using the width that was
-     sitting right there. Capped so it does not stretch across a desktop. */
-  width: calc(100vw - 20px);
-  max-width: 520px;
-  border-radius: 20px;
+  /* A column of words, not a grid of circles. The circles came from the route
+     page's report buttons — contamination, bear, overflow — which are tapped
+     in the rain at a bin and earn their size. These are map settings tapped
+     once a round, and as icons they cost a third of the screen to say what
+     six words say. */
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  padding: 5px;
+  width: 168px;
+  max-width: calc(100vw - 24px);
+  border-radius: 12px;
   /* Subtler than it was. At 0.82 it read as a solid black tray laid over the
      map; the blur does most of the work of keeping the captions legible, so
      the fill can be light enough to see the road through. */
-  background: rgba(14, 18, 15, 0.62);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+  /* See-through. It sits on a map somebody is reading. */
+  background: rgba(22, 28, 24, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.3);
   pointer-events: auto;
 }
 
 .dock-btn {
   pointer-events: auto;
-  flex: 0 0 auto;
-  width: 46px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
   border: none;
+  border-radius: 7px;
   background: none;
-  padding: 0;
   cursor: pointer;
   font-family: inherit;
+  text-align: left;
   color: #fff;
   -webkit-tap-highlight-color: transparent;
 }
-.dock-ico {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-circle, 999px);
-  background: rgba(255,255,255,0.16);
-  font-size: 21px;
-  line-height: 1;
-  transition: background 0.15s, transform 0.1s;
-}
-.dock-btn:active .dock-ico { transform: scale(0.92); }
+/* No icons. The word is the label and the emoji was decoration next to it. */
+.dock-ico { display: none; }
+.dock-btn:active { background: rgba(255,255,255,0.1); }
 .dock-cap {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   letter-spacing: 0.01em;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.75);
   white-space: nowrap;
-  /* Kept inside the button's width. Without this a caption wider than its
-     circle runs into its neighbour's — "Planned" and "Satellite" were reading
-     as one word. Labels are chosen short enough that nothing truncates; this
-     is the guard for when one is not. */
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* The truncation that used to be here was for fitting a word inside a 46px
+     circle. In a list the row is as wide as the panel and the guard only ever
+     did harm: "Driving" came out as "Dri…". */
 }
 /* Lit: a chosen view, or a switch that is on. One treatment, because on a
    round icon there is no room to invent two. */
-.dock-btn.active .dock-ico,
-.dock-btn.on .dock-ico {
-  background: rgba(255,255,255,0.96);
-  color: var(--route-color-dark, #166534);
+.dock-btn.active,
+.dock-btn.on {
+  background: rgba(255,255,255,0.18);
+  font-weight: 700;
 }
 .dock-btn:disabled { opacity: 0.4; cursor: default; }
 /* GPS with no fix yet, and GPS mid-send. */
-.dock-btn.waiting .dock-ico { background: rgba(255,255,255,0.12); opacity: 0.6; }
-.dock-btn.sent .dock-ico { background: #fbbf24; color: #3b2a02; }
+.dock-btn.waiting { opacity: 0.5; }
+.dock-btn.sent { background: rgba(251,191,36,0.85); color: #3b2a02; }
+.dock-btn.sharing { background: rgba(220,38,38,0.85); }
 
 /* ── Position: a compass rose and your coordinates ──
    Top centre of the map. Google holds all four corners — map type top left,
@@ -170,20 +165,31 @@
 /* The compass and its coordinates, first on the top row. They may be as wide
    as the coordinates need: the directions are on the row below now, so this
    column is not taking width from anything. */
+/* Top-left corner, out of the head-up display's flow entirely.
+ *
+ * It used to be the first thing on a row that the directions shared, which
+ * made the whole top of the map a block of text over the road. A driver
+ * glances at a compass; they do not read it. So: a corner, smaller, and see-
+ * through enough that the streets under it still show. */
 #geo-chip {
-  position: relative;
-  flex-shrink: 0;
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  z-index: 7;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  pointer-events: none;      /* only the coordinates take a tap */
+  gap: 2px;
+  opacity: 0.82;
+  pointer-events: none;      /* only the rose and the coordinates take a tap */
 }
 
 .geo-rose {
-  width: 62px;
-  height: 62px;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45));
+  width: 46px;
+  height: 46px;
+  pointer-events: auto;      /* tap it for the coordinates */
+  cursor: pointer;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.5));
 }
 /* Light ink on a dark wash: legible over a pale road map AND over satellite,
    which is the whole reason this is not just dark text on glass. */
@@ -208,6 +214,13 @@
   transform-origin: 32px 32px;
   transition: transform 0.25s ease-out;
 }
+
+/* The coordinates are hidden until asked for. They are the longest piece of
+   text on the map and a driver needs them about once a week — when somebody on
+   the radio asks where they are. Tapping the rose shows them and copies them,
+   and they fade again on their own. */
+#geo-chip .geo-read { display: none; }
+#geo-chip.show-coords .geo-read { display: flex; }
 
 .geo-read {
   pointer-events: auto;
@@ -237,6 +250,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Off unless the driver asked for them. 'muted' rather than display:none so
+   the elements stay measurable and the code that fills them does not have to
+   know or care whether anyone is looking. */
+#turn-banner.muted,
+#optimize-status.muted { display: none !important; }
+
+/* With the words off, the display is two small things in two corners and
+   nothing in between — so it must not sit over the map soaking up taps. */
+#map-hud:not(.with-directions) { padding-bottom: 0; background: none; }
 
 /* ── The hazard picker ── */
 #hazard-picker {
@@ -322,16 +345,19 @@
 /* ── Folding the strip away ── */
 #dock-toggle {
   pointer-events: auto;
-  flex: 0 0 auto;
-  width: 26px;
-  height: 48px;
-  margin-left: 2px;
+  /* First in the panel, though it is last in the markup: the button you
+     tapped should stay where you tapped it rather than jumping to the bottom
+     of a list that grew underneath it. */
+  order: -1;
+  align-self: flex-end;
   border: none;
-  border-radius: 13px;
-  background: rgba(255,255,255,0.12);
+  border-radius: 7px;
+  padding: 4px 9px;
+  margin-bottom: 2px;
+  background: rgba(255,255,255,0.1);
   color: #fff;
-  font-size: 15px;
-  line-height: 1;
+  font-size: 13px;
+  line-height: 1.4;
   font-family: inherit;
   cursor: pointer;
 }
@@ -347,22 +373,28 @@
    the pill: buttons that are merely invisible still hold the space that was
    the whole problem. */
 #map-dock.folded .dock-btn { display: none; }
+/* Shut: one small grey button in the corner, and nothing else on the map
+   except the compass in the other one. */
 #map-dock.folded {
-  width: auto;                 /* not the full-width tray it is when open */
-  padding: 5px 6px;
+  width: auto;
+  padding: 0;
   gap: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 #map-dock.folded #dock-toggle {
-  width: auto;
-  height: 38px;
-  padding: 0 15px;
-  border-radius: 19px;
-  margin-left: 0;
-  font-size: 13.5px;
+  margin-bottom: 0;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.01em;
   white-space: nowrap;
-  background: rgba(255,255,255,0.16);
+  background: rgba(22, 28, 24, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.28);
 }
 
 /* ── Opening ──
@@ -385,7 +417,7 @@
 #map-dock.flying .dock-btn:nth-child(10) { animation-delay: 0.18s; }
 
 @keyframes dock-fly {
-  from { opacity: 0; transform: translateY(-8px) scale(0.82); }
+  from { opacity: 0; transform: translateX(10px); }
   to   { opacity: 1; transform: none; }
 }
 

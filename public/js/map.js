@@ -841,9 +841,10 @@ function updateModeUI() {
       ? 'Quickest order from here — tap for the sheet order'
       : 'Sheet order — tap for the quickest order from here';
   }
-  // "Plan", not "Planned": the caption has a 46px circle's width to live in,
-  // and anything longer ellipsises into "Plann…". The 📋 / ⚡ carries the rest.
-  if (orderCap) orderCap.textContent = routeMode === 'live' ? 'Live' : 'Plan';
+  /* Whole words now the menu is a list. They were clipped to "Plan" and "Live"
+     because a 46px circle was all the room a caption had. */
+  if (orderCap) orderCap.textContent =
+    routeMode === 'live' ? 'Quickest order' : 'Sheet order';
   if (orderIco) orderIco.textContent = routeMode === 'live' ? '⚡' : '📋';
 
   const statusEl = document.getElementById('optimize-status');
@@ -1037,6 +1038,18 @@ function applyFollow(latLng, heading, snapZoom) {
   if (!followMode || !gMap) return;
   suppressFollowOff = true;
 
+  /* Cleared on the next tick WHATEVER happens below, which is why it is here
+     and not at the end.
+     It used to be the last line of this function — after `if (!mapId) return`,
+     the early exit for a map without vector rendering. That is every map in
+     production: the vector Map ID has never been created. So the first GPS fix
+     set this flag and nothing ever cleared it, and from then on a manual pan
+     was not recognised as manual. A driver dragging the map to look up the
+     road had the next fix, a second later, haul it straight back under their
+     thumb — over and over, which is what "the map is all over the place"
+     actually was. */
+  setTimeout(() => { suppressFollowOff = false; }, 0);
+
   /* setCenter, not panTo, and this is the whole reason the map still looked
      jumpy after the GPS updates were smoothed out.
 
@@ -1070,7 +1083,6 @@ function applyFollow(latLng, heading, snapZoom) {
   if (typeof heading === 'number' && !Number.isNaN(heading) && gMap.setHeading) {
     gMap.setHeading(heading);   // rotates so the way they are driving is "up"
   }
-  setTimeout(() => { suppressFollowOff = false; }, 0);
 }
 
 /* Driving and Route are one choice with two answers, so they are painted from
@@ -1088,6 +1100,7 @@ function syncViewButtons() {
 /* What the two buttons call. Picking one IS leaving the other, which is the
    whole point of a choice, and is why neither of them is a toggle. */
 window.setMapView = function (view) {
+  cancelFollowResume();
   if (view === 'route') setOverview(true);
   else { setOverview(false); setFollow(true); }
 };
@@ -1116,9 +1129,37 @@ function setFollow(on) {
 
 // Dragging the map by hand means the driver wants to look somewhere else —
 // stop chasing them until they ask for it back.
+/* How long the map stays where a driver put it before it comes back to them.
+ *
+ * Dragging used to switch following off for good. On a desk that is fine — you
+ * drag, you look, you tap Driving. On a phone held in one hand on a bumpy road
+ * it fires on the smallest touch, silently, and the map then sits where it was
+ * while the truck drives off it. That is what "it's all over the place" is:
+ * not the map moving, the map NOT moving.
+ *
+ * So a drag pauses the follow rather than ending it, and it resumes on its own
+ * once the driver has stopped touching the map. Long enough to read a junction
+ * ahead, short enough that nobody has to remember to undo it. */
+const FOLLOW_RESUME_MS = 8000;
+let followResumeTimer = null;
+
+function pauseFollow() {
+  setFollow(false);
+  clearTimeout(followResumeTimer);
+  followResumeTimer = setTimeout(() => {
+    /* Not while they are looking at the whole round — that is a view they
+       chose from the menu, not a nudge of the map. */
+    if (!overviewOn && lastGpsPos) window.recenterMap();
+  }, FOLLOW_RESUME_MS);
+}
+
+/* Their own decision beats the timer: tapping Route, or Driving, or the
+   recentre button means they have said what they want. */
+function cancelFollowResume() { clearTimeout(followResumeTimer); }
+
 function watchForManualPan() {
   if (!gMap) return;
-  gMap.addListener('dragstart', () => { if (!suppressFollowOff) setFollow(false); });
+  gMap.addListener('dragstart', () => { if (!suppressFollowOff) pauseFollow(); });
 
   /* fitBounds is the one place the app does not know the zoom in advance — it
      asks Google to frame the stops and takes whatever level that needs. Wait
@@ -1189,6 +1230,7 @@ function setOverview(on) {
  * whole round. One tap puts all of it back to how the app opens. */
 
 window.recenterMap = function () {
+  cancelFollowResume();
   if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
   if (overviewOn) { overviewOn = false; }
   followMode = true;
@@ -1467,16 +1509,25 @@ function cardinal(deg) {
 
 function updateGeoChip() {
   const needle = document.getElementById('geo-needle');
-  const coords = document.getElementById('geo-coords');
-  if (!needle || !coords) return;
+  if (!needle) return;
 
-  if (!lastGpsPos) {
-    coords.textContent = 'waiting for GPS…';
-    return;
+  /* The coordinates are optional now. The driver app shows the rose alone —
+     a compass is a glance, and a line of digits over the road was the longest
+     piece of text on the map for something a driver needs about once a week.
+     The demo still draws them, so this fills them when they are there.
+
+     It used to bail out entirely when the element was missing, which would
+     have stopped the needle turning as well. */
+  const coords = document.getElementById('geo-coords');
+  if (coords) {
+    // Five decimal places is about a metre. More is noise a driver cannot use
+    // and cannot read aloud.
+    coords.textContent = lastGpsPos
+      ? lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5)
+      : 'waiting for GPS…';
   }
-  // Five decimal places is about a metre. More is noise a driver cannot use
-  // and cannot read aloud.
-  coords.textContent = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
+  if (!lastGpsPos) return;
+
   if (typeof lastGpsHeading === 'number' && !Number.isNaN(lastGpsHeading)) {
     /* An SVG group, so the rotation goes on the CSS transform with a
        transform-origin in USER UNITS (32,32 — the rose's centre), not on the
@@ -1486,24 +1537,51 @@ function updateGeoChip() {
   }
 }
 
-/* Reading a position over the radio is the actual use, so tapping the chip
-   puts it on the clipboard. Falls back to saying the numbers are on screen —
-   clipboard access needs a secure context and a user gesture, and a driver who
-   taps it and gets nothing would reasonably assume the app is broken. */
 /* The dock's fold, its handle and its measured height all live in
    map-dock.js now — the demo draws the same tray and had none of it. This
    file still calls measureDock() when the map is resized. */
 
-window.copyCoords = async function () {
-  if (!lastGpsPos) { setOptimizeStatus('No GPS fix yet.'); return; }
-  const text = lastGpsPos.lat.toFixed(5) + ', ' + lastGpsPos.lng.toFixed(5);
-  try {
-    await navigator.clipboard.writeText(text);
-    setOptimizeStatus('Copied ' + text);
-  } catch {
-    setOptimizeStatus(text);
-  }
+/* ── The directions panel ─────────────────────────────────────────────────
+ *
+ * Turn-by-turn, the ETA and the traffic: four lines of text across the top of
+ * the map, on by default, whether or not anybody was reading them. On a phone
+ * that is most of the road covered up.
+ *
+ * Off by default now, and on from the menu — the driver decides whether they
+ * want the map or the words. Remembered per device, so a driver who wants it
+ * gets it every day without asking twice. */
+const DIRECTIONS_KEY = 'ev_show_directions';
+let showDirections = false;
+
+function applyDirections(on) {
+  showDirections = on;
+  const wrap = document.getElementById('map-hud');
+  if (wrap) wrap.classList.toggle('with-directions', on);
+  const btn = document.getElementById('mode-directions');
+  if (btn) btn.classList.toggle('on', on);
+  /* The banner shows itself when there is something to say; this only decides
+     whether it is allowed to. */
+  const banner = document.getElementById('turn-banner');
+  if (banner) banner.classList.toggle('muted', !on);
+  const status = document.getElementById('optimize-status');
+  if (status) status.classList.toggle('muted', !on);
+}
+
+window.toggleDirections = function () {
+  applyDirections(!showDirections);
+  try { localStorage.setItem(DIRECTIONS_KEY, showDirections ? '1' : '0'); } catch {}
+  setOptimizeStatus(showDirections ? 'Directions on.' : 'Directions off.');
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+  let want = false;
+  try { want = localStorage.getItem(DIRECTIONS_KEY) === '1'; } catch {}
+  applyDirections(want);
+});
+
+/* copyCoords() and showCoords() lived here. The map shows no coordinates
+   any more — a driver who needs a position reads it off Google Maps, which is
+   one tap away in the menu and is where they would look anyway. */
 
 /* ── Sharing your position with dispatch ──────────────────────────────────
  *
@@ -1622,12 +1700,13 @@ function updateGpsChip() {
   btn.classList.toggle('sharing', liveShare);
 
   if (liveShare) {
-    cap.textContent = 'Live';
+    cap.textContent = 'Stop sharing';
     btn.title = 'Dispatch can see you — tap to stop sharing';
   } else {
-    cap.textContent = has && typeof lastGpsAccuracy === 'number'
-      ? Math.round(lastGpsAccuracy) + ' m'
-      : 'GPS';
+    /* It used to read the accuracy — "9 m" — which made sense as a caption
+       under a circle and reads as nonsense as a line in a menu. The row says
+       what tapping it does. */
+    cap.textContent = has ? 'Share my position' : 'Waiting for GPS…';
     btn.title = has
       ? 'Tap to let dispatch see where you are'
       : 'Waiting for a GPS fix';
@@ -1922,7 +2001,11 @@ function updateAlertChip() {
   const ico = el.querySelector('.dock-ico');
   const cap = el.querySelector('.dock-cap');
   if (ico) ico.textContent = mode === 'sound' ? '🔔' : mode === 'silent' ? '📳' : '🔕';
-  if (cap) cap.textContent = mode === 'sound' ? 'Sound' : mode === 'silent' ? 'Silent' : 'Off';
+  /* A row in a list, not a caption under a circle: it says what the setting
+     IS, because "Sound" on its own could mean either state. */
+  if (cap) cap.textContent = mode === 'sound' ? 'Arrival: sound'
+                           : mode === 'silent' ? 'Arrival: vibrate'
+                           : 'Arrival: off';
   // .on, not .active: this is a switch, not one of a pair of views.
   el.classList.toggle('on', mode !== 'off');
   el.title = 'Arrival alerts: ' + mode + ' — tap to change';

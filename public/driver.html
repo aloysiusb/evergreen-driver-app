@@ -54,6 +54,12 @@
   <div class="hdr-drawer" id="hdr-drawer" hidden>
     <a href="/">⌂ All routes</a>
     <a href="/dispatch">📡 Dispatcher board</a>
+    <!-- These were a bar pinned across the foot of every screen, 89px of
+         chrome under the map for two things a driver touches once a day and
+         once a week. Same buttons, same handlers — in the menu they are a tap
+         away instead of permanently in the way. -->
+    <button class="hdr-drawer-btn" id="start-day-btn">🗓 Start my day <span class="hdr-drawer-sub">saves a backup</span></button>
+    <button class="hdr-drawer-btn" id="view-original-btn" style="display:none;">📋 View the original route</button>
     <span class="hdr-drawer-meta" id="drawer-meta"></span>
   </div>
 </header>
@@ -105,9 +111,6 @@
               <polygon class="rose-needle-s" points="32,54 26.5,33 37.5,33"/>
             </g>
           </svg>
-          <button class="geo-read" onclick="copyCoords()" title="Your position — tap to copy">
-            <span class="geo-coords" id="geo-coords">waiting for GPS…</span>
-          </button>
         </div>
 
       <!-- The route time and the traffic, on the compass's line. This used to
@@ -202,23 +205,25 @@
       <button class="dock-btn active" id="mode-follow" onclick="setMapView('driving')" title="Close in, riding with you">
         <span class="dock-ico">🧭</span><span class="dock-cap">Driving</span></button>
       <button class="dock-btn" id="mode-overview" onclick="setMapView('route')" title="Step back to see the rest of the round">
-        <span class="dock-ico">🔭</span><span class="dock-cap">Route</span></button>
+        <span class="dock-ico">🔭</span><span class="dock-cap">Whole round</span></button>
+      <button class="dock-btn" id="mode-directions" onclick="toggleDirections()" title="Turn-by-turn and traffic — off by default, because it is a lot of text over the map">
+        <span class="dock-ico">🧾</span><span class="dock-cap">Directions</span></button>
       <button class="dock-btn" id="mode-reset" onclick="resetMapView()" title="Put the map back to its usual view">
         <span class="dock-ico">⟳</span><span class="dock-cap">Default</span></button>
       <button class="dock-btn" id="mode-live" onclick="toggleRouteOrder()" title="Planned order — tap for the quickest order from here">
-        <span class="dock-ico">📋</span><span class="dock-cap" id="order-cap">Plan</span></button>
+        <span class="dock-ico">📋</span><span class="dock-cap" id="order-cap">Sheet order</span></button>
       <button class="dock-btn" id="mode-sat" onclick="toggleSatellite()" title="Aerial imagery — helps spot driveways and gates">
-        <span class="dock-ico">🛰</span><span class="dock-cap">Sat</span></button>
+        <span class="dock-ico">🛰</span><span class="dock-cap">Satellite</span></button>
       <button class="dock-btn" id="mode-photo" onclick="photoFromMap()" title="Photograph the stop you are at">
-        <span class="dock-ico">📷</span><span class="dock-cap">Photo</span></button>
+        <span class="dock-ico">📷</span><span class="dock-cap">Take a photo</span></button>
       <button class="dock-btn" id="mode-gps" onclick="toggleLiveShare()" title="Tap to let dispatch see where you are">
-        <span class="dock-ico">📍</span><span class="dock-cap" id="gps-cap">GPS</span></button>
+        <span class="dock-ico">📍</span><span class="dock-cap" id="gps-cap">Share my position</span></button>
       <button class="dock-btn" id="mode-stop" onclick="goToStopInfo()" title="Open this stop's card and its report buttons">
-        <span class="dock-ico">🧾</span><span class="dock-cap">Stop</span></button>
+        <span class="dock-ico">🧾</span><span class="dock-cap">This stop</span></button>
       <button class="dock-btn" id="mode-hazard" onclick="toggleHazardPicker()" title="Tell the other drivers about the road">
-        <span class="dock-ico">⚠️</span><span class="dock-cap">Hazard</span></button>
+        <span class="dock-ico">⚠️</span><span class="dock-cap">Report a hazard</span></button>
       <button class="dock-btn on" id="mode-alert" onclick="cycleAlertMode()" title="Arrival alert">
-        <span class="dock-ico">🔔</span><span class="dock-cap">Sound</span></button>
+        <span class="dock-ico">🔔</span><span class="dock-cap">Arrival sound</span></button>
       <!-- Folds the strip away. Stays visible when it is folded, because a
            control that hides itself along with everything else is a control
            nobody gets back. -->
@@ -234,12 +239,6 @@
          which is where they stay: they belong to the stop, not to the map. -->
     <div id="nav-card" style="display:none;"></div>
   </div>
-</div>
-
-<div class="action-bar">
-  <a href="/" class="btn-secondary">← Routes</a>
-  <button class="btn-primary" id="start-day-btn">Start My Day (saves a backup)</button>
-  <button class="btn-secondary" id="view-original-btn" style="display:none;">📋 View Original</button>
 </div>
 
 <div id="original-overlay">

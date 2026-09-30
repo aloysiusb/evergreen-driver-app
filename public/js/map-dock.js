@@ -59,7 +59,7 @@
       /* Shut, it has to say what it is. A bare chevron over a map is a mystery
          — a driver should not have to tap an unlabelled stub to find out where
          Photo and Hazard went. Open, it only has to say how to put it away. */
-      btn.textContent = folded ? '\u2630 Map menu' : '\u2715';
+      btn.textContent = folded ? '\u2630 Menu' : '\u2715';
       btn.title = folded ? 'Show the map buttons' : 'Hide the map buttons';
       btn.setAttribute('aria-label', folded ? 'Show the map buttons' : 'Hide the map buttons');
       btn.setAttribute('aria-expanded', String(!folded));
