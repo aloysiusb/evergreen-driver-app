@@ -604,16 +604,55 @@ async function geocodeAndPlot() {
   liveMins = null;
   plannedMins = null;
 
+  /* Ask our own cache before asking Google.
+   *
+   * This geocoded every stop every time the map opened — fifty billed lookups
+   * a round, the same fifty on the next open, and again for the next driver
+   * and every test drive. A month of that was 11,542 Geocoding calls against
+   * a couple of hundred addresses that had not moved.
+   *
+   * Addresses do not move, so each one is now looked up once ever and kept on
+   * the app's own disk. A round that anybody has opened before costs nothing
+   * at all. If the cache cannot be reached the map still works — it just pays
+   * Google the way it always did. */
+  const addrOf = s => s.address + (s.city ? ', ' + s.city : '') + ', CO';
+  const cacheKey = a => String(a).trim().replace(/\s+/g, ' ').toLowerCase();
+
+  let known = {};
+  try {
+    const res = await fetch('/api/geocodes');
+    if (res.ok) known = (await res.json()).known || {};
+  } catch { /* offline, or the endpoint is not there yet — carry on */ }
+
+  const fresh = [];
   await Promise.all(stops.map(stop => new Promise(resolve => {
-    const addr = stop.address + (stop.city ? ', ' + stop.city : '') + ', CO';
+    const addr = addrOf(stop);
+    const hit = known[cacheKey(addr)];
+    if (hit) {
+      stop._latLng = new google.maps.LatLng(hit.lat, hit.lng);
+      navStops.push(stop);
+      return resolve();
+    }
     geocoder.geocode({ address: addr }, (results, status) => {
       if (status === 'OK' && results[0]) {
         stop._latLng = results[0].geometry.location;
         navStops.push(stop);
+        fresh.push({ address: addr, lat: stop._latLng.lat(), lng: stop._latLng.lng() });
       }
       resolve();
     });
   })));
+
+  /* Hand back whatever was new, so the next open — anyone's — is free. Fire
+     and forget: a driver must never wait on this, and a failed save costs a
+     lookup next time rather than a stop. */
+  if (fresh.length) {
+    fetch('/api/geocodes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: fresh }),
+    }).catch(() => {});
+  }
 
   navStops = rejectOutliers(navStops);
 
