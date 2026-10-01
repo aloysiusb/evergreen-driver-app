@@ -322,6 +322,8 @@ let rerouteTimer = null;
 let rerouteDismissed = false;  // driver said "no thanks" this session
 const REROUTE_CHECK_MS = 3 * 60 * 1000;  // re-check every 3 minutes
 const REROUTE_MIN_SAVING = 8;            // only nudge if it saves 8+ minutes
+const REROUTE_MIN_MOVE_M = 400;          // ...and only if the truck has moved
+let rerouteCheckedFrom = null;
 
 // Google's Directions API accepts at most 25 waypoints besides the origin and
 // destination. Every call in this file used to pass EVERY remaining stop — 208
@@ -740,6 +742,23 @@ function startRerouteWatcher() {
 function checkForBetterRoute() {
   if (routeMode !== 'planned') return;
   if (rerouteDismissed) return;
+
+  /* The dearest call the app makes: waypoint optimisation and a traffic model
+     together, across up to 23 stops. It was fired every three minutes for as
+     long as the page was open, which on a phone left in a cab overnight, or a
+     tab forgotten in the office, is several hundred pounds' worth of asking
+     whether traffic has shifted on a round nobody is driving.
+   *
+     So it now asks only when there is a truck moving and someone looking:
+     the tab is in front, and the truck has gone at least a quarter-mile since
+     the last check. Traffic that shifts while the truck sits still changes
+     nothing a driver can act on. */
+  if (document.hidden) return;
+  if (lastGpsPos && rerouteCheckedFrom &&
+      haversineM(rerouteCheckedFrom.lat, rerouteCheckedFrom.lng,
+                 lastGpsPos.lat, lastGpsPos.lng) < REROUTE_MIN_MOVE_M) return;
+  if (lastGpsPos) rerouteCheckedFrom = { lat: lastGpsPos.lat, lng: lastGpsPos.lng };
+
   const remaining = routeChunk(plannedOrder.filter(s => !s.done && s._latLng));
   if (remaining.length < 3) return;
 
@@ -2254,10 +2273,40 @@ function promptArrival(stop) {
   }, 12000);
 }
 
-function fetchNextEta(fromLatLng) {
+/* How often the ETA may be re-asked, and how far the truck must have moved
+   to be worth asking at all.
+ *
+ * This was called on EVERY GPS fix. watchPosition fires about once a second in
+ * a moving vehicle, and this is a Distance Matrix request with a traffic model
+ * on it — the dear one. A driver on an eight-hour round was worth tens of
+ * thousands of billed calls a day on his own, for a number that changes by a
+ * minute at a time.
+ *
+ * Its neighbour, fetchTurnSteps, was throttled from the start and says why:
+ * "this is a billed API call, not a free one". This one was simply missed.
+ *
+ * Both conditions, not either: a truck stopped at a bin should not re-ask
+ * every minute, and a truck on the highway does not need a new figure every
+ * hundred metres. */
+const ETA_MIN_REFETCH_MS = 60000;
+const ETA_MIN_MOVE_M = 200;
+let etaFetchedAt = 0;
+let etaFetchedFrom = null;
+
+function fetchNextEta(fromLatLng, force) {
   if (!etaService) return;
   const cur = navStops[currentIdx];
   if (!cur || cur.done || !cur._latLng) return;
+
+  /* Forced when the stop itself changes: arriving at a new stop is exactly
+     when the figure has to be right, and a minute late is no use then. */
+  if (!force) {
+    if (Date.now() - etaFetchedAt < ETA_MIN_REFETCH_MS) return;
+    if (etaFetchedFrom && haversineM(etaFetchedFrom.lat, etaFetchedFrom.lng,
+                                     fromLatLng.lat(), fromLatLng.lng()) < ETA_MIN_MOVE_M) return;
+  }
+  etaFetchedAt = Date.now();
+  etaFetchedFrom = { lat: fromLatLng.lat(), lng: fromLatLng.lng() };
 
   etaService.getDistanceMatrix({
     origins: [fromLatLng],
@@ -2423,7 +2472,9 @@ function jumpTo(idx) {
   updateMarkerIcons();
   renderNavCard();
   centerOnCurrent();
-  if (lastGpsPos) fetchNextEta(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng));
+  // Forced: the stop has changed, so the throttle must not hold back the one
+  // figure the driver is about to look at.
+  if (lastGpsPos) fetchNextEta(new google.maps.LatLng(lastGpsPos.lat, lastGpsPos.lng), true);
 }
 
 window.navStep = function(dir) {
