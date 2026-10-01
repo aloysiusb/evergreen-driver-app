@@ -20,7 +20,7 @@ import { buildDigest, digestText, digestSubject, localClock, DIGEST_TZ } from ".
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
 import { allKnown as knownGeocodes, remember as rememberGeocodes,
-         count as geocodeCount } from "./geocache.js";
+         count as geocodeCount, sweepExpired as sweepGeocodes } from "./geocache.js";
 import {
   validateRequest, createRequest, listRequests, getRequest,
   decideRequest, countByStatus, rateLimited, recordQbo,
@@ -395,6 +395,12 @@ app.get("/api/hazards", (req, res) => {
 // So the browser asks here first and only troubles Google for addresses
 // nobody has looked up before, then posts those back. Steady state is zero
 // calls: the round settles after one driver has opened it once.
+
+/* Coordinates age out at thirty days to stay inside Google's caching terms.
+   Swept at boot and daily, so an expired row is deleted rather than merely
+   ignored — the same shape as the hazard sweep below. */
+sweepGeocodes();
+setInterval(sweepGeocodes, 24 * 60 * 60 * 1000).unref?.();
 
 app.get("/api/geocodes", (req, res) => {
   res.json({ known: knownGeocodes() });
