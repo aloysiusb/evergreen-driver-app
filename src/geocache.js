@@ -13,6 +13,9 @@
 // On the app's own disk beside everything else, so it survives deploys. There
 // is nothing private in it: a street address and the coordinates of that
 // street address, both of which are already in the route sheet.
+//
+// Rows age out after thirty days — see MAX_AGE_DAYS below. That limit comes
+// from Google's terms, not from anything technical.
 
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
@@ -40,12 +43,35 @@ function key(address) {
   return String(address || "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-/** Everything known, as { "<address key>": { lat, lng } }. */
+/* Thirty days, then ask Google again.
+ *
+ * Not a performance decision — a terms one. Google's Maps Platform terms allow
+ * a coordinate from the Geocoding API to be cached temporarily, and as I
+ * understand them that window is thirty days; a Place ID may be kept
+ * indefinitely, a lat/lng may not. The first version of this file kept rows
+ * for good, which would have been a quiet breach of the agreement in the
+ * middle of asking Google for a goodwill credit.
+ *
+ * It costs almost nothing to comply. Two hundred addresses re-looked-up once a
+ * month is 200 calls where September spent 11,542, so the saving is still
+ * better than 98% — and the app is straightforwardly within the rules. */
+const MAX_AGE_DAYS = 30;
+
+/** Everything still inside the caching window, as { "<key>": { lat, lng } }. */
 export function allKnown() {
-  const rows = db.prepare("SELECT address, lat, lng FROM geocache").all();
+  const cutoff = new Date(Date.now() - MAX_AGE_DAYS * 86400000).toISOString();
+  const rows = db.prepare(
+    "SELECT address, lat, lng FROM geocache WHERE at > ?").all(cutoff);
   const out = {};
   for (const r of rows) out[r.address] = { lat: r.lat, lng: r.lng };
   return out;
+}
+
+/** Drop what has aged out, so expired coordinates are not merely ignored but
+ *  actually gone from the disk. Called at boot and daily. */
+export function sweepExpired() {
+  const cutoff = new Date(Date.now() - MAX_AGE_DAYS * 86400000).toISOString();
+  return db.prepare("DELETE FROM geocache WHERE at <= ?").run(cutoff).changes;
 }
 
 /**

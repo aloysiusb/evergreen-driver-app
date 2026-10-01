@@ -316,14 +316,12 @@ let overviewOn = false;
 // has to wait for the map to settle before it can pin the result.
 let pendingLock = false;
 
-// ── Traffic + auto-reroute state ──────────────────────────────────────────
+// ── Traffic state ─────────────────────────────────────────────────────────
+/* Kept, but it reads null now: nothing asks Google for a traffic model any
+   more, so there is no free-flow comparison to draw. The conditions line
+   falls back to the plain drive time, which is what the premium tier was
+   being paid for. */
 let trafficDelayMins = null;   // minutes lost to traffic vs free-flow
-let rerouteTimer = null;
-let rerouteDismissed = false;  // driver said "no thanks" this session
-const REROUTE_CHECK_MS = 3 * 60 * 1000;  // re-check every 3 minutes
-const REROUTE_MIN_SAVING = 8;            // only nudge if it saves 8+ minutes
-const REROUTE_MIN_MOVE_M = 400;          // ...and only if the truck has moved
-let rerouteCheckedFrom = null;
 
 // Google's Directions API accepts at most 25 waypoints besides the origin and
 // destination. Every call in this file used to pass EVERY remaining stop — 208
@@ -445,7 +443,11 @@ async function initMap() {
       const s = document.createElement('script');
       // map_ids lets Google fetch the style for this map before the map is
       // created, so a vector map paints in one pass instead of two.
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places` +
+      /* No libraries=places. It was loaded on every map open and never called
+         once — nothing in this app searches for a place. It cost a download on
+         a mountain signal and meant the Places API had to stay enabled on a
+         key that should be allowed to do as little as possible. */
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}` +
               (mapId ? `&map_ids=${encodeURIComponent(mapId)}` : '');
       s.async = true;
       s.onload = resolve;
@@ -533,7 +535,6 @@ async function initMap() {
   loadHazards();
   await geocodeAndPlot();
   startGpsTracking();
-  startRerouteWatcher();
 }
 
 function rowColorToHex(rowColor) {
@@ -725,7 +726,10 @@ function drawRouteLine() {
     destination: remaining[remaining.length - 1]._latLng,
     waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: false })),
     travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+    /* No drivingOptions. Asking for a traffic model moves a Directions or
+       Distance Matrix call into Google's premium tier, and on a valley round
+       at six in the morning the traffic it models is nobody's. Typical drive
+       times, at a fraction of the price. */
   }, (result, status) => {
     if (status === 'OK') directionsRenderer.setDirections(result);
     else {
@@ -743,7 +747,10 @@ function fetchPlannedTime() {
     destination: remaining[remaining.length - 1]._latLng,
     waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: true })),
     travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+    /* No drivingOptions. Asking for a traffic model moves a Directions or
+       Distance Matrix call into Google's premium tier, and on a valley round
+       at six in the morning the traffic it models is nobody's. Typical drive
+       times, at a fraction of the price. */
   }, (result, status) => {
     if (status === 'OK') {
       const legs = result.routes[0].legs;
@@ -774,72 +781,22 @@ function trafficLabel() {
   return `🔴 Heavy · +${trafficDelayMins} min`;
 }
 
-// ── Auto-reroute watcher ──────────────────────────────────────────────────
-// Every few minutes, silently check whether traffic has shifted enough that
-// re-optimizing would meaningfully help. Only nudges — never switches on its own.
-function startRerouteWatcher() {
-  if (rerouteTimer) clearInterval(rerouteTimer);
-  rerouteTimer = setInterval(checkForBetterRoute, REROUTE_CHECK_MS);
-}
-
-function checkForBetterRoute() {
-  if (routeMode !== 'planned') return;
-  if (rerouteDismissed) return;
-
-  /* The dearest call the app makes: waypoint optimisation and a traffic model
-     together, across up to 23 stops. It was fired every three minutes for as
-     long as the page was open, which on a phone left in a cab overnight, or a
-     tab forgotten in the office, is several hundred pounds' worth of asking
-     whether traffic has shifted on a round nobody is driving.
-   *
-     So it now asks only when there is a truck moving and someone looking:
-     the tab is in front, and the truck has gone at least a quarter-mile since
-     the last check. Traffic that shifts while the truck sits still changes
-     nothing a driver can act on. */
-  if (document.hidden) return;
-  if (lastGpsPos && rerouteCheckedFrom &&
-      haversineM(rerouteCheckedFrom.lat, rerouteCheckedFrom.lng,
-                 lastGpsPos.lat, lastGpsPos.lng) < REROUTE_MIN_MOVE_M) return;
-  if (lastGpsPos) rerouteCheckedFrom = { lat: lastGpsPos.lat, lng: lastGpsPos.lng };
-
-  const remaining = routeChunk(plannedOrder.filter(s => !s.done && s._latLng));
-  if (remaining.length < 3) return;
-
-  directionsService.route({
-    origin: remaining[0]._latLng,
-    destination: remaining[remaining.length - 1]._latLng,
-    waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: true })),
-    optimizeWaypoints: true,
-    travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
-  }, (result, status) => {
-    if (status !== 'OK') return;
-    const optMins = routeMinutes(result.routes[0].legs, true);
-    if (plannedMins === null || optMins === null) return;
-    const saving = plannedMins - optMins;
-    if (saving >= REROUTE_MIN_SAVING) showRerouteNudge(saving);
-  });
-}
-
-function showRerouteNudge(saving) {
-  const toast = document.getElementById('toast');
-  toast.innerHTML =
-    `Traffic shifted — <b>Live route saves ~${saving} min</b> ` +
-    `<button id="reroute-yes" style="margin-left:8px;padding:4px 10px;border:none;border-radius:var(--r-control);background:${LIVE_COLOR};color:#fff;font-weight:700;cursor:pointer;">⚡ Switch</button>` +
-    `<button id="reroute-no" style="margin-left:4px;padding:4px 8px;border:none;border-radius:var(--r-control);background:transparent;color:inherit;opacity:0.6;cursor:pointer;">Dismiss</button>`;
-  toast.classList.add('show');
-
-  document.getElementById('reroute-yes').addEventListener('click', () => {
-    toast.classList.remove('show');
-    window.setRouteMode('live');
-  });
-  document.getElementById('reroute-no').addEventListener('click', () => {
-    toast.classList.remove('show');
-    rerouteDismissed = true;  // don't nag again this session
-  });
-
-  setTimeout(() => toast.classList.remove('show'), 15000);
-}
+/* The auto-reroute watcher is gone.
+ *
+ * It asked Google every three minutes whether traffic had shifted enough to be
+ * worth re-ordering the round — the most expensive call this app made, waypoint
+ * optimisation and a traffic model together across up to 23 stops, running for
+ * as long as the page was open.
+ *
+ * Dropping the traffic model took its reason for existing with it. Without live
+ * traffic the best order of a fixed list of stops does not change from minute
+ * to minute: the watcher would have computed the same answer every three
+ * minutes and either nudged immediately and forever or never nudged at all. A
+ * billed timer that cannot learn anything new is worse than no feature.
+ *
+ * The driver can still reorder deliberately: the Live route button in Map
+ * tools does the same optimisation, once, when somebody asks for it.
+ */
 
 // ── Navigation app handoff ────────────────────────────────────────────────
 //
@@ -2331,7 +2288,11 @@ function promptArrival(stop) {
  * Both conditions, not either: a truck stopped at a bin should not re-ask
  * every minute, and a truck on the highway does not need a new figure every
  * hundred metres. */
-const ETA_MIN_REFETCH_MS = 60000;
+/* Three minutes, not one. Sized so three drivers on full eight-hour rounds fit
+   inside a 322-a-day quota with room to spare — about 160 calls each at worst,
+   where one minute would have been 480. An ETA to the next bin that is three
+   minutes stale is still right to the minute that matters. */
+const ETA_MIN_REFETCH_MS = 180000;
 const ETA_MIN_MOVE_M = 200;
 let etaFetchedAt = 0;
 let etaFetchedFrom = null;
@@ -2355,7 +2316,10 @@ function fetchNextEta(fromLatLng, force) {
     origins: [fromLatLng],
     destinations: [cur._latLng],
     travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+    /* No drivingOptions. Asking for a traffic model moves a Directions or
+       Distance Matrix call into Google's premium tier, and on a valley round
+       at six in the morning the traffic it models is nobody's. Typical drive
+       times, at a fraction of the price. */
   }, (resp, status) => {
     if (status !== 'OK') return;
     const el = resp.rows[0]?.elements[0];
@@ -2400,7 +2364,10 @@ window.setRouteMode = function(mode) {
       waypoints: remaining.slice(1, -1).map(s => ({ location: s._latLng, stopover: true })),
       optimizeWaypoints: true,
       travelMode: google.maps.TravelMode.DRIVING,
-      drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
+      /* No drivingOptions. Asking for a traffic model moves a Directions or
+       Distance Matrix call into Google's premium tier, and on a valley round
+       at six in the morning the traffic it models is nobody's. Typical drive
+       times, at a fraction of the price. */
     }, (result, status) => {
       document.getElementById('mode-live').disabled = false;
       if (status !== 'OK') {
