@@ -72,12 +72,9 @@ export function remember(entries) {
   return saved;
 }
 
-/** For the forget-this-address case: an address the sheet has corrected. */
-export function forget(address) {
-  const k = key(address);
-  if (!k) return false;
-  return db.prepare("DELETE FROM geocache WHERE address = ?").run(k).changes > 0;
-}
+/* There is deliberately no forget(). A corrected address in the sheet is a
+   different string, so it misses the cache and is looked up afresh on its
+   own — and an address nobody asks about any more costs nothing to keep. */
 
 export function count() {
   return db.prepare("SELECT COUNT(*) AS n FROM geocache").get().n;
