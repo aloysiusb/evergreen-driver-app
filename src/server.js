@@ -443,7 +443,24 @@ setInterval(sweepHazards, 24 * 60 * 60 * 1000).unref?.();
 // --- Maps config ---------------------------------------------------------
 
 app.get("/api/maps-key", (req, res) => {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
+  /* A test drive spends a different key.
+   *
+   * September's bill was built partly out of demonstrations: sim.js is careful
+   * that a test drive cannot write to the route sheet, the dispatch board or
+   * the hazard layer, and nobody thought about it writing to the card. Every
+   * demo was real Google money, indistinguishable on the bill from a driver
+   * doing the round.
+   *
+   * So the simulator asks for its own key. Give GOOGLE_MAPS_API_KEY_DEV a tiny
+   * daily quota in the Cloud console and a runaway during testing stops at a
+   * few pennies, loudly, on the screen of whoever caused it — instead of
+   * quietly, on the bill, thirty days later.
+   *
+   * Unset, it falls back to the real key, so nothing breaks by not configuring
+   * it and the test drive keeps working either way. */
+  const wantsDev = req.query.sim === "1";
+  const key = (wantsDev && process.env.GOOGLE_MAPS_API_KEY_DEV)
+    || process.env.GOOGLE_MAPS_API_KEY;
   if (!key) return res.status(404).json({ error: "Maps key not configured" });
   // A Map ID is optional, and it is the thing that decides whether the driver
   // map can tilt and turn heading-up. Google only renders a VECTOR map when

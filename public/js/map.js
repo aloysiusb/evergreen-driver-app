@@ -421,7 +421,11 @@ async function initMap() {
 
   let apiKey;
   try {
-    const res = await fetch('/api/maps-key');
+    /* A test drive asks for the development key, which carries a small daily
+       quota — see the note on /api/maps-key. Falls back to the real one when
+       none is configured. */
+    const isSim = new URLSearchParams(location.search).get('sim') === '1';
+    const res = await fetch('/api/maps-key' + (isSim ? '?sim=1' : ''));
     if (!res.ok) throw new Error();
     const cfg = await res.json();
     apiKey = cfg.key;
