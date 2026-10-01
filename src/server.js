@@ -19,6 +19,8 @@ import { recordActivity, todaysActivity, pruneActivity } from "./activity.js";
 import { buildDigest, digestText, digestSubject, localClock, DIGEST_TZ } from "./digest.js";
 import { mountGate } from "./gate.js";
 import { recordError, listErrors, errorSummary, clearErrors } from "./errors.js";
+import { allKnown as knownGeocodes, remember as rememberGeocodes,
+         count as geocodeCount } from "./geocache.js";
 import {
   validateRequest, createRequest, listRequests, getRequest,
   decideRequest, countByStatus, rateLimited, recordQbo,
@@ -381,6 +383,32 @@ app.get("/api/driver-locations", (req, res) => {
  */
 app.get("/api/hazards", (req, res) => {
   res.json({ kinds: HAZARD_KINDS, hazards: liveHazards() });
+});
+
+// --- Where the addresses are -----------------------------------------------
+//
+// The map used to ask Google for the coordinates of every stop every time it
+// opened — fifty billed lookups a round, again on the next open and again for
+// the next driver. September's usage showed 11,542 Geocoding calls against a
+// couple of hundred addresses that had not moved.
+//
+// So the browser asks here first and only troubles Google for addresses
+// nobody has looked up before, then posts those back. Steady state is zero
+// calls: the round settles after one driver has opened it once.
+
+app.get("/api/geocodes", (req, res) => {
+  res.json({ known: knownGeocodes() });
+});
+
+app.post("/api/geocodes", (req, res) => {
+  const entries = Array.isArray(req.body?.entries) ? req.body.entries : [];
+  // A sane ceiling: a round is tens of stops, not thousands, and this endpoint
+  // takes no code to reach.
+  if (entries.length > 500) {
+    return res.status(400).json({ error: "Too many at once." });
+  }
+  const saved = rememberGeocodes(entries);
+  res.json({ ok: true, saved, total: geocodeCount() });
 });
 
 app.post("/api/hazards", (req, res) => {
