@@ -117,6 +117,9 @@ data/
 | `DATA_DIR` | Path for the SQLite db. `render.yaml` sets this to `/data`, a mounted persistent disk (added 2026-07-11, owner is on Render's Pro tier) — defaults to `./data` if unset, e.g. for local dev. |
 | `ACCESS_CODE` | Shared code drivers need. Sent in the link as `?c=CODE`, then stored in a cookie. **If unset, the gate is off and the app is open to anyone with the URL.** |
 | `ADMIN_CODE` | Separate code for `/admin.html` and style writes, so a driver cannot restyle everybody else's screen. If unset, the driver code works for admin too. |
+| `GOOGLE_MAPS_API_KEY` | The map. Billed per call — read the paid-API section below before changing anything that uses it. |
+| `GOOGLE_MAPS_API_KEY_DEV` | Optional second key, served only to a test drive (`?sim=1`). Give it a small daily quota in the Cloud console so a runaway in testing fails loudly instead of billing. Unset, the simulator uses the real key. |
+| `GOOGLE_MAPS_MAP_ID` | Optional. A vector Map ID lets the map tilt and turn heading-up. **A Map ID that does not exist, or belongs to another project, fails the whole map rather than falling back** — remove the variable to rule it out. |
 | `QBO_CLIENT_ID` / `QBO_CLIENT_SECRET` | QuickBooks Online app credentials, for the customer payment-link feature. |
 | `QBO_REFRESH_TOKEN` / `QBO_REALM_ID` | Obtained once by visiting `/qbo/auth`. **Shown in the browser only — deliberately never logged.** |
 
@@ -169,6 +172,50 @@ job, not the drivers' — Virginia was explicit about this on 2026-09-18 — so 
 is off the route picker and off the route screen, where it would also have sat
 under a driver's thumb while they work a stop. It must never go on the
 customer portal.
+
+## Paid APIs: answer this before shipping anything that calls one
+
+Google Maps bills per call. In September this app spent **$207** on a round of
+two or three drivers, and the whole of it came from the same mistake made three
+times: **a billed call placed inside something that repeats, with nothing
+remembering the answer.**
+
+- **Geocoding: 11,542 requests** against about 200 addresses. `geocodeAndPlot`
+  asked Google where every stop was *every time the map opened* — again on the
+  next open, again for the next driver, again on every test drive.
+- **Distance Matrix,** with a traffic model, on **every GPS fix**. In a moving
+  truck `watchPosition` fires about once a second.
+- **The reroute watcher** — waypoint optimisation *and* traffic across 23 stops
+  — every three minutes for as long as the page was open, including all night
+  on a phone left in a cab.
+
+None of it showed up as an error. The app ran perfectly while spending money,
+and the first signal was a bill thirty days later. The second was the map
+dying, because Google suspends the APIs when payment fails.
+
+**So, before merging anything that touches `google.maps`, answer all four in
+the PR body — not from memory, from the code:**
+
+1. **What does it call that Google bills for?** Geocoder, DirectionsService,
+   DistanceMatrixService, Places, Street View, and each map load.
+2. **What makes it fire?** A click is fine. A GPS fix, a `setInterval`, or a
+   loop over every stop is not, until it has a guard.
+3. **What is the worst case per driver per day?** Multiply it out. "Once a
+   second for eight hours" is 28,800. If the number is over a few hundred,
+   it is wrong.
+4. **Can the answer be reused?** Anything derived from the sheet rather than
+   from the moment — an address above all — is cached in `geocache.js` and
+   asked once ever.
+
+Two guards already exist to copy rather than reinvent: `fetchTurnSteps` and
+`fetchNextEta` each take a minimum interval *and* a minimum distance moved, and
+`checkForBetterRoute` additionally skips while `document.hidden`. A billed call
+with no guard at all does not ship.
+
+A test drive asks `/api/maps-key?sim=1` and gets `GOOGLE_MAPS_API_KEY_DEV` when
+one is set — a key with a small daily quota, so a runaway during testing fails
+loudly on the tester's screen instead of quietly on the card thirty days later.
+Keep it that way: demonstrations are not free.
 
 ## Checks before pushing
 
