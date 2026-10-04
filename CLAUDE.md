@@ -1,6 +1,9 @@
 # Evergreen Driver App — Claude context
 
-**Before doing anything else, read `CLAUDE_LOG.md`.** It's a running log every Claude session appends to — check it first for prior context, then add a dated entry after making changes.
+**Before doing anything else, read `CARRYOVER.md` and `CLAUDE_LOG.md`.**
+
+- **`CARRYOVER.md`** is the standing handoff: what the app is for, what work is open, and the rules this codebase runs on — paid APIs, the geocode cache's expiry, where style defaults actually live, why `ACCESS_CODE` is off, how the client-facing briefs are maintained, and the testing failure mode that keeps recurring. It describes the *present*, so **edit it in place** when the present changes rather than appending a contradiction.
+- **`CLAUDE_LOG.md`** is the history, and only grows. Check it for prior context, then **add a dated entry after making changes.** It went unwritten for nine days once, and a stale claim reached the client as a direct result.
 
 ## What this app is
 

@@ -1089,3 +1089,177 @@ a stale-looking note. When it does go back on, the link needs to carry the
 code — `?c=…` — because the last time it was on, the code only ever travelled
 inside a text message and the owner could not open his own app once the
 message scrolled away.
+
+---
+
+## 2026-09-30 → 2026-10-04 — four reported faults, a $207 bill, and three corrections to one paragraph
+
+Nothing was logged here between 26 September and this entry, so this covers
+everything in between. **The log going unwritten for nine days is itself the
+finding**: the geocoding work below would have been caught sooner by a session
+that read its own history, and the stale brief claim in the last section would
+not have survived to reach the client. Append after each session.
+
+A standing handoff now lives in **`CARRYOVER.md`** at the repo root. It
+describes the present and is meant to be edited in place; this file stays a
+history and only grows. Read both.
+
+### Four things reported in one message, fixed as PR #39
+
+**The directions and conditions floated over the compass.** The map's bottom
+padding was adding three strips together — geo chip, hazard strip, dock — so
+with all three on screen it reserved far more room than any one of them needed,
+and with the geo chip unmeasured it reserved too little. It is now a `max()` of
+the three, and `public/js/map-dock.js` measures the geo chip live through a
+`ResizeObserver` plus resize, orientationchange and `fonts.ready`. The
+clearance follows the tallest thing actually drawn instead of a guess.
+
+**The dispatch incident cards said only a name.** "Grace Oliphant", with no
+indication that the alert was *contamination* — the dispatcher could see who
+but not what. The chip now reads icon, then what happened, then `· who`, and is
+set `flex: 0 0 auto` so a long name cannot squeeze the kind out.
+
+**The day's feed is ruled like a spreadsheet**, which is how it was asked for:
+alternating subtle stripes on `:nth-child(even)` through a `--d-stripe` token,
+each row clamped to two lines with `-webkit-line-clamp` and expanding on click
+or keyboard. Handlers are delegated, so rows arriving over the socket work
+without rebinding.
+
+**The dark board was near-black and has been lifted** through `#18231b` /
+`#26352a` / `#3a4d3f` with `#e8f1ea` text. Worth knowing: this was changed in
+`DEFAULT_STYLES` in `src/db.js`, because the stored defaults are the real
+source and the CSS fallbacks only apply when nothing is saved. **Editing the
+CSS alone looks like it did nothing** — a wasted pass before working that out.
+
+### "The routes are not loading" — PR #40
+
+Diagnosed from a screenshot taken for an unrelated purpose. The driver page
+opens on the Map tab. When the Google Maps script failed to load, the page sat
+on "Loading map…" indefinitely and **the stop list was behind a tab nobody
+thought to press.** So a billing problem on one API presented as the whole app
+being dead, to a driver standing at a truck.
+
+`mapUnavailable(why)` now falls back to the stop list once, says why, and offers
+a retry; `initMap()` wraps the script load in try/catch and throws early when
+there is no key at all. The driver always has their round.
+
+**The test for this is the reason to trust it**: it includes a control case
+where the map loads successfully, proving the fallback does not fire when it
+shouldn't. Three earlier versions of that test passed while exercising nothing,
+because the stubbed `google.maps` object was missing `TrafficLayer`,
+`addListener` and `DirectionsRenderer` — which looks exactly like success.
+
+### The $207 September bill — PRs #41 through #44
+
+The owner was charged $207.21 for September. One mistake, made three times: **a
+billed call inside something that repeats, with nothing remembering the
+answer.**
+
+**I diagnosed it wrong first.** I blamed Distance Matrix and began optimising
+it. The actual usage report said **Geocoding, 11,542 calls** — on a round of a
+couple of hundred addresses that had not moved. Worth recording because the
+wrong answer was confident and plausible, and reading the report took a minute.
+
+- **#41 — ETA.** `fetchNextEta` was firing on effectively every GPS fix. Now
+  gated by `ETA_MIN_REFETCH_MS` (3 minutes) and `ETA_MIN_MOVE_M` (200 m).
+- **#42 — Geocoding.** Every stop was geocoded on every map open: fifty stops
+  is fifty billed lookups, again on the next open, again for the next driver,
+  again on every test drive. Added `src/geocache.js`; `geocodeAndPlot()` now
+  asks `GET /api/geocodes` what is already known and only geocodes the misses,
+  posting new ones back.
+- **#43 — Policy.** `CLAUDE.md` gained a *"Paid APIs: answer this before
+  shipping anything that calls one"* section — four questions mandatory in the
+  PR body. Test drives (`?sim=1`) now route to `GOOGLE_MAPS_API_KEY_DEV` when
+  it is set, so simulating a route stops spending the fleet's quota.
+- **#44 — Standard tier, and an expiry.** Removed every `drivingOptions` /
+  `trafficModel` (five sites) and `optimizeWaypoints`, and dropped
+  `libraries=places` from the script URL. All three push requests out of the
+  standard tier.
+
+**The auto-reroute watcher was deleted outright** — 3,419 characters of it. A
+three-minute timer calling a premium-tier route API, running all night with
+nobody driving. That one could not be optimised into acceptability. There is a
+comment block in `public/js/map.js` saying so, because the obvious instinct is
+to add it back.
+
+Then the claim was checked rather than asserted: every timer in the codebase
+was read, and **no timer anywhere can now reach Google.** Every billed call is
+triggered by a person or a moving truck.
+
+**Two things about the cache worth passing on.** First, it had **no expiry**
+when first written — rows kept forever, which is very likely a breach of the
+Maps Platform terms, and it was caught only because Google's support engineer
+asked what was being stored. In the middle of asking Google for a goodwill
+credit. It now ages out at 30 days with a daily sweep, and the comment in
+`geocache.js` says the limit is a terms decision and not a performance one, so
+nobody removes it as an optimisation. Second, **Cloud quotas are per-API
+per-project, not per-key** — a dev key in the same project shares the
+production quota, so the #43 split only half works until that is checked.
+
+### Brief two, and three corrections to one paragraph
+
+Brief two was written on 30 September — a thorough account of the app as it
+stands, plus the automation pages and how to review them — and a self-contained
+copy is hosted on the `vpayson` portfolio site with four explanatory figures.
+That copy carries **no reference to Claude**, by request; note that the server
+appends an attribution footer to PR bodies on its own, and it had to be
+stripped.
+
+Then the same paragraph was wrong three times, each time from writing about the
+state of something without checking it.
+
+**One.** Brief one, on 20 September, named the missing start-service form as
+"the whole remaining gap between someone finding you online and their bin
+appearing on a driver's screen." True that day. **The form was built four days
+later** — `675fb95`, "a start service form, so the website can reach a route" —
+and the sentence was carried into brief two on the 30th unchecked. So a
+document written to be sent to the client told her a thing was missing **that
+she had already paid to have built**, and pointed her at the wrong next step.
+Verified before changing anything by posting `start.html`'s exact payload to a
+running server: `{"ok":true,"id":"REQ-9EF7C405"}`, and the queue then held one
+pending `new_customer` with every field intact.
+
+**Two.** The correction replaced that with a different wrong claim — a known
+limit saying the office might not be told when a request arrives, written
+because the mail configuration was not visible from here. It is configured. The
+notification sends, and had all along. Retracted.
+
+**Three.** The retraction reached both copies of brief two **and nowhere else.**
+`pitch.html` and `updates.html` went on saying a request could wait "silently
+in the queue" until the mail service was configured. Found by reading the diff
+of the still-open pull request rather than by anyone hitting it. **When
+correcting a client-facing claim, grep for it across all four pages and the
+portfolio copy.**
+
+Brief one is **not** rewritten. It carries a dated note saying the form has
+since been built, above its original text, because a brief records what was
+known on a day.
+
+**What the briefs say now:** the path runs form → queue → approval → route
+sheet, the office is emailed when a request lands, and one real gap remains —
+**Evergreen's public website does not link to `/start`.** The machinery has no
+front door.
+
+**And one trap that was written down nowhere.** Request emails go through
+Resend's shared sandbox sender unless `REQUESTS_FROM_EMAIL` names a verified
+domain, and that sender generally only delivers to the address the account was
+registered with. Changing `notify_email` on the Approvals page to a shared
+office inbox would stop the emails arriving, with nothing on screen to say so.
+Related: **`notifyNewRequest` returns silently** when notifications are off or
+the address is blank — no log line at all; only the missing-API-key branch
+logs. The quietest of the three ways it can fail to send.
+
+### On `ACCESS_CODE`
+
+Still off, still deliberate, still confirmed by the owner in this session in
+plain terms. The previous two entries have this right. Do not turn it on
+unasked.
+
+### Credentials
+
+The owner pasted a Maps API key, a sheet ID and a full service-account private
+key into the conversation while debugging, and offered Google account access.
+The account access was declined — reading a usage report and fixing a billing
+pattern needs none of it, and holding it would have widened the blast radius of
+any mistake for no gain. **None of the pasted secrets were written to either
+repo.** The service-account key should be rotated; the owner has agreed to.
