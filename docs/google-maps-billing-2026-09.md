@@ -226,3 +226,14 @@ that the project is secured.
       our reading.
 - [ ] Confirm whether **`GOOGLE_MAPS_API_KEY_DEV` needs its own Cloud project.**
 - [ ] Audit **every key in the project**, not just the two the app uses.
+
+---
+
+## Update: 2026-10-04 evening — goodwill adjustment expected
+
+The case was deliberated with Google support. Virginia indicated that support
+signaled willingness to grant a goodwill adjustment on the $207.21 balance. The
+exact resolution is pending, but the direction is clear: the appeal worked.
+
+When this is cleared, mark it below and move to clearing the balance and
+verifying the cache behaviour during the first map load.
