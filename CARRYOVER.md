@@ -14,6 +14,7 @@ Last reviewed: 2026-10-04.
 | `CLAUDE.md` | Living | How to work in this repo, including the paid-API gate and the rule that anything of lasting value gets committed as a file. |
 | `CLAUDE_LOG.md` | History | Dated entries, oldest first after the opening block. Append after each session. |
 | `docs/credentials.md` | Living | Every environment variable, which are secrets, where each is managed, what is outstanding to rotate. **No values, ever.** |
+| `docs/testing-start-form.md` | Living | Step-by-step end-to-end test of the customer sign-up path, including the sheet write that has never run live. |
 | `docs/google-maps-billing-2026-09.md` | Dated record | The $207.21 Maps bill — cause, fixes, the terms problem with the cache, the appeal letter, and what to expect during a monitoring window. Do not rewrite it. |
 
 ---
@@ -41,7 +42,8 @@ sheet, with an email to the owner when a request lands. Verified by posting
 `public/start.html`'s exact payload to a running server — returns
 `{"ok":true,"id":"REQ-…"}`, and the queue then holds one pending `new_customer`
 with every field intact. The only step not exercised is the final sheet append,
-which needs the live Sheets credential.
+which needs the live Sheets credential. The owner's test steps for that are in
+`docs/testing-start-form.md`.
 
 **Nothing points at the front door.** That link belongs on Evergreen's own
 website, which is outside both of these repos — so this is a note to the owner,
