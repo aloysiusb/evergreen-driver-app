@@ -7,6 +7,15 @@ it rather than appending a contradiction.
 
 Last reviewed: 2026-10-04.
 
+**See also**, and read these rather than re-deriving what is in them:
+
+| File | Kind | What it is |
+|---|---|---|
+| `CLAUDE.md` | Living | How to work in this repo, including the paid-API gate and the rule that anything of lasting value gets committed as a file. |
+| `CLAUDE_LOG.md` | History | Dated entries, oldest first after the opening block. Append after each session. |
+| `docs/credentials.md` | Living | Every environment variable, which are secrets, where each is managed, what is outstanding to rotate. **No values, ever.** |
+| `docs/google-maps-billing-2026-09.md` | Dated record | The $207.21 Maps bill — cause, fixes, the terms problem with the cache, the appeal letter, and what to expect during a monitoring window. Do not rewrite it. |
+
 ---
 
 ## What the app is for

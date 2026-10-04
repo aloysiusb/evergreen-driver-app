@@ -4,6 +4,34 @@
 
 - **`CARRYOVER.md`** is the standing handoff: what the app is for, what work is open, and the rules this codebase runs on — paid APIs, the geocode cache's expiry, where style defaults actually live, why `ACCESS_CODE` is off, how the client-facing briefs are maintained, and the testing failure mode that keeps recurring. It describes the *present*, so **edit it in place** when the present changes rather than appending a contradiction.
 - **`CLAUDE_LOG.md`** is the history, and only grows. Check it for prior context, then **add a dated entry after making changes.** It went unwritten for nine days once, and a stale claim reached the client as a direct result.
+- **`docs/`** holds standalone reference documents — see the rule below.
+
+## Anything of lasting value goes in a committed file
+
+**A standing instruction from the owner:** work that will be useful later must
+end up in a **standalone file in this repository**, not in a chat reply and not
+in a session scratchpad. Those vanish with the container. If you produce
+something reusable — a reference table, a post-mortem, a letter that worked, a
+decision and its reasoning, a trap that cost someone an evening — **write it to
+a file and commit it.** Do not wait to be asked, and do not assume the next
+session will have the conversation you had.
+
+Two kinds of file, and the difference matters:
+
+- **Living references** describe the present and are **edited in place**:
+  `CARRYOVER.md`, `docs/credentials.md`. Correct them when they go stale rather
+  than appending a contradiction.
+- **Dated records** are closed and **must not be rewritten**:
+  `CLAUDE_LOG.md` entries, `docs/google-maps-billing-2026-09.md`, and the
+  client-facing briefs in `public/`. If something changes, add a dated note —
+  quietly editing a record is how a record stops being worth having.
+
+Current contents of `docs/`:
+
+| File | Kind | What it is |
+|---|---|---|
+| `docs/credentials.md` | Living | Every environment variable, which are secrets, where each is managed, what is outstanding to rotate. **No values, ever.** |
+| `docs/google-maps-billing-2026-09.md` | Dated record | The $207.21 Maps bill: cause, the four fixes, the terms problem with the cache, the appeal letter verbatim, and what to expect during a monitoring window. |
 
 ## What this app is
 
