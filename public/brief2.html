@@ -310,10 +310,21 @@
   <div class="step">
     <h3>1 · The customer submits</h3>
     <p>Four kinds are accepted: <strong>new customer</strong>, <strong>service hold</strong>, <strong>missed pickup</strong> and <strong>update details</strong>.</p>
+    <p>
+      Starting service has its own form at <strong>/start</strong>, linked from
+      the customer portal. It asks for name, address, town, email, phone, the
+      service wanted and anything the driver should know — everything needed to
+      put a row on a route.
+    </p>
   </div>
   <div class="step">
     <h3>2 · It lands in the queue</h3>
     <p>The office is notified by email, and it appears on the dispatcher board at the same moment — name, address, and a line saying it is waiting.</p>
+    <p>
+      Both the address that gets told and whether it is told at all are
+      settings on the Approvals page, not something buried in code — but see
+      the note in <strong>Known limits</strong> before changing the address.
+    </p>
   </div>
   <div class="step">
     <h3>3 · You decide it</h3>
@@ -388,6 +399,8 @@
     <div class="link-row"><a href="/dispatch">/dispatch</a><span class="what">The board to leave open — trucks, the day's feed, every route's progress</span></div>
     <div class="link-row"><a href="/approval">/approval</a><span class="what">Decide customer requests; switch the evening digest on or off, set its hour, preview tonight's email</span></div>
     <div class="link-row"><a href="/admin">/admin</a><span class="what">The style editor — colours, wording, incident buttons, button sizes. Asks for a code</span></div>
+    <div class="link-row"><a href="/start">/start</a><span class="what">Customers — the start-service form. This is the one to link from the website</span></div>
+    <div class="link-row"><a href="/portal">/portal</a><span class="what">Customers — hold, missed pickup, update details, pay</span></div>
     <div class="link-row"><a href="/">/</a><span class="what">The driver's home screen — pick a round</span></div>
     <div class="link-row"><a href="/errors">/errors</a><span class="what">Anything that went wrong in a driver's browser, so a fault doesn't depend on someone remembering it</span></div>
     <div class="link-row"><a href="/demo.html">/demo</a><span class="what">The map on its own, with nothing real behind it</span></div>
@@ -442,7 +455,8 @@
   <p class="lede">Stated plainly, so none of these is a surprise later.</p>
   <ul>
     <li><strong>There is no access code.</strong> Anyone with a link can open the app, including the dispatcher board. Switched off deliberately while it is being tested, and one setting to turn back on.</li>
-    <li><strong>No "start service" form on the website.</strong> The new-customer path is built and tested end to end, and nothing reaches it — the website has forms for hold, missed pickup, update details and pay, but not for starting service. That one form is the whole remaining gap between someone finding you online and their bin appearing on a driver's screen.</li>
+    <li><strong>Nothing on the public website points at the form yet.</strong> The form exists and works at <strong>/start</strong>, reachable from the customer portal. Whether Evergreen's own website sends anyone there is a separate job, and until it does, the path is built but unused. <strong>This is the last real gap.</strong></li>
+    <li><strong>The notification address cannot be changed casually.</strong> Request emails go through a shared sender, which will generally only deliver to the address the mail account was registered with. Changing the notification address on the Approvals page to, say, a shared office inbox would stop the emails arriving — with nothing on screen to say so. That needs a verified sending domain first, the same one the customer confirmations need.</li>
     <li><strong>Confirmation emails to customers are not sent.</strong> The office notification works; the customer-facing one needs a verified sending domain first, which is a one-time setup.</li>
     <li><strong>Live tracking has never run at real driving speed.</strong> It works in the simulator and on a desk. A truck on the road is the test.</li>
     <li><strong>The arrival alert has the same caveat</strong> — it is meant to fire once per stop as you pull up.</li>
