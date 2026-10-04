@@ -320,6 +320,11 @@
   <div class="step">
     <h3>2 · It lands in the queue</h3>
     <p>The office is notified by email, and it appears on the dispatcher board at the same moment — name, address, and a line saying it is waiting.</p>
+    <p>
+      Both the address that gets told and whether it is told at all are
+      settings on the Approvals page, not something buried in code — but see
+      the note in <strong>Known limits</strong> before changing the address.
+    </p>
   </div>
   <div class="step">
     <h3>3 · You decide it</h3>
@@ -450,8 +455,8 @@
   <p class="lede">Stated plainly, so none of these is a surprise later.</p>
   <ul>
     <li><strong>There is no access code.</strong> Anyone with a link can open the app, including the dispatcher board. Switched off deliberately while it is being tested, and one setting to turn back on.</li>
-    <li><strong>The office may not be told when a request arrives.</strong> A new customer submitting the start-service form lands in the queue correctly — but the notification email only sends if the mail service is configured. If it is not, the request sits there silently and is seen only by whoever happens to be looking at the dispatcher board. Worth confirming before the form is advertised anywhere.</li>
-    <li><strong>Nothing on the public website points at the form yet.</strong> The form exists and works at <strong>/start</strong>, reachable from the customer portal. Whether Evergreen's own website sends anyone there is a separate job, and until it does, the path is built but unused.</li>
+    <li><strong>Nothing on the public website points at the form yet.</strong> The form exists and works at <strong>/start</strong>, reachable from the customer portal. Whether Evergreen's own website sends anyone there is a separate job, and until it does, the path is built but unused. <strong>This is the last real gap.</strong></li>
+    <li><strong>The notification address cannot be changed casually.</strong> Request emails go through a shared sender, which will generally only deliver to the address the mail account was registered with. Changing the notification address on the Approvals page to, say, a shared office inbox would stop the emails arriving — with nothing on screen to say so. That needs a verified sending domain first, the same one the customer confirmations need.</li>
     <li><strong>Confirmation emails to customers are not sent.</strong> The office notification works; the customer-facing one needs a verified sending domain first, which is a one-time setup.</li>
     <li><strong>Live tracking has never run at real driving speed.</strong> It works in the simulator and on a desk. A truck on the road is the test.</li>
     <li><strong>The arrival alert has the same caveat</strong> — it is meant to fire once per stop as you pull up.</li>
