@@ -752,7 +752,7 @@
         <li>Don't rely on the app to save anything today. Nothing tapped here
             is reaching the sheet.</li>
       </ul>
-      <p>The office already knows and is sorting it out. Nothing you did caused
+      <p>The office is aware and working on it. Nothing you did caused
          this, and nothing already written to the sheet has been lost.</p>
       <span class="outage-detail">${esc(msg)}</span>
     </div>`;
