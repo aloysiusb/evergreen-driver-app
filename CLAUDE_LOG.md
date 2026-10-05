@@ -4,6 +4,98 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-10-04 — Google disabled the project's APIs; access gate restored
+
+### The headline: project `evergreen-driver-app` is under AUP enforcement
+
+Alyssa's app cannot read or write the route sheet right now, and the cause is
+not in this repo. Google has disabled the APIs for the Cloud project the app's
+credentials belong to. Two independent probes say the same thing:
+
+    GET /health
+      sheet.tabsReadable: 0 of 9, every tab:
+      "invalid_grant: Invalid grant: account not found"
+
+    Geocoding API, using the key /api/maps-key serves:
+      "status": "REQUEST_DENIED"
+      "error_message": "Google has disabled the use of APIs from this API project."
+
+`account not found` is not a permissions or sharing error — the service
+account `evergreen-driver-service-acc@evergreen-driver-app.iam.gserviceaccount.com`
+no longer resolves. The owner reported a banner in Google Cloud: "A potential
+violation of our Acceptable Use Policy has been detected for a project you
+own." These are the same event. Enforcement has already been applied, not
+merely threatened.
+
+### What this invalidates from earlier in the session
+
+Time was spent on a 400 from the driver map page and on three deprecation
+warnings (`DirectionsService`, `DirectionsRenderer`, `DistanceMatrix`, all
+deprecated 25 Feb 2026). **Both were red herrings.** The 400 was the project
+already being disabled. Do not migrate to the Routes API to fix it — a
+migration cannot help while the project is disabled, and once the project is
+restored the legacy services work as before.
+
+The deprecation remains true and worth doing eventually. It is not urgent and
+it is not the bug.
+
+### Recovery paths, in order
+
+1. Read the actual AUP notice to learn what was detected, and respond/appeal.
+   Nothing in code can substitute for this.
+2. If the project cannot be restored quickly, the app needs a **new Cloud
+   project**: new service account (re-share the sheet with its address, which
+   `/api/sheet-check` prints under `shareWith`), new browser key, then update
+   `GOOGLE_SERVICE_ACCOUNT_KEY` and `GOOGLE_MAPS_API_KEY` in Render. A new
+   service account inside a disabled project will not work.
+3. Worth checking in the console: whether earlymusicsa.org's Maps Embed key
+   lives in this same project. If it does, that site's maps are down too. Its
+   key is not exposed in the homepage HTML, so this could not be settled from
+   outside.
+
+### Access gate put back on
+
+`ACCESS_CODE` and `ADMIN_CODE` had been unset in Render (from the testing
+period), so the gate was taking its early-return path — `/api/tabs` returned
+all nine route tab names to an unauthenticated request. Both were set again
+via the Render API as a **merge**, so no other variable was touched. Verified
+against the live deploy after it came up:
+
+| request | result |
+| --- | --- |
+| no code | 401 |
+| wrong code | 401 |
+| driver code | 200 |
+| driver code on `/api/sheet-headings` | 401 — admin separation holds |
+| admin code on `/api/sheet-headings` | past the gate |
+| `/portal.html`, `/brief.html` | 200 — customers unaffected |
+
+### Exposure review (asked for alongside the above)
+
+- **`/api/maps-key` is public by design** (`src/server.js:451`, whitelisted in
+  `gate.js`) so the public walkthrough can draw satellite imagery. Correct for
+  a browser key, but its only protection is the HTTP-referrer restriction in
+  the console, which cannot be verified from here. A scraped, unrestricted key
+  being reused by third parties is a plausible AUP trigger and should be
+  treated as a live hypothesis until the notice says otherwise.
+- **Photo filenames use `Math.random()`** — `photoStore.js:146`,
+  `${Date.now()}-${Math.random().toString(36).slice(2,8)}`. The entire security
+  model for the public `/photos/` prefix is that the URL is unguessable, and
+  `gate.js` states that in its comment. `Math.random` is not a cryptographic
+  RNG, so that claim is weaker than written. Should be `crypto.randomBytes`.
+  Note it only protects new photos; the 13 existing keep their names.
+- **`POST /api/payment-link` is an email-enumeration oracle** — public, and
+  distinguishes a customer (invoice link) from a non-customer (404). Already
+  acknowledged in its own comment; recorded here as a known, accepted trade.
+- **The access cookie stores the literal code**, and `?c=CODE` lands in
+  Render's access logs. Fine for a shared code texted to drivers; it is not a
+  secret.
+- Checked and clean: no real addresses in `brief.html`, `pay.html`,
+  `updates.html`, `pitch.html`. The 3 address-like strings in
+  `walkthrough.html` are the invented demo data.
+
+---
+
 ## 2026-09-17 (session 3) — Sim mode, and a rebase onto the access gate
 
 ### Rebased onto two upstream commits
