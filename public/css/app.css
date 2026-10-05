@@ -1505,14 +1505,42 @@ textarea.note-edit {
  * It is driven entirely by the error the server returns, so it appears and
  * disappears on its own — when access is restored the route simply loads and
  * this is never rendered. Nothing has to be remembered and taken back out. */
+/* Outage panel colours.
+ *
+ * Deliberately NOT the --amber in tokens.css: that pair is scoped to
+ * [data-palette="report"], which the driver page does not set, so reading it
+ * here resolves to nothing and silently drops the background and border.
+ *
+ * Same light/dark shape as the rest of the app: system preference, with the
+ * explicit toggle able to win either way. */
+:root {
+  --outage-bg:   #fdf0dc;
+  --outage-line: #b45309;
+  --outage-head: #8a3f07;
+  --outage-text: #3b2a14;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --outage-bg:   #2e2113;
+    --outage-line: #e0a35c;
+    --outage-head: #f0bc7d;
+    --outage-text: #f3e7d6;
+  }
+}
+:root[data-theme="dark"] {
+  --outage-bg:   #2e2113;
+  --outage-line: #e0a35c;
+  --outage-head: #f0bc7d;
+  --outage-text: #f3e7d6;
+}
 .outage {
   margin: 20px auto;
   max-width: 34rem;
   padding: 18px 20px;
   border-radius: var(--r-card);
-  background: var(--amber-l);
-  border: 2px solid var(--amber);
-  color: var(--text);
+  background: var(--outage-bg);
+  border: 2px solid var(--outage-line);
+  color: var(--outage-text);
   text-align: left;
   line-height: 1.55;
 }
@@ -1520,7 +1548,7 @@ textarea.note-edit {
   margin: 0 0 8px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--amber);
+  color: var(--outage-head);
 }
 .outage p { margin: 0 0 10px; font-size: 0.95rem; }
 .outage p:last-child { margin-bottom: 0; }
@@ -1530,7 +1558,7 @@ textarea.note-edit {
   display: block;
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid var(--amber);
+  border-top: 1px solid var(--outage-line);
   font-size: 0.78rem;
   opacity: 0.75;
   font-family: var(--font-mono, ui-monospace, monospace);

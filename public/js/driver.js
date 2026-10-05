@@ -714,7 +714,15 @@
        *
        * So the message is chosen from the error itself, which means this
        * corrects itself: restore access and the route just loads. */
-      document.getElementById('loading').innerHTML = outageOrError(e.message || '');
+      const msg = e.message || '';
+      document.getElementById('loading').innerHTML = outageOrError(msg);
+      /* The header counter sits above this and still reads "Loading…", which
+         quietly contradicts the panel — it suggests the app is still trying
+         when it has in fact given up. Say so instead. */
+      if (isAccessFailure(msg)) {
+        const prog = document.getElementById('progress-text');
+        if (prog) prog.textContent = 'Unavailable';
+      }
     }
   }
 
