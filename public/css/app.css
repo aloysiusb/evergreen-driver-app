@@ -1490,6 +1490,53 @@ textarea.note-edit {
   cursor: pointer;
 }
 
+
+/* ── Outage notice ───────────────────────────────────────────────────────────
+ *
+ * The difference between "try again" and "stop trying" matters more here than
+ * anywhere else in the app, because a driver is reading it at 6am in a cab.
+ *
+ * .error-state above is for a failure that retrying might fix — a dead zone, a
+ * slow response. This is for the other kind: the sheet is reachable but the
+ * app's credentials are not valid, which no amount of tapping Retry will mend.
+ * So this notice has no Retry button, says plainly that it is not the driver's
+ * phone, and tells them what to do instead.
+ *
+ * It is driven entirely by the error the server returns, so it appears and
+ * disappears on its own — when access is restored the route simply loads and
+ * this is never rendered. Nothing has to be remembered and taken back out. */
+.outage {
+  margin: 20px auto;
+  max-width: 34rem;
+  padding: 18px 20px;
+  border-radius: var(--r-card);
+  background: var(--amber-l);
+  border: 2px solid var(--amber);
+  color: var(--text);
+  text-align: left;
+  line-height: 1.55;
+}
+.outage h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--amber);
+}
+.outage p { margin: 0 0 10px; font-size: 0.95rem; }
+.outage p:last-child { margin-bottom: 0; }
+.outage ul { margin: 0 0 10px; padding-left: 1.2em; font-size: 0.95rem; }
+.outage li { margin-bottom: 4px; }
+.outage .outage-detail {
+  display: block;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--amber);
+  font-size: 0.78rem;
+  opacity: 0.75;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  word-break: break-word;
+}
+
 /* ── Toast ── */
 #toast {
   position: fixed;

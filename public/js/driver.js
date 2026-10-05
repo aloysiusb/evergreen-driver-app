@@ -705,10 +705,49 @@
       document.getElementById('loading').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
     } catch (e) {
-      document.getElementById('loading').innerHTML =
-        `<div class="error-state">Could not load route.<br><small>${e.message}</small>
+      /* Two different failures, two different screens.
+       *
+       * Some of what lands here is worth retrying: a dead zone, a timeout, a
+       * cold server. But a credentials or project-level failure is not — the
+       * app's Google access is not valid, and a driver tapping Retry in a cab
+       * is being given something to do that cannot possibly work.
+       *
+       * So the message is chosen from the error itself, which means this
+       * corrects itself: restore access and the route just loads. */
+      document.getElementById('loading').innerHTML = outageOrError(e.message || '');
+    }
+  }
+
+  /* Does this message describe something tapping Retry could fix? */
+  function isAccessFailure(msg) {
+    return /invalid_grant|account not found|has been disabled|API project|SERVICE_DISABLED|PERMISSION_DENIED|API key|credential/i
+      .test(msg);
+  }
+
+  function outageOrError(msg) {
+    if (!isAccessFailure(msg)) {
+      return `<div class="error-state">Could not load route.<br><small>${esc(msg)}</small>
          <button onclick="location.reload()">Retry</button></div>`;
     }
+    /* No Retry button here on purpose — see isAccessFailure above. */
+    return `<div class="outage">
+      <h2>&#9888; Today's route can't be loaded</h2>
+      <p><b>This is not your phone and not your fault.</b> The app's connection
+         to the route sheet has been switched off at Google's end, so it cannot
+         read your stops or save anything you tap.</p>
+      <p>Until it is back on:</p>
+      <ul>
+        <li>Work from the route sheet directly &mdash; the spreadsheet itself
+            still works normally, so you can open it the usual way.</li>
+        <li>Keep a note of contamination and anything unusual, the way you did
+            before the app.</li>
+        <li>Don't rely on the app to save anything today. Nothing tapped here
+            is reaching the sheet.</li>
+      </ul>
+      <p>The office already knows and is sorting it out. Nothing you did caused
+         this, and nothing already written to the sheet has been lost.</p>
+      <span class="outage-detail">${esc(msg)}</span>
+    </div>`;
   }
 
   // ── WebSocket ────────────────────────────────────────────────────────────
