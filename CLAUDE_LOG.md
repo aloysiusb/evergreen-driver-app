@@ -27,6 +27,38 @@ violation of our Acceptable Use Policy has been detected for a project you
 own." These are the same event. Enforcement has already been applied, not
 merely threatened.
 
+### Correction: this was a billing suspension, not an abuse finding
+
+Written after the rest of this entry, and it overrides the framing above.
+
+The owner established the actual cause: **an unpaid balance of about $200**,
+which suspended the project. The Acceptable Use Policy banner is how the
+suspension surfaced, not a finding of misconduct. Everything observed here —
+`invalid_grant: account not found`, `REQUEST_DENIED`, the APIs disabled — fits
+a billing suspension at least as well as it fitted enforcement, and the
+enforcement reading was mine, not Google's.
+
+Two things follow, and both are better news than the entry above implies:
+
+1. **A billing suspension does not delete service accounts.** The
+   `account not found` is the project being suspended, not the credentials
+   being destroyed. Recreating the service account and re-sharing the sheet is
+   very probably unnecessary. Settle the balance and access should return as
+   it was.
+2. **The spend that caused the bill is already fixed.** `807683c` records it:
+   `fetchNextEta` was called from the GPS handler on every fix — about once a
+   second in a moving vehicle — each one a Distance Matrix request carrying a
+   traffic model. Verified live in the deployed `map.js`:
+   `ETA_MIN_REFETCH_MS = 180000` plus a 200 m movement guard, with
+   `geocache.js` holding geocodes so an address is asked once ever. The same
+   bill should not recur.
+
+The exposure review below still stands on its own merits — an unrestricted,
+publicly-served browser key is worth restricting because it lets a stranger
+spend your quota, which matters more now that an unpaid balance has proved it
+can take the whole project down. It is just no longer a suspect in *this*
+incident.
+
 ### What this invalidates from earlier in the session
 
 Time was spent on a 400 from the driver map page and on three deprecation
