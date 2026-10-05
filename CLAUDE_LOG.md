@@ -70,6 +70,43 @@ against the live deploy after it came up:
 | admin code on `/api/sheet-headings` | past the gate |
 | `/portal.html`, `/brief.html` | 200 — customers unaffected |
 
+### Driver-side outage panel
+
+With the project disabled, `loadRoute`'s catch was showing Dave the server's
+raw `invalid_grant: Invalid grant: account not found` above a Retry button that
+cannot work. The catch now chooses its screen from the error text:
+`isAccessFailure()` matches credential and project-level failures, which get a
+`.outage` panel with **no Retry**; everything else keeps the old `.error-state`
+and its Retry. Classifier checked against the live error, the Maps project
+error, a missing key, `SERVICE_DISABLED`, and four retryable messages — 8/8.
+
+It is driven entirely by the server's message, so it clears itself when access
+returns. Nothing has to be remembered and removed.
+
+**It shipped broken, and the reason is worth keeping.** The panel first used
+`var(--amber)` / `var(--amber-l)` from `tokens.css` — but that pair is scoped
+to `[data-palette="report"]`, which the driver page does not set. The failure
+was not a missing colour: an invalid `var()` makes the whole declaration
+invalid at computed-value time, so `background` fell to transparent and
+`border: 2px solid var(--amber)` computed to **0px**. The notice rendered as
+bare text on the page background and looked deliberate. Grepping `tokens.css`
+for `--amber` found the definition and said nothing about its scope; only
+reading the live page's computed styles showed it resolving to `""`.
+
+Fixed with its own `--outage-*` tokens in the light/dark shape used elsewhere
+in `app.css` (system preference, explicit toggle able to win). Contrast
+measured: body 12.2:1 light / 12.8:1 dark, heading 6.7:1 / 9.1:1, border 4.5:1
+against a 3:1 non-text bar. Verified on the live deploy at 375x812 in both
+schemes.
+
+Also: the header counter kept reading "Loading…" beneath the panel, implying
+the app was still trying. It now reads "Unavailable" on an access failure.
+
+**No offline fallback exists.** "View Original" reads `/api/backup/<tab>`,
+which is a *tab in the sheet* and needs the same dead credentials, so it cannot
+stand in. The spreadsheet itself is unaffected — only the app's programmatic
+access — so the round can be run from the sheet by hand.
+
 ### Exposure review (asked for alongside the above)
 
 - **`/api/maps-key` is public by design** (`src/server.js:451`, whitelisted in
