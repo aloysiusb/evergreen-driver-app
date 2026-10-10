@@ -4,6 +4,56 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-10-10 — the dispatch board said it nine times
+
+The owner opened the dispatch board and saw nine lines of
+`invalid_grant: Invalid grant: account not found`, one per route, under
+"9 routes cannot be saved to".
+
+**Nothing here is a new fault.** It is the suspended Cloud project from
+2026-10-04, still suspended. What was wrong is what the office was being
+told about it.
+
+The driver page was taught to say this plainly on 2026-10-04 (`f5feb5e`).
+**The dispatch board was not.** `checkSheet()` printed `problems[t]` raw for
+every failing tab, so the one screen the office keeps open all day was
+reporting an account-level outage as nine independent broken tabs — pointing
+at the route sheet, which is not where the problem is. The sheet is fine; it
+opens normally.
+
+`checkSheet()` now asks whether *every* failing route failed for an access
+reason. If so it says the connection to Google is off, that the spreadsheet
+still works directly, and that drivers are seeing the same message with their
+taps held on their phones — one fault, named. The per-tab list is still what
+renders otherwise, because that is the case it was built for: the Friday
+missing-heading bug wants the tab and the reason, not a speech about Google.
+A mixed set keeps the list too, so one odd route out is never swallowed by a
+louder story.
+
+**`isAccessFailure()` moved to `public/js/access-failure.js`.** It was
+driver.js's private copy; dispatch needs the same judgement, and copy-pasting
+it is precisely how `style-units.js` came to exist. The two screens
+disagreeing about what an outage is — drivers told the office knows, the
+office's own board showing raw `invalid_grant` — is the drift this prevents.
+
+**It had a hole.** The classifier did not match `sheets.js`'s own two startup
+errors (`GOOGLE_SERVICE_ACCOUNT_KEY` missing, or not valid JSON). Both are
+configuration, so a driver would have been handed a Retry button that could
+never work. `SERVICE_ACCOUNT` added; 12/12 cases pass, including that
+`Failed to fetch`, `HTTP 500`, unavailable and quota-exceeded all stay
+retryable.
+
+**The var() trap was avoided deliberately, and the reason is the same one as
+last time.** `dispatch.html` links only `tokens.css` and `chrome.css` — the
+`--outage-*` tokens live in `app.css` and are not visible there. Using them
+would have made each declaration invalid at computed-value time and rendered
+the panel unstyled, which is exactly how the driver panel shipped broken. The
+new rules use the page's own `--d-*` tokens instead.
+
+**Still true, and not fixed by any of this:** the project is suspended over an
+unpaid balance of about $200. No code change restores access. Settle the
+balance.
+
 ## 2026-10-04 — Google disabled the project's APIs; access gate restored
 
 ### The headline: project `evergreen-driver-app` is under AUP enforcement

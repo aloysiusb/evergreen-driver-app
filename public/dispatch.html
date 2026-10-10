@@ -163,6 +163,21 @@ body {
   font-weight: 500;
   opacity: 0.85;
 }
+/* When every route fails for the same reason, the cause is the app's Google
+   access, not nine separate routes. Nine identical lines of invalid_grant
+   says "your sheet is broken in nine ways" to someone whose actual problem
+   is one suspended billing account. */
+.sheet-alert .sa-what {
+  display: block;
+  margin-top: 6px;
+  font-weight: 500;
+}
+.sheet-alert .sa-routes {
+  display: block;
+  margin-top: 6px;
+  font-weight: 500;
+  opacity: 0.85;
+}
 
 .header-link {
   font-size: 11px;
@@ -938,6 +953,7 @@ body {
   <div class="loading-grid"><div class="spinner"></div>Loading routes…</div>
 </div>
 
+<script src="/js/access-failure.js"></script>
 <script src="/js/routes.js"></script>
 <script>
 /* ROUTES comes from /js/routes.js, loaded above.
@@ -1987,12 +2003,30 @@ async function checkSheet() {
     const tabs = Object.keys(problems);
     if (!tabs.length) { el.hidden = true; return; }
 
-    el.innerHTML =
-      '<b>⚠ ' + tabs.length + ' route' + (tabs.length > 1 ? 's' : '') +
-      ' cannot be saved to.</b> Work done on ' +
-      (tabs.length > 1 ? 'these routes' : 'this route') +
-      ' will wait on the driver\'s phone instead of reaching the sheet.' +
-      tabs.map(t => '<span class="sa-detail">' + esc(t) + ' — ' + esc(problems[t]) + '</span>').join('');
+    /* Every route down for the same credential reason is ONE fault, and
+       naming it is what lets the office act. The raw text
+       ("invalid_grant: Invalid grant: account not found") reads as nine
+       broken tabs and points at the sheet, which is not where the problem
+       is — and the driver app already tells drivers this plainly. */
+    const allAccess = tabs.every(t => isAccessFailure(String(problems[t] || '')));
+
+    if (allAccess && tabs.length > 1) {
+      el.innerHTML =
+        '<b>⚠ The app has lost its connection to Google.</b>' +
+        '<span class="sa-what">No route can be read or saved — this is an ' +
+        'account-level problem, not a problem with the route sheet itself. ' +
+        'The spreadsheet still works normally if you open it directly.</span>' +
+        '<span class="sa-what">Drivers are being told the same thing, and ' +
+        'anything they tap is held on their phone until access returns.</span>' +
+        '<span class="sa-routes">Affected: all ' + tabs.length + ' routes.</span>';
+    } else {
+      el.innerHTML =
+        '<b>⚠ ' + tabs.length + ' route' + (tabs.length > 1 ? 's' : '') +
+        ' cannot be saved to.</b> Work done on ' +
+        (tabs.length > 1 ? 'these routes' : 'this route') +
+        ' will wait on the driver\'s phone instead of reaching the sheet.' +
+        tabs.map(t => '<span class="sa-detail">' + esc(t) + ' — ' + esc(problems[t]) + '</span>').join('');
+    }
     el.hidden = false;
   } catch {
     // A failed check is not itself worth shouting about.

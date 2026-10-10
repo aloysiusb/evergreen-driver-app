@@ -727,10 +727,8 @@
   }
 
   /* Does this message describe something tapping Retry could fix? */
-  function isAccessFailure(msg) {
-    return /invalid_grant|account not found|has been disabled|API project|SERVICE_DISABLED|PERMISSION_DENIED|API key|credential/i
-      .test(msg);
-  }
+  /* isAccessFailure lives in js/access-failure.js — dispatch.html needs the
+     same judgement, and the two screens must not disagree about it. */
 
   function outageOrError(msg) {
     if (!isAccessFailure(msg)) {
