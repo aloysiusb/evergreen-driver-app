@@ -735,7 +735,7 @@
       return `<div class="error-state">Could not load route.<br><small>${esc(msg)}</small>
          <button onclick="location.reload()">Retry</button></div>`;
     }
-    /* No Retry button here on purpose — see isAccessFailure above. */
+    /* No Retry button here on purpose — see js/access-failure.js. */
     return `<div class="outage">
       <h2>&#9888; Today's route can't be loaded</h2>
       <p><b>This is not your phone and not your fault.</b> The app's connection
