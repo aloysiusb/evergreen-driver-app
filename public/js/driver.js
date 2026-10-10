@@ -727,17 +727,15 @@
   }
 
   /* Does this message describe something tapping Retry could fix? */
-  function isAccessFailure(msg) {
-    return /invalid_grant|account not found|has been disabled|API project|SERVICE_DISABLED|PERMISSION_DENIED|API key|credential/i
-      .test(msg);
-  }
+  /* isAccessFailure lives in js/access-failure.js — dispatch.html needs the
+     same judgement, and the two screens must not disagree about it. */
 
   function outageOrError(msg) {
     if (!isAccessFailure(msg)) {
       return `<div class="error-state">Could not load route.<br><small>${esc(msg)}</small>
          <button onclick="location.reload()">Retry</button></div>`;
     }
-    /* No Retry button here on purpose — see isAccessFailure above. */
+    /* No Retry button here on purpose — see js/access-failure.js. */
     return `<div class="outage">
       <h2>&#9888; Today's route can't be loaded</h2>
       <p><b>This is not your phone and not your fault.</b> The app's connection
