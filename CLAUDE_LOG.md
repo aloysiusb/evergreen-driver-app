@@ -4,6 +4,48 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-10-10 (later) — evidence file for the Google feedback
+
+`GOOGLE-CLOUD-FEEDBACK.md` added. The owner wants to write to Google about
+prevention once the billing case closes, and the specifics decay fast — exact
+error strings, which wrong turn cost what, what the console actually said.
+Collected now, written up later.
+
+It is **raw material, not the finished piece**, and it is sourced from the
+entries in this log rather than from recollection. Ten items; the three with
+real weight:
+
+- **The error strings caused the wrong diagnosis.** `invalid_grant: Invalid
+  grant: account not found` for an unpaid invoice reads as a deleted service
+  account, and the 2026-10-04 entry concluded exactly that — headlining AUP
+  enforcement and a probable rebuild on a new project, then overriding itself
+  hours later. The Routes API migration and the map-page 400 went the same way.
+  That cost is measurable, which is why it leads.
+- **There is no circuit breaker, and Google's own email concedes it** —
+  budget alerts "do not automatically pause your APIs or stop usage". Quotas
+  are the real control and are denominated in requests, not dollars, so using
+  them as a budget means knowing the unit price of every API you call.
+- **The dangerous page is the default.** 6,594 quota rows for a project whose
+  only job is drawing a map, while the four-item Maps-scoped console is
+  undiscoverable — and the generic page is the one where you can throttle an
+  unrelated service by accident.
+
+Also recorded: `earlymusicsa.org` was **confirmed on 2026-10-10 to be a
+separate project and unaffected**. The 2026-10-04 entry left that open as
+worth checking; it is now settled. It was luck rather than design, and the
+file says so — same project would have meant a compost-route GPS bug taking a
+music charity's website down.
+
+**One section is there to stop us overreaching.** "What NOT to argue": the
+platform is not badly built, and 6,594 knobs are legitimate for a bank. The
+argument is that **no small path exists** — a solo developer gets the
+enterprise console with no spending cap and no signpost. Specific and fixable
+beats "it's all too complicated", which gets filed.
+
+Three facts are still missing and the file lists them: how the adjustment
+resolved, whether reinstatement followed payment automatically or had to be
+asked for separately, and the total days offline.
+
 ## 2026-10-10 — the dispatch board said it nine times
 
 The owner opened the dispatch board and saw nine lines of
