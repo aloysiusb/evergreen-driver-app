@@ -270,65 +270,6 @@
 
 <div id="toast"></div>
 
-<script>
-/* Debug overlay — ONLY when the URL carries ?debug=1, so a driver never sees it.
- *
- * Here because the map fails on this page with Google's generic "This page
- * can't load Google Maps correctly" and the real reason is only ever printed
- * to the browser console. The owner works from an iPad, where there is no
- * console to open, so the error was unreachable. Every external check of the
- * key passed — referrer, billing, map creation, API restrictions — which means
- * the answer is only visible from inside this page.
- *
- * Installed before every other script so nothing can fail ahead of it. */
-(function(){
-  if (new URLSearchParams(location.search).get('debug') !== '1') return;
-  var lines = [];
-  function show(){
-    var el = document.getElementById('__dbg');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = '__dbg';
-      el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:999999;'
-        + 'max-height:55vh;overflow:auto;background:#111;color:#0f0;'
-        + 'font:11px/1.45 ui-monospace,Menlo,monospace;padding:10px 12px;'
-        + '-webkit-user-select:text;user-select:text;white-space:pre-wrap;'
-        + 'word-break:break-word;border-top:2px solid #0f0';
-      document.body.appendChild(el);
-    }
-    el.textContent = 'DEBUG — tap and hold to select, then copy\n\n' + lines.join('\n\n');
-  }
-  function add(tag, msg){ lines.push('[' + tag + '] ' + msg); if (document.body) show(); }
-
-  var ce = console.error, cw = console.warn;
-  console.error = function(){ add('error', [].slice.call(arguments).join(' ')); ce.apply(console, arguments); };
-  console.warn  = function(){ add('warn',  [].slice.call(arguments).join(' ')); cw.apply(console, arguments); };
-  window.addEventListener('error', function(e){
-    add('uncaught', (e.message||'') + ' @ ' + (e.filename||'') + ':' + (e.lineno||''));
-  });
-  /* Google calls this on any key/billing/referrer rejection. It is the single
-     most useful signal, and it never reaches the user otherwise. */
-  window.gm_authFailure = function(){ add('GOOGLE AUTH', 'gm_authFailure fired — key, referrer, billing or API restriction rejected'); };
-
-  add('page', location.href);
-  add('referrer-policy', document.referrerPolicy || '(default)');
-  document.addEventListener('DOMContentLoaded', show);
-  /* What the page was actually handed as a key, and what it asked for. */
-  var f = window.fetch;
-  window.fetch = function(u){
-    if (String(u).indexOf('maps-key') > -1) {
-      return f.apply(this, arguments).then(function(r){
-        var c = r.clone();
-        c.text().then(function(t){
-          add('maps-key ' + r.status, t.replace(/"key":"[^"]{0,8}/, '"key":"…').slice(0, 200));
-        }).catch(function(){});
-        return r;
-      });
-    }
-    return f.apply(this, arguments);
-  };
-})();
-</script>
 <script src="/js/sim.js"></script>
 <script src="/js/report-errors.js"></script>
 <script src="/js/fonts.js"></script>
