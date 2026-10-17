@@ -290,6 +290,40 @@ app.get("/health", (req, res) => {
       // between knowing something is wrong and knowing what to do about it.
       problems: Object.fromEntries(columnProblems),
     },
+    /* Which integrations are WIRED, as yes/no and nothing else.
+     *
+     * Why this exists: Render lets a person or a Claude session SET an
+     * environment variable but gives a Claude session no way to READ one. So
+     * "is QuickBooks connected?" had no answer anyone could get at without
+     * asking the owner, and the repo's notes went stale the moment something
+     * was connected outside a session. This is the source of truth instead of
+     * somebody's memory of it.
+     *
+     * Booleans only — never a value, an id, an address or a recipient. This
+     * endpoint is outside the access gate, so it must say no more than that
+     * the wiring is present. Whether the gate itself is on is deliberately not
+     * reported here: any gated page answering 401 already says so.
+     *
+     * "Configured" means the settings are present. It does NOT mean the
+     * integration works — a revoked QuickBooks token still reports true. For
+     * that, exercise it. */
+    integrations: {
+      googleServiceAccount: Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
+      mapsKey: Boolean(process.env.GOOGLE_MAPS_API_KEY),
+      mapId: Boolean(process.env.GOOGLE_MAPS_MAP_ID),
+      quickbooks: qboConfigured(),
+      email: {
+        providerKey: Boolean(process.env.RESEND_API_KEY),
+        verifiedSender: Boolean(process.env.REQUESTS_FROM_EMAIL),
+      },
+      digest: {
+        enabled: getSettings().digest_enabled === "1",
+        hour: Number(getSettings().digest_hour),
+        // In memory, so it resets on restart. Absent means "not since the
+        // last restart", not "never".
+        lastSentOn: digestSentOn || null,
+      },
+    },
   });
 });
 

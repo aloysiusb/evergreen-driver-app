@@ -2,6 +2,68 @@
 
 **Before doing anything else, read `CLAUDE_LOG.md`.** It's a running log every Claude session appends to — check it first for prior context, then add a dated entry after making changes.
 
+## Current state — READ THIS, then update it before you end the session
+
+*Last updated 2026-10-17. Each line says whether a session VERIFIED it or the
+owner TOLD a session. Anything marked UNVERIFIED is a claim, not a fact. Do not
+repeat an UNVERIFIED line to anyone as if it were settled.*
+
+**Look before you ask.** `GET https://evergreen-driver-app.onrender.com/health`
+is public and has an `integrations` block: which of the Google service account,
+Maps key, Map ID, QuickBooks, email and the evening digest are *configured*.
+Configured is not working, but it answers "is it connected" without anyone
+having to remember. (A Claude session can SET Render environment variables but
+cannot READ them, which is why this endpoint exists.) Whether the access gate is
+on is not reported there: a gated page answering 401 says so.
+
+| Area | State | Basis |
+|---|---|---|
+| Route sheets | All nine tabs read cleanly since the service account key was replaced on 2026-10-12 | VERIFIED, Render logs |
+| Google service account | Its key was deleted by accident on 2026-10-11 while the owner was editing the Credentials page, which caused `invalid_grant: Invalid JWT Signature`. A new key was made and pasted into Render by the owner | VERIFIED |
+| Google billing | The project was suspended about 2026-10-04 over an unpaid balance of roughly $182, almost all Geocoding. The owner says she paid it on 2026-10-12. The billing account is on the owner's *other* Google login, not the one the Console opens under by default, which is why it looked as if there were none | Owner TOLD; payment UNVERIFIED |
+| Map and directions on the driver page | Whether they work again after payment is UNVERIFIED. Last observed failing on 2026-10-12 | UNVERIFIED |
+| Google adjustment request | A support agent confirmed on 2026-10-06 that the report supports an adjustment, and the owner re-sent a status request on 2026-10-12. The outcome is unknown, and paying the balance may have changed what is possible | UNVERIFIED |
+| Maps key | Referrer-restricted to `https://evergreen-driver-app.onrender.com` and the same with `/*`. APIs allowed: Maps JavaScript, Directions, Geocoding, Distance Matrix. **Not Places**: `map.js` dropped `libraries=places` on purpose | Owner TOLD |
+| QuickBooks | Owner says it is connected (2026-10-17). No session has seen an invoice created through the app, and the sandbox run recommended in the 2026-09-26 entry has never been done | Owner TOLD; works UNVERIFIED |
+| Evening digest | Sending as of 2026-10-12. It stays silent on days with no activity, so empty logs are not a fault. It goes to the `notify_email` setting, not to Alyssa unless that is changed | VERIFIED 2026-10-12 |
+| Customer emails | Need a verified sending domain in `REQUESTS_FROM_EMAIL` before customers receive anything | Last stated 2026-09-26 |
+| Access gate | On as of 2026-10-12 (`Access gate on` in the boot log) | VERIFIED |
+| Debug overlay on `driver.html` | Added and removed again (PRs #49, #50). The file is back to its earlier state | VERIFIED |
+
+**What a session can and cannot do here.** It can deploy on Render, read logs
+and set environment variables. It can read and push code, but the GitHub proxy
+refuses repository settings. It has no access to Google Cloud, QuickBooks
+itself, cPanel or Bluehost, so anything done there is invisible unless written
+down.
+
+**Lessons that cost hours, so they stay written down:**
+
+- `gm_authFailure` does **not** fire for `BillingNotEnabledMapError`. A test
+  that creates a `google.maps.Map` and sees no auth failure has NOT shown that
+  billing is fine. The real error is only in the browser console, which the
+  owner cannot open on an iPad. `walkthrough.html` only displays a map, so it
+  works without billing. The driver page also calls Directions and Distance
+  Matrix, which are refused outright without it.
+- A Maps referrer entry of `https://evergreen-driver-app.onrender.com/*` was
+  proven to accept `/driver/tues-dv`. A map failure on a deep URL is not a
+  referrer problem.
+- On the Credentials page, only touch the API key. The service account is what
+  reads the route sheets, and deleting its key stops every route.
+
+### Session rule — no information may be lost between sessions
+
+1. Read this block and the top of `CLAUDE_LOG.md` first.
+2. Check `/health` instead of asking the owner what is connected.
+3. When the owner says something changed outside a session (connected a
+   service, paid a bill, changed a setting), write it into the table above
+   **immediately**, marked "Owner TOLD".
+4. Before ending, update the date and every line you touched, and say how you
+   know it. Add the dated entry to the log as well.
+5. This repo auto-deploys on every commit to `main`, so even a documentation
+   change restarts the live app for a few seconds. Do it outside weekday
+   driver hours (route tabs run Monday to Friday), or batch it with a code
+   change.
+
 ## What this app is
 
 Node.js/Express backend + frontend for Evergreen compost route drivers. Syncs with a Google Sheets spreadsheet via a service account. Drivers see their route stops, can mark stops done, and add notes. All updates sync in real time across devices via WebSocket.
