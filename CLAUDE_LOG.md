@@ -4,6 +4,52 @@ Append a dated entry after each session. Most recent first.
 
 ---
 
+## 2026-10-17 — what happened 10-11 to 10-12, and making state discoverable
+
+The owner was told by a session that "QuickBooks is built but untested" and
+replied that it was already connected. Nothing in the repo said so, and no
+session could have found out: Render lets a session set environment variables
+but not read them. So the notes went stale the moment something was connected
+outside a session. That is the failure this entry fixes.
+
+**What changed**
+
+- `/health` now reports an `integrations` block: yes/no per integration, never a
+  value, id or address. It is public, so it says nothing more than that the
+  wiring is present. Tested booting the server with dummy secrets set and with
+  none set: correct booleans both ways, and no secret value appears anywhere in
+  the response.
+- `CLAUDE.md` has a "Current state" block at the top with a session rule:
+  update it before ending, mark each line VERIFIED / owner TOLD / UNVERIFIED.
+
+**The incident the block records**
+
+1. 2026-10-11: while editing the Google Credentials page the owner deleted the
+   service account's only key. Every route read failed with
+   `invalid_grant: Invalid JWT Signature`. Fix was a new key, pasted by the
+   owner into `GOOGLE_SERVICE_ACCOUNT_KEY`; all nine routes read again within
+   about ninety seconds. Her paste was right first time. The key was never
+   shared in chat, deliberately.
+2. The driver map then failed with Google's generic "This page can't load
+   Google Maps correctly". Hours went into the key and its restrictions, all
+   correct. The cause was **billing**: `BillingNotEnabledMapError`. Read off a
+   temporary `?debug=1` overlay (PRs #49, #50), since an iPad has no console.
+   An outside test had wrongly reported billing as fine because
+   `gm_authFailure` does not fire for that error.
+3. The old billing account was closed for non-payment and could not be reopened
+   or replaced while the payments profile was not in good standing. Creating a
+   fresh account failed the same way. The owner paid the balance on 2026-10-12.
+   Whether the map came back is not verified.
+
+**Not done, and why**
+
+- QuickBooks has still not been exercised. "Connected" was reported by the
+  owner; the next session that can should run one sandbox approval
+  (`QBO_SANDBOX=true`) before it handles a real customer.
+- Nobody has confirmed the map works after payment.
+
+---
+
 ## 2026-10-10 (later) — evidence file for the Google feedback
 
 `GOOGLE-CLOUD-FEEDBACK.md` added. The owner wants to write to Google about
