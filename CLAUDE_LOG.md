@@ -43,9 +43,14 @@ outside a session. That is the failure this entry fixes.
 
 **Not done, and why**
 
-- QuickBooks has still not been exercised. "Connected" was reported by the
-  owner; the next session that can should run one sandbox approval
-  (`QBO_SANDBOX=true`) before it handles a real customer.
+- QuickBooks: the owner said it was connected, but the new `/health` check
+  reports `quickbooks: false` on the live app, so the app's own credentials
+  are not all set. Probably she connected QuickBooks to Claude as a
+  connector, which is a different thing. Corrected in the Current state
+  table. The app has still never run against Intuit; do one sandbox
+  approval (`QBO_SANDBOX=true`) before it handles a real customer.
+  This is also the first time the endpoint has paid for itself: it caught a
+  wrong belief within minutes of being deployed.
 - Nobody has confirmed the map works after payment.
 
 ---
